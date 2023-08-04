@@ -1,0 +1,15 @@
+<form action="/wisski/get" method="GET">
+    <input name="uri">
+    <button type="submit">Resolve URI</button>
+</form>
+<hr />
+powered by Hangover
+<p>
+    <small>
+        HTML Render: {{ .Globals.HTMLRender }}<br />
+        Image Render: {{ .Globals.ImageRender }}<br />
+        Public URL: {{ .Globals.PublicURL}}<br />
+        SameAs Predicates: {{ .Globals.Predicates.SameAs }}<br />
+        InverseOf Predicates: {{ .Globals.Predicates.InverseOf }}<br />
+    </small>
+</p>

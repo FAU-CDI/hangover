@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<head>
+    <title>{{ block "title" . }}title{{ end }}</title>
+    <meta charset="utf-8">
+    {{ block "styles" . }}<!-- no styles -->{{ end }}
+</head>
+<body>
+    {{ block "body" . }}
+    <header>
+        {{ block "header" . }}header{{ end }}
+    </header>
+    <nav>
+        {{ block "nav" . }}nav{{ end }}
+    </nav>
+    <main>
+        {{ block "main" .}}main{{ end }}
+    </main>
+    <footer>
+        {{ block "footer" .}}footer{{ end }}
+    </footer>
+    {{ end }}
+
+    {{ block "scripts" . }}<!-- no scripts -->{{ end }}
+</body>

@@ -1,0 +1,60 @@
+{{ $globals := .Globals }}
+{{ $entity := .Entity }}
+
+<table class="entity_table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Count</th>
+            <th>Value(s)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td colspan="4">
+                <div class="showable" data-placeholder="Show Entity Triples">
+                    <div class="toggle">Hide Entity Triples</div>
+                    {{ template "viewer_render_triples.html" combine "Globals" $globals "Entity" $entity }}
+                </div>
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+
+        {{ range $field := .Bundle.Fields }}
+        {{ $name := $field.MachineName }}
+        {{ $values := index $entity.Fields $name }}
+
+        {{ $l := len $values }}
+        <tr>
+            <td class="collapse" {{ if ne $l 0 }}rowspan="{{ $l }}" {{end}}>
+                {{ $field.Name }}
+            </td>
+            <td class="collapse" {{ if ne $l 0 }}rowspan="{{ $l }}" {{end}}>
+                {{ $field.FieldType }}
+            </td>
+            <td class="collapse" {{ if ne $l 0 }}rowspan="{{ $l }}" {{end}}>
+                {{ len $values }}
+                <small>
+                    (Cardinality {{ $field.Cardinality }})
+                </small>
+            </td>
+
+            {{ if eq $l 0 }}
+            <td colspan="2"></td>
+        </tr>
+        {{ end }}
+
+        {{ range $i, $value := $values }}
+        {{ if ne $i 0 }}
+        <tr>
+            {{ end }}
+            <td>
+                {{ template "viewer_render_value.html" combine "Globals" $globals "Field" $field "Value" $value }}
+            </td>
+        </tr>
+        {{ end }}
+        {{ end }}
+    </tbody>
+</table>

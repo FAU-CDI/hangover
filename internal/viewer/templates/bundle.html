@@ -1,0 +1,32 @@
+{{ template "base.html" . }}
+
+{{ define "title" }}Hangover - Bundle "{{ .Bundle.Path.Name }}"{{ end }}
+
+
+{{ define "header" }}
+    <h1>{{ .Bundle.Path.Name }}</h1>
+{{ end }}
+
+{{ define "nav" }}
+    <a href="/">Bundles</a> &gt;
+    <b>Bundle {{ .Bundle.Path.Name }}</b>
+{{ end }}
+    
+{{ define "main" }}
+    {{ $l := len .URIS }}
+    <p>{{ $l }} {{ if eq $l 1 }}Entity{{ else }}Entities{{ end }}</p>
+    <ul>
+        {{ $bundle := .Bundle.MachineName }}
+        {{ range .URIS }}
+            <li>
+                <a href="/entity/{{ $bundle }}?uri={{ . }}">
+                    {{ . }}
+                </a>
+            </li>
+        {{ end }}
+    </ul>
+{{ end }}
+
+{{ define "footer" }}
+    {{ template "viewer_foot.html" . }}
+{{ end }}

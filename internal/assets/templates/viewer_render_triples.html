@@ -1,0 +1,79 @@
+<small>
+    <p>
+        This Table shows all triples that define this entity.
+        The main entity URI is underlined.
+    </p>
+    <p>
+        Ctrl / Command click on a URI to highlight all identical URIS.
+        Ctrl / Command click a URI again to remove the highlight.
+    </p>
+
+    <p>
+        Option / Alt double click to bring all rows that contain it to the top of the table.
+        Option / Alt click on the top of the table to reset rows to original order.
+    </p>
+</small>
+
+<table class="tripletable">
+    <thead>
+        <tr>
+            <th>
+                Subject
+            </th>
+            <th>
+                Predicate
+            </th>
+            <th>
+                Object
+            </th>
+            <th>
+                Kinds
+            </th>
+        </tr>
+    </thead>
+
+    {{ $uri := .Entity.URI }}
+
+    <tbody>
+        {{ range .Entity.AllTriples }}
+        <tr>
+            <td class="collapse">
+                <code class="uri {{ if eq $uri .Subject }}highlight{{ end }}">{{ .Subject }}</code>
+                {{ if not (eq .Subject .SSubject) }}
+                <br />
+                (<code class="uri {{ if eq $uri .SSubject }}highlight{{ end }}">{{ .SSubject }}</code>)
+                {{ end }}
+            </td>
+            <td class="collapse">
+                <code class="uri">{{ .Predicate }}</code>
+                {{ if not (eq .Predicate .SPredicate) }}
+                <br />
+                (<code class="uri">{{ .SPredicate }}</code>)
+                {{ end }}
+            </td>
+            {{ if not (eq .Role 2) }}
+            <td class="collapse">
+                <code class="uri {{ if eq $uri .Object }}highlight{{ end }}">{{ .Object }}</code>
+                {{ if not (eq .Object .SObject) }}
+                    <br />
+                    (<code class="uri {{ if eq $uri .SObject }}highlight{{ end }}">{{ .SObject }}</code>)
+                {{ end }}
+            </td>
+            {{ else }}
+            <td class="break">
+                <code>{{ .Datum }}</code>
+            </td>
+            {{ end }}
+
+            <td class="collapse">
+                {{ if eq .Role 0 }}
+                {{ else if eq .Role 1 }}
+                Inverted
+                {{ else }}
+                Data
+                {{ end }}
+            </td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>

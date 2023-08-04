@@ -1,0 +1,23 @@
+{{ template "base.html" . }}
+
+{{ define "title" }}Hangover - Pathbuilder{{ end }}
+
+{{ define "header" }}
+    <h1>Pathbuilder</h1>
+{{ end }}
+
+{{ define "nav" }} 
+    <b>Pathbuilder</b>
+{{ end }}
+
+{{ define "main" }}
+{{ range .Pathbuilder.Bundles }}
+<div>
+    {{ template "render_bundle.html" combine "Bundle" . }}
+</div>
+{{ end }}
+{{ end }}
+
+{{ define "footer" }}
+    {{ template "viewer_foot.html" . }}
+{{ end }}

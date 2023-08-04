@@ -1,0 +1,29 @@
+{{ template "base.html" . }}
+
+{{ define "title" }}Hangover{{ end }}
+
+{{ define "header" }}
+    <h1>Bundles</h1>
+{{ end }}
+
+{{ define "nav" }}
+    <b>Bundles</b>
+{{ end }}
+
+{{ define "main" }}
+    {{ $l := len .Bundles }}
+    <p>{{ $l }} {{ if eq $l 1 }}Bundle{{ else }}Bundles{{ end }}</p>
+    <ul>
+        {{ range .Bundles }}
+            <li>
+                <a href="/bundle/{{ .MachineName }}">
+                    {{ .Path.Name }}
+                </a>
+            </li>
+        {{ end }}
+    </ul>
+{{ end }}
+
+{{ define "footer" }}
+    {{ template "viewer_foot.html" . }}
+{{ end }}

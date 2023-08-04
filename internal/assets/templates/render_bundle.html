@@ -1,0 +1,72 @@
+<div class="bundle-nested">
+    <b>{{ .Bundle.Path.MachineName }} </b>
+
+    <div class="showable" data-placeholder="Show {{ len .Bundle.Fields }} Fields">
+        <table class="field_table">
+            <thead>
+                <th>ID</th>
+                <th>UUID</th>
+                <th>Field ID</th>
+                <th>Enabled</th>
+                <th>Name</th>
+    
+                <th>Type</th>
+                <th>Widgets</th>
+                <th>PathArray</th>
+                <th>DatatypeProperty</th>
+                <th>Disamb</th>
+            </thead>
+            <tbody>
+                {{ range .Bundle.Fields }}
+                <tr>
+                    <td class="collapse">
+                        <code>
+                            {{ .ID }}
+                        </code>
+                    </td>
+                    <td class="collapse">
+                        <code>
+                            {{ .UUID }}
+                        </code>
+                    </td>
+                    <td class="collapse">
+                        <code>
+                            {{ .Field }}
+                        </code>
+                    </td>
+                    <td class="collapse">{{ .Enabled }}</td>
+                    <td>{{ .Name }}</td>
+                    <td class="collapse">
+                        <code>
+                            {{ .FieldType }}
+                            {{ if not ( eq .FieldType .FieldTypeInformative ) }}
+                                <br />
+                                ({{ .FieldTypeInformative }})
+                            {{ end }}
+                            <br />
+                            <b>Cardinality:</b> <code>{{ .Cardinality }}</code>
+                        </code>
+                    </td>
+                    <td class="collapse">
+                        <b>Display:</b> <code>{{ .DisplayWidget }}</code><br />
+                        <b>Format:</b> <code>{{ .FormatterWidget }}</code>
+                    </td>
+                    <td class="collapse">
+                        {{ range .PathArray }}
+                        <code>{{ . }}</code><br />
+                        {{ end }}
+                    </td>
+                    <td class="collapse"><code>
+                        {{ .DatatypeProperty }}
+                    </code></td>
+                    <td class="collapse">{{ .Disamb }}</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    {{ range .Bundle.Bundles }}
+    {{ template "render_bundle.html" combine "Bundle" . }}
+    {{ end }}
+</div>

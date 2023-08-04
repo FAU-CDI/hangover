@@ -1,0 +1,15 @@
+*.xml
+*.json
+*.jsonc
+*.sqlite
+
+# frontend
+!internal/assets/package.json
+internal/assets/.parcel-cache
+internal/assets/.entry-cache
+internal/assets/node_modules
+internal/assets/yarn-error.log
+
+go.work
+go.work.sum
+/dist/
