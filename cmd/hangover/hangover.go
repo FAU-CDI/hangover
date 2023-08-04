@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/FAU-CDI/drincw"
+	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/glass"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/viewer"
@@ -99,7 +99,7 @@ func init() {
 	flag.BoolVar(&legalFlag, "legal", legalFlag, "Display legal notices and exit")
 	defer func() {
 		if legalFlag {
-			fmt.Print(drincw.LegalText())
+			fmt.Print(hangover.LegalText())
 			os.Exit(0)
 		}
 	}()

@@ -8,9 +8,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/FAU-CDI/drincw"
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/drincw/pathbuilder/pbxml"
+	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
 	"github.com/FAU-CDI/hangover/internal/wisski"
@@ -123,7 +123,7 @@ func init() {
 
 	defer func() {
 		if legalFlag {
-			fmt.Print(drincw.LegalText())
+			fmt.Print(hangover.LegalText())
 			os.Exit(0)
 		}
 	}()
