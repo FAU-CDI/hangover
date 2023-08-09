@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/tkw1536/pkglib/iterator"
@@ -184,6 +183,10 @@ func (set *Paths[Label, Datum]) makePath(elem element) (path Path[Label, Datum])
 		opp := len(path.tripleIDs) - 1 - i
 		path.tripleIDs[i], path.tripleIDs[opp] = path.tripleIDs[opp], path.tripleIDs[i]
 	}
+
+	// resolve all the ids (once)
+	path.process()
+
 	return path
 }
 
@@ -201,25 +204,22 @@ type element struct {
 
 // Path represents a path inside a GraphIndex
 type Path[Label comparable, Datum any] struct {
-	// index is the index this Path belonges to
+	// index is the index this Path belongs to
 	index *IGraph[Label, Datum]
 
-	errNodes  error
-	nodeIDs   []imap.ID
-	nodesOnce sync.Once
-	nodes     []Label
-	hasDatum  bool
-	datum     Datum
+	errNodes error
+	nodeIDs  []imap.ID
+	nodes    []Label
+	hasDatum bool
+	datum    Datum
 
-	errEdges  error
-	edgeIDs   []imap.ID
-	edgesOnce sync.Once
-	edges     []Label
+	errEdges error
+	edgeIDs  []imap.ID
+	edges    []Label
 
-	errTriples  error
-	tripleIDs   []imap.ID
-	triplesOnce sync.Once
-	triples     []Triple[Label, Datum]
+	errTriples error
+	tripleIDs  []imap.ID
+	triples    []Triple[Label, Datum]
 }
 
 // Nodes returns the nodes this path consists of, in order.
@@ -255,35 +255,38 @@ func (path *Path[Label, Datum]) Node(index int) (Label, error) {
 
 // Datum returns the datum attached to the last node of this path, if any.
 func (path *Path[Label, Datum]) Datum() (datum Datum, ok bool, err error) {
-	path.processNodes()
 	return path.datum, path.hasDatum, path.errNodes
 }
 
-func (path *Path[Label, Datum]) processNodes() {
-	path.nodesOnce.Do(func() {
-		if len(path.nodeIDs) == 0 {
-			return
-		}
+func (path *Path[Label, Datum]) process() {
+	path.processNodes()
+	path.processEdges()
+	path.processTriples()
+}
 
-		// split off the last value as a datum (if any)
-		last := path.nodeIDs[len(path.nodeIDs)-1]
-		path.datum, path.hasDatum, path.errNodes = path.index.data.Get(last)
+func (path *Path[Label, Datum]) processNodes() {
+	if len(path.nodeIDs) == 0 {
+		return
+	}
+
+	// split off the last value as a datum (if any)
+	last := path.nodeIDs[len(path.nodeIDs)-1]
+	path.datum, path.hasDatum, path.errNodes = path.index.data.Get(last)
+	if path.errNodes != nil {
+		return
+	}
+	if path.hasDatum {
+		path.nodeIDs = path.nodeIDs[:len(path.nodeIDs)-1]
+	}
+
+	// turn the nodes into a set of labels
+	path.nodes = make([]Label, len(path.nodeIDs))
+	for j, label := range path.nodeIDs {
+		path.nodes[j], path.errNodes = path.index.labels.Reverse(label)
 		if path.errNodes != nil {
 			return
 		}
-		if path.hasDatum {
-			path.nodeIDs = path.nodeIDs[:len(path.nodeIDs)-1]
-		}
-
-		// turn the nodes into a set of labels
-		path.nodes = make([]Label, len(path.nodeIDs))
-		for j, label := range path.nodeIDs {
-			path.nodes[j], path.errNodes = path.index.labels.Reverse(label)
-			if path.errNodes != nil {
-				return
-			}
-		}
-	})
+	}
 }
 
 // Edges returns the labels of the edges this path consists of.
@@ -293,15 +296,13 @@ func (path *Path[Label, Datum]) Edges() ([]Label, error) {
 }
 
 func (path *Path[Label, Datum]) processEdges() {
-	path.edgesOnce.Do(func() {
-		path.edges = make([]Label, len(path.edgeIDs))
-		for j, label := range path.edgeIDs {
-			path.edges[j], path.errEdges = path.index.labels.Reverse(label)
-			if path.errEdges != nil {
-				return
-			}
+	path.edges = make([]Label, len(path.edgeIDs))
+	for j, label := range path.edgeIDs {
+		path.edges[j], path.errEdges = path.index.labels.Reverse(label)
+		if path.errEdges != nil {
+			return
 		}
-	})
+	}
 }
 
 // Triples returns the triples that this Path consists of.
@@ -312,21 +313,19 @@ func (path *Path[Label, Datum]) Triples() ([]Triple[Label, Datum], error) {
 }
 
 func (path *Path[Label, Datum]) processTriples() {
-	path.triplesOnce.Do(func() {
-		path.triples = make([]Triple[Label, Datum], len(path.tripleIDs))
-		for j, label := range path.tripleIDs {
-			path.triples[j], path.errTriples = path.index.Triple(label)
-			if path.errEdges != nil {
-				return
-			}
+	path.triples = make([]Triple[Label, Datum], len(path.tripleIDs))
+	for j, label := range path.tripleIDs {
+		path.triples[j], path.errTriples = path.index.Triple(label)
+		if path.errEdges != nil {
+			return
 		}
-	})
+	}
 }
 
 // String turns this result into a string
 //
 // NOTE(twiesing): This is for debugging only, and ignores all errors.
-// It should not be used in producion code.
+// It should not be used in production code.
 func (result *Path[URI, Datum]) String() string {
 	var builder strings.Builder
 
