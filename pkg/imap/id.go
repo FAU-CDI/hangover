@@ -1,5 +1,7 @@
 package imap
 
+// cspell:words twiesing
+
 import (
 	"errors"
 	"fmt"
@@ -21,7 +23,7 @@ const IDLen = len(ID{})
 
 // Valid checks if this ID is valid
 func (id ID) Valid() bool {
-	// NOTE(twiesing): We start this loop from the back as a performance optimisation
+	// NOTE(twiesing): We start this loop from the back as a performance optimization
 	// because most IDs are expected to be small, so most of them will be faster
 	for i := IDLen - 1; i >= 0; i-- {
 		if id[i] != 0 {
@@ -68,7 +70,9 @@ func (id ID) Int(value *big.Int) *big.Int {
 //
 // The ID is returned for convenience.
 func (id *ID) LoadInt(value *big.Int) *ID {
-	id.Decode(value.FillBytes(make([]byte, IDLen)))
+	value.FillBytes(id[:])
+	id.Decode(id[:])
+
 	return id
 }
 
@@ -137,7 +141,7 @@ func EncodeIDs(ids ...ID) []byte {
 }
 
 // DecodeIDs decodes a set of ids encoded with [EncodeIDs].
-// The behaviour of slices that do not evenly divide into IDs is not defined.
+// The behavior of slices that do not evenly divide into IDs is not defined.
 func DecodeIDs(src []byte) []ID {
 	ids := make([]ID, len(src)/IDLen)
 	for i := 0; i < len(ids); i++ {
