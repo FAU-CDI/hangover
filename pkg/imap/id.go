@@ -110,7 +110,7 @@ func (id ID) Encode(dest []byte) {
 // src must be of at least size IDLen, or a runtime panic occurs.
 func (id *ID) Decode(src []byte) {
 	_ = src[IDLen-1] // boundary hint to compiler
-	copy((*id)[:], src[:])
+	copy(id[:], src[:])
 }
 
 var errMarshal = errors.New("MarshalIDs: invalid length")
