@@ -22,8 +22,8 @@ type Cache struct {
 	sameAs  map[imap.ID]imap.ID   // canonical name mappings from entities
 	aliasOf map[imap.ID][]imap.ID // opposite of sameAs
 
-	engine imap.MemoryEngine[URI] // the engine used for the imap
-	uris   imap.IMap[URI]         // holds mappings between ids and uris
+	engine imap.MemoryMap[URI] // the engine used for the imap
+	uris   imap.IMap[URI]      // holds mappings between ids and uris
 }
 
 // EncodeTo encodes this cache object to the given gob.Encoder.

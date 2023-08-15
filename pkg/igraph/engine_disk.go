@@ -12,7 +12,7 @@ import (
 
 // DiskEngine represents an engine that stores everything on disk
 type DiskEngine[Label comparable, Datum any] struct {
-	imap.DiskEngine[Label]
+	imap.DiskMap[Label]
 
 	MarshalDatum   func(datum Datum) ([]byte, error)
 	UnmarshalDatum func(dest *Datum, src []byte) error

@@ -8,15 +8,15 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-// DiskEngine represents an engine that persistently stores data on disk.
-type DiskEngine[Label comparable] struct {
+// DiskMap represents an engine that persistently stores data on disk.
+type DiskMap[Label comparable] struct {
 	Path string
 
 	MarshalLabel   func(label Label) ([]byte, error)
 	UnmarshalLabel func(dest *Label, src []byte) error
 }
 
-func (de DiskEngine[Label]) Forward() (KeyValueStore[Label, [2]ID], error) {
+func (de DiskMap[Label]) Forward() (KeyValueStore[Label, [2]ID], error) {
 	forward := filepath.Join(de.Path, "forward.leveldb")
 
 	ds, err := NewDiskStorage[Label, [2]ID](forward)
@@ -35,7 +35,7 @@ func (de DiskEngine[Label]) Forward() (KeyValueStore[Label, [2]ID], error) {
 	return ds, nil
 }
 
-func (de DiskEngine[Label]) Reverse() (KeyValueStore[ID, Label], error) {
+func (de DiskMap[Label]) Reverse() (KeyValueStore[ID, Label], error) {
 	reverse := filepath.Join(de.Path, "reverse.leveldb")
 
 	ds, err := NewDiskStorage[ID, Label](reverse)

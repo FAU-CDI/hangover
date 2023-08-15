@@ -9,7 +9,7 @@ import (
 func TestDiskEngine(t *testing.T) {
 	dir := t.TempDir()
 	graphTest(t, &DiskEngine[int, string]{
-		DiskEngine: imap.DiskEngine[int]{
+		DiskMap: imap.DiskMap[int]{
 			Path: dir,
 		},
 	}, 100_000)

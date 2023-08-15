@@ -18,7 +18,7 @@ type IMap[Label comparable] struct {
 }
 
 // Reset resets this IMap to be empty, finishing any previ
-func (mp *IMap[Label]) Reset(engine Engine[Label]) error {
+func (mp *IMap[Label]) Reset(engine Map[Label]) error {
 	if err := mp.Close(); err != nil {
 		return err
 	}

@@ -8,7 +8,7 @@ import (
 
 // MemoryEngine represents an engine that stores everything in memory
 type MemoryEngine[Label comparable, Datum any] struct {
-	imap.MemoryEngine[Label]
+	imap.MemoryMap[Label]
 }
 
 func (MemoryEngine[Label, Datum]) Data() (imap.KeyValueStore[imap.ID, Datum], error) {

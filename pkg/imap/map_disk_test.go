@@ -2,9 +2,9 @@ package imap
 
 import "testing"
 
-func TestDiskEngine(t *testing.T) {
+func TestDiskMap(t *testing.T) {
 	dir := t.TempDir()
-	engineTest(t, DiskEngine[string]{
+	mapTest(t, DiskMap[string]{
 		Path: dir,
 	}, 100_000)
 }
