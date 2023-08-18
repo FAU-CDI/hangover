@@ -1,5 +1,7 @@
 package wisski
 
+// cspell:words WissKI
+
 // URI represents a URI inside of WissKI
 type URI string
 

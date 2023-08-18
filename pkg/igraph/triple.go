@@ -74,7 +74,7 @@ type Triple[Label comparable, Datum any] struct {
 	Datum Datum
 }
 
-// Inferred returns if this triple has been infered
+// Inferred returns if this triple has been inferred
 func (triple Triple[Label, Datum]) Inferred() bool {
 	return triple.Role == Inverse
 }
@@ -83,10 +83,10 @@ func (triple Triple[Label, Datum]) Inferred() bool {
 type Role uint8
 
 const (
-	// Regular represents a regular (non-infered) triple
+	// Regular represents a regular (non-inferred) triple
 	Regular Role = iota
 
-	// Inverse represents an infered inverse triple
+	// Inverse represents an inferred inverse triple
 	Inverse
 
 	// Data represents a data triple

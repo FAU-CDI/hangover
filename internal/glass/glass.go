@@ -21,6 +21,8 @@ import (
 	"github.com/FAU-CDI/hangover/pkg/sgob"
 )
 
+// cspell:words WissKI pathbuilder nquads
+
 const GlassVersion = 1
 
 // Glass represents a stand-alone representation of a WissKI
@@ -51,7 +53,7 @@ func (glass *Glass) EncodeTo(encoder *gob.Encoder) error {
 		}
 	}
 
-	// encode the paypload
+	// encode the payload
 	return glass.Cache.EncodeTo(encoder)
 }
 
@@ -83,7 +85,7 @@ func (glass *Glass) DecodeFrom(decoder *gob.Decoder) (err error) {
 	return glass.Cache.DecodeFrom(decoder)
 }
 
-// Create creates a new glass from the given pathbbuilder and nquads.
+// Create creates a new glass from the given pathbuilder and nquads.
 // output is written to output.
 func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, output io.Writer) (drincw Glass, err error) {
 	log := log.New(output, "", log.LstdFlags)

@@ -9,6 +9,8 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
+// cspell:words pathbuilder
+
 // Export loads all top-level paths from the given path-builder from the index into the given engine.
 // Afterwards it is exported into the given exporter.
 func Export(pb *pathbuilder.Pathbuilder, index *Index, engine storages.BundleEngine, exporter exporter.Exporter) error {

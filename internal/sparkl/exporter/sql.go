@@ -12,6 +12,8 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// cspell:words twiesing
+
 // SQL implements an exporter for storing data inside an sql database.
 // TODO(twiesing): For now this only supports string-like fields.
 type SQL struct {
@@ -21,8 +23,8 @@ type SQL struct {
 	BatchSize   int // BatchSize for top-level bundles
 	MaxQueryVar int // Maximum number of query variables (overrides BatchSize)
 
-	MakeFieldTables bool   // create tables for field values (if false, they get joined with "seperator")
-	Separator       string // Seperator for database multi-valued fields
+	MakeFieldTables bool   // create tables for field values (if false, they get joined with "separator")
+	Separator       string // separator for database multi-valued fields
 
 	batchLock sync.Mutex
 	batches   map[string][]wisski.Entity
@@ -176,7 +178,7 @@ func (sql *SQL) Add(bundle *pathbuilder.Bundle, entity *wisski.Entity) (err erro
 			return nil
 		}
 
-		// extracxt current batch
+		// extract current batch
 		entities := make([]wisski.Entity, sql.BatchSize)
 		count := copy(entities, sql.batches[name])
 		entities = entities[:count]
@@ -209,7 +211,7 @@ func (sql *SQL) End(bundle *pathbuilder.Bundle) error {
 		return result
 	}()
 
-	// split them into batchsize
+	// split them into batches
 	for len(rest) > 0 {
 		batch := rest
 		rest = nil
@@ -228,7 +230,7 @@ func (sql *SQL) End(bundle *pathbuilder.Bundle) error {
 }
 
 func (sql *SQL) Close() error {
-	return sql.DB.Close() // close the databas
+	return sql.DB.Close() // close the database
 }
 
 var (

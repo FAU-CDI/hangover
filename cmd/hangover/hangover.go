@@ -1,6 +1,8 @@
 // Command hangover implements a WissKI Viewer
 package main
 
+// cspell:words WissKI
+
 import (
 	_ "embed"
 	"flag"

@@ -5,6 +5,8 @@ import (
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 )
 
+// cspell:words pathbuilder
+
 // findBundle returns a bundle by machine name and makes sure that appropriate caches are filled
 func (viewer *Viewer) findBundle(machine string) (bundle *pathbuilder.Bundle, ok bool) {
 	bundle = viewer.Pathbuilder.Bundle(machine)

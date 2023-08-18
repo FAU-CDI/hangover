@@ -17,6 +17,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// cspell:words pathbuilder
+
 var contextTemplateFuncs = template.FuncMap{
 	"renderhtml": func(html string, globals contextGlobal) template.HTML {
 		return template.HTML(htmlx.ReplaceLinks(html, globals.ReplaceURL))

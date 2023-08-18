@@ -10,6 +10,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// cspell:Words WIssKI imap
+
 // Cache represents an easily accessible cache of WissKIObjects.
 // It is held entirely in memory.
 type Cache struct {

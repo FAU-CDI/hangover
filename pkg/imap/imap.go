@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 )
 
+// cspell:words twiesing
+
 // IMap holds forward and reverse mapping from Labels to IDs.
 // An IMap may be read concurrently; however any operations which change internal state are not safe to access concurrently.
 //

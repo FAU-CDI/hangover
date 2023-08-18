@@ -38,7 +38,7 @@ type BundleStorage interface {
 
 	// AddFieldValue adds a value to the given field for the entity with the given uri.
 	//
-	// Concurrent calls to distinct fields may take place, however within each field calls are always syncronized.
+	// Concurrent calls to distinct fields may take place, however within each field calls are always synchronized.
 	//
 	// A non-existing parent should return ErrNoEntity.
 	AddFieldValue(uri wisski.URI, field string, value any, path []wisski.URI, triples []wisski.Triple) error

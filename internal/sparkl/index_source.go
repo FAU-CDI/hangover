@@ -7,6 +7,8 @@ import (
 	"github.com/cayleygraph/quad/nquads"
 )
 
+// cspell:words triplestore
+
 // Source represents a source of triples
 type Source interface {
 	// Open opens this data source.

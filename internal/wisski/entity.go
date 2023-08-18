@@ -5,6 +5,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// cspell:words WissKI
+
 // Entity represents an Entity inside a WissKI Bundle
 type Entity struct {
 	URI     URI      // URI of this entity
@@ -16,7 +18,7 @@ type Entity struct {
 }
 
 // AllTriples returns all triples that are related to this entity.
-// Concretetly this means:
+// Concretely this means:
 //
 // - Any Triple defining the entity itself.
 // - Any Triple defining any field of the entity.

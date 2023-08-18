@@ -1,4 +1,4 @@
-// Package htmlx provides facilitirs
+// Package htmlx provides facilities for various html editing
 package htmlx
 
 import (
@@ -6,6 +6,8 @@ import (
 
 	"golang.org/x/net/html"
 )
+
+// cspell:words htmlx twiesing
 
 // ReplaceLinks parses source as a html fragment, and then replaces all paths
 // inside <a> and <img> elements with the replace function.

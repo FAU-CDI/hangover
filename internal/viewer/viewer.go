@@ -13,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// cspell:words WissKI
+
 // Viewer implements an [http.Handler] that displays WissKI Entities.
 type Viewer struct {
 	Cache       *sparkl.Cache

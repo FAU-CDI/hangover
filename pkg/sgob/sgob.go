@@ -15,6 +15,8 @@ import (
 	"reflect"
 )
 
+// cspell:words sgob
+
 // Encode encodes object into the given encoder.
 func Encode(encoder *gob.Encoder, obj any) error {
 	return EncodeValue(encoder, reflect.ValueOf(obj))
@@ -25,7 +27,7 @@ func Decode(decoder *gob.Decoder, obj any) error {
 	return DecodeValue(decoder, reflect.ValueOf(obj))
 }
 
-// EncodeValue is like Encode, but takes a relect.Value.
+// EncodeValue is like Encode, but takes a reflect.Value.
 func EncodeValue(encoder *gob.Encoder, value reflect.Value) error {
 	switch value.Type().Kind() {
 	case reflect.Map:
@@ -37,7 +39,7 @@ func EncodeValue(encoder *gob.Encoder, value reflect.Value) error {
 	}
 }
 
-// DecodeValue is like Decode, but takes a relect.Value.
+// DecodeValue is like Decode, but takes a reflect.Value.
 func DecodeValue(decoder *gob.Decoder, value reflect.Value) error {
 	tp := value.Type()
 	if tp.Kind() != reflect.Pointer {

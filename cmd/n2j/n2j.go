@@ -19,6 +19,8 @@ import (
 	"github.com/pkg/profile"
 )
 
+// cspell:words nquads pathbuilder
+
 func main() {
 	if debugProfile != "" {
 		defer profile.Start(profile.ProfilePath(debugProfile)).Stop()

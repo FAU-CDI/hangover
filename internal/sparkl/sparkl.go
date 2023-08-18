@@ -9,6 +9,8 @@ import (
 	"github.com/FAU-CDI/hangover/pkg/igraph"
 )
 
+// cspell:words sparkl
+
 type (
 	Entity = wisski.Entity
 	URI    = wisski.URI
@@ -23,7 +25,7 @@ type (
 	Triple = igraph.Triple[URI, any] // Triple inside the index
 	Index  = igraph.IGraph[URI, any] // Index represents an index of a RDF Graph
 	Paths  = igraph.Paths[URI, any]  // Set of Paths inside the index
-	Path   = igraph.Path[URI, any]   // Singel Path in the index
+	Path   = igraph.Path[URI, any]   // Single Path in the index
 )
 
 // Predicates represent special predicates
@@ -32,7 +34,7 @@ type Predicates struct {
 	InverseOf []URI
 }
 
-// ParsePredicateString parses a value of comma-seperate value into a list of URIs
+// ParsePredicateString parses a value of comma-separate value into a list of URIs
 func ParsePredicateString(target *[]URI, value string) {
 	if value == "" {
 		*target = nil

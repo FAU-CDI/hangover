@@ -191,7 +191,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) BundleStorage {
 			cstorages[i] = context.Store(bundle)
 			if cstorages[i] == nil {
 				// creating the storage has failed, so we don't need to continue
-				// and we can return immediatly.
+				// and we can return immediately.
 				return
 			}
 

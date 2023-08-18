@@ -7,6 +7,8 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
+// cspell:words WissKI
+
 // Exporter handles WissKI Entities
 type Exporter interface {
 	io.Closer

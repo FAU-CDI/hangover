@@ -9,6 +9,8 @@ import (
 	"github.com/tkw1536/pkglib/iterator"
 )
 
+// cspell:words sparql twiesing
+
 // Paths represents a set of paths in a related GraphIndex.
 // It implements a very simple sparql-like query engine.
 //
@@ -306,7 +308,7 @@ func (path *Path[Label, Datum]) processEdges() {
 }
 
 // Triples returns the triples that this Path consists of.
-// Triples are guaranteed to be returned in query order, that is in the order they were required for the query to be fullfilled.
+// Triples are guaranteed to be returned in query order, that is in the order they were required for the query to be fulfilled.
 func (path *Path[Label, Datum]) Triples() ([]Triple[Label, Datum], error) {
 	path.processTriples()
 	return path.triples, path.errTriples

@@ -8,6 +8,8 @@ import (
 	"github.com/FAU-CDI/hangover/pkg/progress"
 )
 
+// cspell:words nquads WissKI sparkl
+
 // LoadIndex is like MakeIndex, but reads nquads from the given path.
 // When err != nil, the caller must eventually close the index.
 func LoadIndex(path string, predicates Predicates, engine Engine, opts IndexOptions, p *progress.Progress) (*Index, error) {

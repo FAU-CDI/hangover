@@ -22,7 +22,7 @@ var bufferPool = sync.Pool{
 	},
 }
 
-// sEntity represents a stored entity that does not hold references to child entitites
+// sEntity represents a stored entity that does not hold references to child entities
 type sEntity struct {
 	URI     wisski.URI      // URI of this entity
 	Path    []wisski.URI    // the path of this entity

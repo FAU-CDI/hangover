@@ -9,6 +9,8 @@ import (
 	"github.com/FAU-CDI/hangover/pkg/imap"
 )
 
+// cSpell:words imap
+
 // IGraph represents a searchable index of a directed labeled graph with optionally attached Data.
 //
 // Labels are used for nodes and edges.
