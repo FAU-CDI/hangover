@@ -18,7 +18,9 @@ func graphTest(t *testing.T, engine Engine[int, string], N int) {
 	var g IGraph[int, string]
 	defer g.Close()
 
-	g.Reset(engine)
+	if err := g.Reset(engine); err != nil {
+		t.Errorf("unable to reset: %s", engine)
+	}
 	{
 		// mark some inverses
 		g.MarkInverse(0, -1)
@@ -69,7 +71,9 @@ func graphTest(t *testing.T, engine Engine[int, string], N int) {
 			g.AddTriple(source.Intn(N), 5, source.Intn(N))
 		}
 	}
-	g.Finalize()
+	if err := g.Finalize(); err != nil {
+		t.Fatalf("Unable to finalize: %s", err)
+	}
 
 	// query for all of the paths we have just created
 	query, err := g.PathsStarting(2, 2)

@@ -2,10 +2,12 @@ package imap
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 // DiskMap represents an engine that persistently stores data on disk.
@@ -188,6 +190,14 @@ func (ds *DiskStorage[Key, Value]) Iterate(f func(Key, Value) error) error {
 		}
 	}
 	return it.Error()
+}
+
+func (ds *DiskStorage[Key, Value]) Compact() error {
+	return ds.DB.CompactRange(util.Range{})
+}
+
+func (ds *DiskStorage[Key, Value]) Finalize() error {
+	return errors.Join(ds.Compact(), ds.DB.SetReadOnly())
 }
 
 func (ds *DiskStorage[Key, Value]) Close() error {

@@ -36,6 +36,10 @@ func (MemoryEngine[Label, Datum]) POSIndex() (ThreeStorage, error) {
 // ThreeHash implements ThreeStorage in memory
 type ThreeHash map[imap.ID]map[imap.ID]*ThreeItem
 
+func (th *ThreeHash) Compact() error {
+	return nil // do nothing
+}
+
 type ThreeItem struct {
 	Keys []imap.ID
 	Data map[imap.ID]imap.ID

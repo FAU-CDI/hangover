@@ -29,7 +29,11 @@ type ThreeStorage interface {
 	// Count counts the overall number of entries in the index
 	Count() (int64, error)
 
-	// Finalize informs the storage that no more mappings will be made
+	// Compact indicates to the caller to perform internal optimizations of all data structures.
+	Compact() error
+
+	// Finalize informs the storage that no more mutable calls will be made.
+	// A mutable call is one to Compact or Add.
 	Finalize() error
 
 	// Fetch iterates over all triples (a, b, c) in c-order.

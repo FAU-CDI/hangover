@@ -3,6 +3,8 @@ package igraph
 import (
 	"errors"
 	"io"
+	"sync"
+	"sync/atomic"
 
 	"github.com/FAU-CDI/hangover/pkg/imap"
 )
@@ -21,6 +23,8 @@ import (
 //
 // IGraph may not be modified concurrently, however it is possible to run several queries concurrently.
 type IGraph[Label comparable, Datum any] struct {
+	finalized atomic.Bool
+
 	stats Stats
 
 	labels imap.IMap[Label]
@@ -100,6 +104,7 @@ func (index *IGraph[Label, Datum]) Triple(id imap.ID) (triple Triple[Label, Datu
 
 // Reset resets this index and prepares all internal structures for use.
 func (index *IGraph[Label, Datum]) Reset(engine Engine[Label, Datum]) (err error) {
+
 	if err = index.Close(); err != nil {
 		return err
 	}
@@ -148,6 +153,8 @@ func (index *IGraph[Label, Datum]) Reset(engine Engine[Label, Datum]) (err error
 	}
 
 	index.triple.Reset()
+	index.finalized.Store(false)
+
 	return nil
 }
 
@@ -157,6 +164,10 @@ func (index *IGraph[Label, Datum]) Reset(engine Engine[Label, Datum]) (err error
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
 func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) error {
+	if index.finalized.Load() {
+		return ErrFinalized
+	}
+
 	// store the labels for the triple values
 	s, err := index.labels.Add(subject)
 	if err != nil {
@@ -217,6 +228,10 @@ func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) e
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
 func (index *IGraph[Label, Datum]) AddData(subject, predicate Label, object Datum) error {
+	if index.finalized.Load() {
+		return ErrFinalized
+	}
+
 	// get labels for subject, predicate and object
 	o := index.labels.Next()
 	if err := index.data.Set(o, object); err != nil {
@@ -300,6 +315,10 @@ func (index *IGraph[Label, Datum]) insert(subject, predicate, object imap.ID, la
 // MarkIdentical identifies the new and old labels.
 // See [imap.IMap.MarkIdentical].
 func (index *IGraph[Label, Datum]) MarkIdentical(new, old Label) error {
+	if index.finalized.Load() {
+		return ErrFinalized
+	}
+
 	_, err := index.labels.MarkIdentical(new, old)
 	return err
 }
@@ -312,6 +331,10 @@ func (index *IGraph[Label, Datum]) MarkIdentical(new, old Label) error {
 //
 // This means that each call to AddTriple(s, left, o) will also result in a call to AddTriple(o, right, s).
 func (index *IGraph[Label, Datum]) MarkInverse(left, right Label) error {
+	if index.finalized.Load() {
+		return ErrFinalized
+	}
+
 	l, err := index.labels.Add(left)
 	if err != nil {
 		return err
@@ -342,19 +365,100 @@ func (index *IGraph[Label, Datum]) IdentityMap(storage imap.KeyValueStore[Label,
 	return index.labels.IdentityMap(storage)
 }
 
+// Compact informs the implementation to perform any internal optimizations.
+func (index *IGraph[Label, Datum]) Compact() error {
+	if index.finalized.Load() {
+		return ErrFinalized
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(6)
+
+	var errs [6]error
+
+	go func() {
+		defer wg.Done()
+		errs[0] = index.labels.Compact()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[1] = index.data.Compact()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[2] = index.inverses.Compact()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[3] = index.posIndex.Compact()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[4] = index.psoIndex.Compact()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[5] = index.triples.Compact()
+	}()
+
+	wg.Wait()
+	return errors.Join(errs[:]...)
+}
+
+var ErrFinalized = errors.New("IGraph: Finalized")
+
 // Finalize finalizes any adding operations into this graph.
 //
 // Finalize must be called before any query is performed,
 // but after any calls to the Add* methods.
-// Calling finalize multiple times is valid.
+// Calling finalize multiple times is invalid.
 func (index *IGraph[Label, Datum]) Finalize() error {
-	if err := index.posIndex.Finalize(); err != nil {
-		return err
+	if index.finalized.Swap(true) {
+		return ErrFinalized
 	}
-	if err := index.psoIndex.Finalize(); err != nil {
-		return err
-	}
-	return nil
+
+	var wg sync.WaitGroup
+	wg.Add(6)
+
+	var errs [6]error
+
+	go func() {
+		defer wg.Done()
+		errs[0] = index.labels.Finalize()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[1] = index.data.Finalize()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[2] = index.inverses.Finalize()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[3] = index.posIndex.Finalize()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[4] = index.psoIndex.Finalize()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[5] = index.triples.Finalize()
+	}()
+
+	wg.Wait()
+	return errors.Join(errs[:]...)
 }
 
 // Close closes any storages attached to this storage

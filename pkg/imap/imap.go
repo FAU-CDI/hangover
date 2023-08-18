@@ -1,7 +1,10 @@
 package imap
 
 import (
+	"errors"
 	"io"
+	"sync"
+	"sync/atomic"
 )
 
 // IMap holds forward and reverse mapping from Labels to IDs.
@@ -9,6 +12,8 @@ import (
 //
 // The zero map is not ready for use; it should be initialized using a call to [Reset].
 type IMap[Label comparable] struct {
+	finalized atomic.Bool // stores if the map has been finalized
+
 	// forward holds a mapping from labels to a pair of identifiers
 	// the first being the canonical identifier, the second being the original identifier
 	forward KeyValueStore[Label, [2]ID]
@@ -17,7 +22,9 @@ type IMap[Label comparable] struct {
 	id ID // last id inserted
 }
 
-// Reset resets this IMap to be empty, finishing any previ
+var ErrFinalized = errors.New("IMap is finalized")
+
+// Reset resets this IMap to be empty, closing any previously opened files
 func (mp *IMap[Label]) Reset(engine Map[Label]) error {
 	if err := mp.Close(); err != nil {
 		return err
@@ -41,6 +48,7 @@ func (mp *IMap[Label]) Reset(engine Map[Label]) error {
 	}
 
 	mp.id.Reset()
+	mp.finalized.Store(false)
 	return nil
 }
 
@@ -50,17 +58,75 @@ func (mp *IMap[Label]) Next() ID {
 	return mp.id.Inc()
 }
 
+// Compact indicates to the implementation to perform any optimization of internal data structures.
+func (mp *IMap[Label]) Compact() error {
+	var errs [2]error
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		errs[0] = mp.forward.Compact()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[1] = mp.reverse.Compact()
+	}()
+
+	wg.Wait()
+	return errors.Join(errs[:]...)
+}
+
+// Finalize indicates that no more mutating calls will be made.
+// A mutable call is one made to Compact, Add, AddNew or MarkIdentical.
+func (mp *IMap[Label]) Finalize() error {
+	// store that we finalized!
+	if mp.finalized.Swap(true) {
+		return ErrFinalized
+	}
+
+	var errs [2]error
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		errs[0] = mp.forward.Finalize()
+	}()
+
+	go func() {
+		defer wg.Done()
+		errs[1] = mp.reverse.Finalize()
+	}()
+
+	wg.Wait()
+	return errors.Join(errs[:]...)
+}
+
 // Add inserts label into this IMap and returns a pair of corresponding ids.
 // The first is the canonical id (for use in lookups) whereas the second is the original id.
 //
 // When label (or any object marked identical to ID) already exists in this IMap, returns the corresponding ID.
 func (mp *IMap[Label]) Add(label Label) (ids [2]ID, err error) {
+	// we were already finalized!
+	if mp.finalized.Load() {
+		return ids, ErrFinalized
+	}
+
 	ids, _, err = mp.AddNew(label)
 	return
 }
 
-// AddNew behaves like Add, except additionally returns a boolean indiciating if the returned id existed previously.
+// AddNew behaves like Add, except additionally returns a boolean indicating if the returned id existed previously.
 func (mp *IMap[Label]) AddNew(label Label) (ids [2]ID, old bool, err error) {
+	// we were already finalized!
+	if mp.finalized.Load() {
+		return ids, false, ErrFinalized
+	}
+
 	// fetch the mapping (if any)
 	ids, old, err = mp.forward.Get(label)
 	if err != nil {
@@ -91,6 +157,11 @@ func (mp *IMap[Label]) AddNew(label Label) (ids [2]ID, old bool, err error) {
 // NOTE(twiesing): Each call to MarkIdentical potentially requires iterating over all calls that were previously added to this map.
 // This is a potentially slow operation and should be avoided.
 func (mp *IMap[Label]) MarkIdentical(new, old Label) (canonical ID, err error) {
+	// we were already finalized!
+	if mp.finalized.Load() {
+		return canonical, ErrFinalized
+	}
+
 	var canonicals [2]ID
 
 	canonicals, err = mp.Add(new)

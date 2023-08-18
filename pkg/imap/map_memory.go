@@ -1,5 +1,7 @@
 package imap
 
+import "errors"
+
 // MemoryMap holds forward and backward maps in memory
 type MemoryMap[Label comparable] struct {
 	FStorage MemoryStorage[Label, [2]ID]
@@ -22,6 +24,14 @@ func (me *MemoryMap[Label]) Reverse() (KeyValueStore[ID, Label], error) {
 
 // MemoryStorage implements Storage as an in-memory map
 type MemoryStorage[Key comparable, Value any] map[Key]Value
+
+func (MemoryStorage[Key, Value]) Compact() error {
+	return nil
+}
+
+func (ims MemoryStorage[Key, Value]) Finalize() error {
+	return errors.Join(ims.Compact(), nil)
+}
 
 func (ims MemoryStorage[Key, Value]) Set(key Key, value Value) error {
 	ims[key] = value

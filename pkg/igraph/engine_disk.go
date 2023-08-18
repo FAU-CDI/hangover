@@ -1,12 +1,13 @@
 package igraph
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
 	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/errors"
+	leveldberrors "github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -113,7 +114,7 @@ func (tlm *ThreeDiskHash) Add(a, b, c imap.ID, l imap.ID, conflict func(old, new
 			return false, err
 		}
 		conflicted = true
-	case errors.ErrNotFound:
+	case leveldberrors.ErrNotFound:
 	}
 	return conflicted, tlm.DB.Put(imap.EncodeIDs(a, b, c), imap.EncodeIDs(l), nil)
 }
@@ -133,11 +134,12 @@ func (tlm *ThreeDiskHash) Count() (total int64, err error) {
 	return total, nil
 }
 
+func (tlm ThreeDiskHash) Compact() error {
+	return tlm.DB.CompactRange(util.Range{})
+}
+
 func (tlm ThreeDiskHash) Finalize() error {
-	if err := tlm.DB.CompactRange(util.Range{}); err != nil {
-		return err
-	}
-	return tlm.DB.SetReadOnly()
+	return errors.Join(tlm.Compact(), tlm.DB.SetReadOnly())
 }
 
 func (tlm *ThreeDiskHash) Fetch(a, b imap.ID, f func(c imap.ID, l imap.ID) error) error {
@@ -161,7 +163,7 @@ func (tlm *ThreeDiskHash) Fetch(a, b imap.ID, f func(c imap.ID, l imap.ID) error
 
 func (tlm *ThreeDiskHash) Has(a, b, c imap.ID) (id imap.ID, ok bool, err error) {
 	value, err := tlm.DB.Get(imap.EncodeIDs(a, b, c), nil)
-	if err == errors.ErrNotFound {
+	if err == leveldberrors.ErrNotFound {
 		var invalid imap.ID
 		return invalid, false, nil
 	}

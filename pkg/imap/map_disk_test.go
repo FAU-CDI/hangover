@@ -6,5 +6,5 @@ func TestDiskMap(t *testing.T) {
 	dir := t.TempDir()
 	mapTest(t, DiskMap[string]{
 		Path: dir,
-	}, 100_000)
+	}, 1_000_000)
 }

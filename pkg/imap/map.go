@@ -10,8 +10,15 @@ type Map[Label comparable] interface {
 
 // KeyValueStore is something that stores key-value pairs.
 type KeyValueStore[Key comparable, Value any] interface {
-	// Close closes this key
+	// Close closes this store
 	Close() error
+
+	// Compact informs the store to perform any optimizations or compaction of internal data structures.
+	Compact() error
+
+	// Finalize indicates to the implementation that no more mutating calls will be made.
+	// A mutating call is one to Compact, Set or Delete.
+	Finalize() error
 
 	// Set sets the given key to the given value
 	Set(key Key, value Value) error

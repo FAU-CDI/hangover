@@ -65,7 +65,7 @@ func main() {
 	var index *sparkl.Index
 	{
 		start := perf.Now()
-		index, err = sparkl.LoadIndex(nArgs[1], predicates, engine, &progress.Progress{
+		index, err = sparkl.LoadIndex(nArgs[1], predicates, engine, sparkl.DefaultIndexOptions(), &progress.Progress{
 			Rewritable: progress.Rewritable{
 				FlushInterval: progress.DefaultFlushInterval,
 				Writer:        os.Stderr,
