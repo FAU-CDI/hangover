@@ -27,22 +27,22 @@ func main() {
 	}
 
 	if mysql != "" && sqlite != "" {
+		log.Print("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
 		log.Fatal("both -sqlite and -mysql were given")
 	}
 
-	if len(nArgs) != 2 {
+	// find the paths
+	nqp, pbp, _, err := hangover.FindSource(false, nArgs...)
+	if err != nil {
 		log.Print("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
-		flag.PrintDefaults()
-		os.Exit(1)
+		log.Fatal(err)
 	}
-
-	var err error
 
 	// read the pathbuilder
 	var pb pathbuilder.Pathbuilder
 	{
 		start := perf.Now()
-		pb, err = pbxml.Load(nArgs[0])
+		pb, err = pbxml.Load(pbp)
 		pbT := perf.Since(start)
 
 		if err != nil {
@@ -67,7 +67,7 @@ func main() {
 	var index *sparkl.Index
 	{
 		start := perf.Now()
-		index, err = sparkl.LoadIndex(nArgs[1], predicates, engine, sparkl.DefaultIndexOptions(), &progress.Progress{
+		index, err = sparkl.LoadIndex(nqp, predicates, engine, sparkl.DefaultIndexOptions(), &progress.Progress{
 			Rewritable: progress.Rewritable{
 				FlushInterval: progress.DefaultFlushInterval,
 				Writer:        os.Stderr,

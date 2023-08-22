@@ -43,14 +43,20 @@ func main() {
 		log.Println("listening on", addr)
 	}
 
+	// find the paths
+	nq, pb, idx, err := hangover.FindSource(true, nArgs...)
+	if err != nil {
+		panic(err)
+	}
+
 	var drincw glass.Glass
-	if len(nArgs) == 2 {
+	if idx == "" {
 		sparkl.ParsePredicateString(&flags.Predicates.SameAs, sameAs)
 		sparkl.ParsePredicateString(&flags.Predicates.InverseOf, inverseOf)
 
-		drincw, err = glass.Create(nArgs[0], nArgs[1], cache, flags, os.Stderr)
+		drincw, err = glass.Create(pb, nq, cache, flags, os.Stderr)
 	} else {
-		drincw, err = glass.Import(nArgs[0], os.Stderr)
+		drincw, err = glass.Import(idx, os.Stderr)
 	}
 	if err != nil {
 		return
