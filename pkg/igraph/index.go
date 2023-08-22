@@ -68,8 +68,6 @@ func (index *IGraph[Label, Datum]) Triple(id imap.ID) (triple Triple[Label, Datu
 
 	triple.Role = t.Role
 
-	// FIXME: make this concurrent?
-
 	triple.Subject, err = index.labels.Reverse(t.Items[0].Literal)
 	if err != nil {
 		return triple, err
