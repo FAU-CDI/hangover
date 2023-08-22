@@ -21,21 +21,20 @@ func (stats Stats) String() string {
 
 // IndexTriple represents a triple stored inside the index
 type IndexTriple struct {
-	Role              // Why was this triple stored?
-	Items  [3]imap.ID // What were the *original* items in this triple
-	SItems [3]imap.ID // What were the *semantic* items in this triple
+	Role  // Why was this triple stored?
+	Items [3]imap.TripleID
 }
 
 func MarshalTriple(triple IndexTriple) ([]byte, error) {
 	result := make([]byte, 6*imap.IDLen+1)
 	imap.MarshalIDs(
 		result[1:],
-		triple.Items[0],
-		triple.Items[1],
-		triple.Items[2],
-		triple.SItems[0],
-		triple.SItems[1],
-		triple.SItems[2],
+		triple.Items[0].Literal,
+		triple.Items[1].Literal,
+		triple.Items[2].Literal,
+		triple.Items[0].Canonical,
+		triple.Items[1].Canonical,
+		triple.Items[2].Canonical,
 	)
 	result[0] = byte(triple.Role)
 	return result, nil
@@ -50,12 +49,12 @@ func UnmarshalTriple(dest *IndexTriple, src []byte) error {
 	dest.Role = Role(src[0])
 	imap.UnmarshalIDs(
 		src[1:],
-		&(dest.Items[0]),
-		&(dest.Items[1]),
-		&(dest.Items[2]),
-		&(dest.SItems[0]),
-		&(dest.SItems[1]),
-		&(dest.SItems[2]),
+		&(dest.Items[0].Literal),
+		&(dest.Items[1].Literal),
+		&(dest.Items[2].Literal),
+		&(dest.Items[0].Canonical),
+		&(dest.Items[1].Canonical),
+		&(dest.Items[2].Canonical),
 	)
 	return nil
 }
@@ -63,13 +62,18 @@ func UnmarshalTriple(dest *IndexTriple, src []byte) error {
 // Triple represents a triple found inside a graph
 type Triple[Label comparable, Datum any] struct {
 	// ID uniquely identifies this triple.
-	// Two Triples are identical iff their IDs are identical.
+	// Two triples are identical iff their IDs are identical.
 	ID imap.ID
 
+	// Role why this triple was inserted
 	Role Role
 
-	Subject, Predicate, Object    Label
-	SSubject, SPredicate, SObject Label // the "semantic" version of the datum
+	// the literal SPO for this triple, as found in the original data.
+	Subject, Predicate, Object Label
+
+	// the canonical (normalized for sameAs) for this triple.
+	// FIXME: change this to say canonical in the name
+	SSubject, SPredicate, SObject Label
 
 	Datum Datum
 }

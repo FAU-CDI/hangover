@@ -16,12 +16,22 @@ import (
 type IMap[Label comparable] struct {
 	finalized atomic.Bool // stores if the map has been finalized
 
-	// forward holds a mapping from labels to a pair of identifiers
-	// the first being the canonical identifier, the second being the original identifier
-	forward KeyValueStore[Label, [2]ID]
+	// mapping from labels to the ids of their trippings
+	forward KeyValueStore[Label, TripleID]
+	// mapping from literal back to their labels
 	reverse KeyValueStore[ID, Label]
 
 	id ID // last id inserted
+}
+
+// TripleID represents the id of a tripleID
+type TripleID struct {
+	// Canonical holds the id of this triple, that is normalized for inverses and identities.
+	Canonical ID
+
+	// Literal is the original id of the triple found in the original triple.
+	// It always refers to the original value, no matter which value it actually has.
+	Literal ID
 }
 
 var ErrFinalized = errors.New("IMap is finalized")
@@ -112,7 +122,7 @@ func (mp *IMap[Label]) Finalize() error {
 // The first is the canonical id (for use in lookups) whereas the second is the original id.
 //
 // When label (or any object marked identical to ID) already exists in this IMap, returns the corresponding ID.
-func (mp *IMap[Label]) Add(label Label) (ids [2]ID, err error) {
+func (mp *IMap[Label]) Add(label Label) (ids TripleID, err error) {
 	// we were already finalized!
 	if mp.finalized.Load() {
 		return ids, ErrFinalized
@@ -123,7 +133,7 @@ func (mp *IMap[Label]) Add(label Label) (ids [2]ID, err error) {
 }
 
 // AddNew behaves like Add, except additionally returns a boolean indicating if the returned id existed previously.
-func (mp *IMap[Label]) AddNew(label Label) (ids [2]ID, old bool, err error) {
+func (mp *IMap[Label]) AddNew(label Label) (ids TripleID, old bool, err error) {
 	// we were already finalized!
 	if mp.finalized.Load() {
 		return ids, false, ErrFinalized
@@ -138,13 +148,16 @@ func (mp *IMap[Label]) AddNew(label Label) (ids [2]ID, old bool, err error) {
 		return
 	}
 
-	id := mp.id.Inc() // TODO: We could use Next() here, but that's significantly slower
-	ids[0] = id
-	ids[1] = id
+	// create a new map for the identical triple
+	{
+		id := mp.id.Inc()
+		ids.Canonical = id
+		ids.Literal = id
+	}
 
 	// store mappings in both directions
 	mp.forward.Set(label, ids)
-	mp.reverse.Set(id, label)
+	mp.reverse.Set(ids.Literal, label)
 
 	// return the id
 	return
@@ -164,15 +177,13 @@ func (mp *IMap[Label]) MarkIdentical(new, old Label) (canonical ID, err error) {
 		return canonical, ErrFinalized
 	}
 
-	var canonicals [2]ID
-
-	canonicals, err = mp.Add(new)
-	canonical = canonicals[0] // we use the "new" version of canonicals
+	canonicals, err := mp.Add(new)
+	canonical = canonicals.Canonical // we use the "new" version of canonicals
 	if err != nil {
 		return canonical, err
 	}
 	aliass, aliasIsOld, err := mp.AddNew(old)
-	alias := aliass[0] // we use the canonical
+	alias := aliass.Canonical // we use the canonical
 	if err != nil {
 		return canonical, err
 	}
@@ -186,7 +197,7 @@ func (mp *IMap[Label]) MarkIdentical(new, old Label) (canonical ID, err error) {
 	// if the alias was added fresh, then it can't be touched by anything else
 	// so we can just give it a new canonical identifier!
 	if !aliasIsOld {
-		aliass[0] = canonical
+		aliass.Canonical = canonical
 		if err := mp.forward.Set(old, aliass); err != nil {
 			return canonical, err
 		}
@@ -195,13 +206,13 @@ func (mp *IMap[Label]) MarkIdentical(new, old Label) (canonical ID, err error) {
 
 	// alias wasn't fresh, so we need to update everything that currently maps to it
 	// that is stored in the "canonical" map of the first element.
-	err = mp.forward.Iterate(func(label Label, ids [2]ID) error {
-		if ids[0] != alias || label == new {
+	err = mp.forward.Iterate(func(label Label, ids TripleID) error {
+		if ids.Canonical != alias || label == new {
 			return nil
 		}
 
 		// set the canonical id
-		ids[0] = canonical
+		ids.Canonical = canonical
 		if err := mp.forward.Set(label, ids); err != nil {
 			return err
 		}
@@ -219,7 +230,7 @@ func (mp *IMap[Label]) MarkIdentical(new, old Label) (canonical ID, err error) {
 func (mp *IMap[Label]) Forward(label Label) (ID, error) {
 	// TODO: This stores, but discards the original value.
 	value, err := mp.forward.GetZero(label)
-	return value[0], err
+	return value.Canonical, err
 }
 
 // Reverse returns the label corresponding to the given id.
@@ -235,8 +246,8 @@ func (mp *IMap[Label]) Reverse(id ID) (Label, error) {
 //	mp.Reverse(mp.Forward(L1)) == L2 && L1 != L2
 func (mp *IMap[Label]) IdentityMap(storage KeyValueStore[Label, Label]) error {
 	// TODO: Do we really want this right now
-	return mp.forward.Iterate(func(label Label, id [2]ID) error {
-		value, err := mp.reverse.GetZero(id[0])
+	return mp.forward.Iterate(func(label Label, id TripleID) error {
+		value, err := mp.reverse.GetZero(id.Canonical)
 		if err != nil {
 			return err
 		}

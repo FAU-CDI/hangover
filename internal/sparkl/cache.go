@@ -93,8 +93,8 @@ func NewCache(Data map[string][]wisski.Entity, SameAs map[URI]URI) (c Cache, err
 			if err != nil {
 				return c, err
 			}
-			c.biIndex[bundle][id[0]] = i
-			c.ebIndex[id[0]] = bundle
+			c.biIndex[bundle][id.Canonical] = i
+			c.ebIndex[id.Canonical] = bundle
 		}
 	}
 
@@ -114,8 +114,8 @@ func NewCache(Data map[string][]wisski.Entity, SameAs map[URI]URI) (c Cache, err
 			return c, err
 		}
 
-		c.sameAs[aliass[0]] = canons[0]
-		c.aliasOf[canons[0]] = append(c.aliasOf[canons[0]], aliass[0])
+		c.sameAs[aliass.Canonical] = canons.Canonical
+		c.aliasOf[canons.Canonical] = append(c.aliasOf[canons.Canonical], aliass.Canonical)
 	}
 
 	return c, nil

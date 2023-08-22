@@ -4,13 +4,13 @@ import "errors"
 
 // MemoryMap holds forward and backward maps in memory
 type MemoryMap[Label comparable] struct {
-	FStorage MemoryStorage[Label, [2]ID]
+	FStorage MemoryStorage[Label, TripleID]
 	RStorage MemoryStorage[ID, Label]
 }
 
-func (me *MemoryMap[Label]) Forward() (KeyValueStore[Label, [2]ID], error) {
+func (me *MemoryMap[Label]) Forward() (KeyValueStore[Label, TripleID], error) {
 	if me.FStorage == nil {
-		me.FStorage = make(MemoryStorage[Label, [2]ID])
+		me.FStorage = make(MemoryStorage[Label, TripleID])
 	}
 	return &me.FStorage, nil
 }

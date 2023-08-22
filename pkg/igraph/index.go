@@ -59,7 +59,7 @@ func (index *IGraph[Label, Datum]) TripleCount() (count uint64, err error) {
 	return index.triples.Count()
 }
 
-// Triple returns the triple with the given
+// Triple returns the triple with the given id
 func (index *IGraph[Label, Datum]) Triple(id imap.ID) (triple Triple[Label, Datum], err error) {
 	t, _, err := index.triples.Get(id)
 	if err != nil {
@@ -68,34 +68,36 @@ func (index *IGraph[Label, Datum]) Triple(id imap.ID) (triple Triple[Label, Datu
 
 	triple.Role = t.Role
 
-	triple.Subject, err = index.labels.Reverse(t.Items[0])
+	// FIXME: make this concurrent?
+
+	triple.Subject, err = index.labels.Reverse(t.Items[0].Literal)
 	if err != nil {
 		return triple, err
 	}
-	triple.SSubject, err = index.labels.Reverse(t.SItems[0])
+	triple.SSubject, err = index.labels.Reverse(t.Items[0].Canonical)
 	if err != nil {
 		return triple, err
 	}
 
-	triple.Predicate, err = index.labels.Reverse(t.Items[1])
+	triple.Predicate, err = index.labels.Reverse(t.Items[1].Literal)
 	if err != nil {
 		return triple, err
 	}
-	triple.SPredicate, err = index.labels.Reverse(t.SItems[1])
-	if err != nil {
-		return triple, err
-	}
-
-	triple.Object, err = index.labels.Reverse(t.Items[2])
-	if err != nil {
-		return triple, err
-	}
-	triple.SObject, err = index.labels.Reverse(t.SItems[2])
+	triple.SPredicate, err = index.labels.Reverse(t.Items[1].Canonical)
 	if err != nil {
 		return triple, err
 	}
 
-	triple.Datum, _, err = index.data.Get(t.Items[2])
+	triple.Object, err = index.labels.Reverse(t.Items[2].Literal)
+	if err != nil {
+		return triple, err
+	}
+	triple.SObject, err = index.labels.Reverse(t.Items[2].Canonical)
+	if err != nil {
+		return triple, err
+	}
+
+	triple.Datum, _, err = index.data.Get(t.Items[2].Literal)
 	if err != nil {
 		return triple, err
 	}
@@ -187,12 +189,11 @@ func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) e
 	// forward id
 	id := index.triple.Inc()
 	index.triples.Set(id, IndexTriple{
-		Role:   Regular,
-		SItems: [3]imap.ID{s[0], p[0], o[0]},
-		Items:  [3]imap.ID{s[1], p[1], o[1]},
+		Role:  Regular,
+		Items: [3]imap.TripleID{s, p, o},
 	})
 
-	conflicted, err := index.insert(s[0], p[0], o[0], id)
+	conflicted, err := index.insert(s.Canonical, p.Canonical, o.Canonical, id)
 	if err != nil {
 		return err
 	}
@@ -200,7 +201,7 @@ func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) e
 		index.stats.DirectTriples++
 	}
 
-	i, ok, err := index.inverses.Get(p[0])
+	i, ok, err := index.inverses.Get(p.Canonical)
 	if err != nil {
 		return err
 	}
@@ -208,12 +209,24 @@ func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) e
 		// reverse id
 		iid := index.triple.Inc()
 		index.triples.Set(iid, IndexTriple{
-			Role:   Inverse,
-			SItems: [3]imap.ID{o[0], i, s[0]},
-			Items:  [3]imap.ID{s[1], p[1], o[1]},
+			Role: Inverse,
+			Items: [3]imap.TripleID{
+				{
+					Canonical: o.Canonical,
+					Literal:   s.Literal,
+				},
+				{
+					Canonical: i,
+					Literal:   p.Literal,
+				},
+				{
+					Canonical: s.Canonical,
+					Literal:   o.Literal,
+				},
+			},
 		})
 
-		conflicted, err := index.insert(o[0], i, s[0], iid)
+		conflicted, err := index.insert(o.Canonical, i, s.Canonical, iid)
 		if err != nil {
 			return err
 		}
@@ -253,12 +266,18 @@ func (index *IGraph[Label, Datum]) AddData(subject, predicate Label, object Datu
 	// store the original triple
 	id := index.triple.Inc()
 	index.triples.Set(id, IndexTriple{
-		Role:   Data,
-		SItems: [3]imap.ID{s[0], p[0], o},
-		Items:  [3]imap.ID{s[1], p[1], o},
+		Role: Data,
+		Items: [3]imap.TripleID{
+			s,
+			p,
+			{
+				Canonical: o,
+				Literal:   o,
+			},
+		},
 	})
 
-	conflicted, err := index.insert(s[0], p[0], o, id)
+	conflicted, err := index.insert(s.Canonical, p.Canonical, o, id)
 	if err == nil && !conflicted {
 		index.stats.DatumTriples++
 	}
@@ -352,10 +371,10 @@ func (index *IGraph[Label, Datum]) MarkInverse(left, right Label) error {
 	}
 
 	// store the inverses of the left and right
-	if err := index.inverses.Set(l[0], r[0]); err != nil {
+	if err := index.inverses.Set(l.Canonical, r.Canonical); err != nil {
 		return err
 	}
-	if err := index.inverses.Set(r[0], l[0]); err != nil {
+	if err := index.inverses.Set(r.Canonical, l.Canonical); err != nil {
 		return err
 	}
 	return nil

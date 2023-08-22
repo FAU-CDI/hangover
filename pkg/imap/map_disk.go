@@ -18,10 +18,10 @@ type DiskMap[Label comparable] struct {
 	UnmarshalLabel func(dest *Label, src []byte) error
 }
 
-func (de DiskMap[Label]) Forward() (KeyValueStore[Label, [2]ID], error) {
+func (de DiskMap[Label]) Forward() (KeyValueStore[Label, TripleID], error) {
 	forward := filepath.Join(de.Path, "forward.leveldb")
 
-	ds, err := NewDiskStorage[Label, [2]ID](forward)
+	ds, err := NewDiskStorage[Label, TripleID](forward)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func (de DiskMap[Label]) Forward() (KeyValueStore[Label, [2]ID], error) {
 		ds.UnmarshalKey = de.UnmarshalLabel
 	}
 
-	ds.MarshalValue = MarshalIDPair
-	ds.UnmarshalValue = UnmarshalIDPair
+	ds.MarshalValue = MarshalTripleID
+	ds.UnmarshalValue = UnmarshalTripleID
 
 	return ds, nil
 }

@@ -18,9 +18,9 @@ func ExampleIMap() {
 		}
 	}
 
-	lid2 := func(prefix string) func(id [2]ID, err error) {
-		return func(id [2]ID, err error) {
-			fmt.Println(prefix, id[0], err)
+	lid2 := func(prefix string) func(id TripleID, err error) {
+		return func(id TripleID, err error) {
+			fmt.Println(prefix, id.Canonical, err)
 		}
 	}
 
