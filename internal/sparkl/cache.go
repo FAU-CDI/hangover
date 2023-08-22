@@ -25,7 +25,7 @@ type Cache struct {
 	aliasOf map[imap.ID][]imap.ID // opposite of sameAs
 
 	engine imap.MemoryMap[URI] // the engine used for the imap
-	uris   imap.IMap[URI]      // holds mappings between ids and uris
+	uris   *imap.IMap[URI]     // holds mappings between ids and uris
 }
 
 // EncodeTo encodes this cache object to the given gob.Encoder.
@@ -49,6 +49,12 @@ func (cache *Cache) EncodeTo(encoder *gob.Encoder) error {
 }
 
 func (cache *Cache) DecodeFrom(decoder *gob.Decoder) error {
+	if cache.uris != nil {
+		if err := cache.uris.Close(); err != nil {
+			return err
+		}
+	}
+
 	for _, obj := range []any{
 		&cache.beIndex,
 		&cache.biIndex,
@@ -64,6 +70,7 @@ func (cache *Cache) DecodeFrom(decoder *gob.Decoder) error {
 		}
 	}
 
+	cache.uris = &imap.IMap[wisski.URI]{}
 	return cache.uris.Reset(&cache.engine)
 }
 
