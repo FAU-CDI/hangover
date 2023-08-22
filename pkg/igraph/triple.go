@@ -9,14 +9,16 @@ import (
 
 // Stats holds statistics about triples in the index
 type Stats struct {
-	DirectTriples   int64
-	DatumTriples    int64
-	InverseTriples  int64
-	ConflictTriples int64
+	DirectTriples     uint64
+	DatumTriples      uint64
+	MaskedPredTriples uint64
+	MaskedDataTriples uint64
+	InverseTriples    uint64
+	ConflictTriples   uint64
 }
 
 func (stats Stats) String() string {
-	return fmt.Sprintf("{direct:%d,datum:%d,inverse:%d,conflict:%d}", stats.DirectTriples, stats.DatumTriples, stats.InverseTriples, stats.ConflictTriples)
+	return fmt.Sprintf("{direct:%d,datum:%d,mask(pred):%d,mask(data):%d,inverse:%d,conflict:%d}", stats.DirectTriples, stats.DatumTriples, stats.MaskedPredTriples, stats.MaskedDataTriples, stats.InverseTriples, stats.ConflictTriples)
 }
 
 // IndexTriple represents a triple stored inside the index

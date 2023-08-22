@@ -43,6 +43,9 @@ type IGraph[Label comparable, Datum any] struct {
 	// the id for a given triple
 	triple  imap.ID
 	triples imap.KeyValueStore[imap.ID, IndexTriple]
+
+	pMask map[imap.ID]struct{} // mask for predicates
+	dMask map[imap.ID]struct{} // mask for data
 }
 
 // Stats returns statistics from this graph
@@ -157,7 +160,58 @@ func (index *IGraph[Label, Datum]) Reset(engine Engine[Label, Datum]) (err error
 	index.triple.Reset()
 	index.finalized.Store(false)
 
+	// reset mask and triples
+	index.pMask = nil
+	index.dMask = nil
+	var s Stats
+	index.stats = s
+
 	return nil
+}
+
+// SetPredicateMask sets the masks for predicates
+func (index *IGraph[Label, Datum]) SetPredicateMask(predicates map[Label]struct{}) error {
+	return index.setMask(predicates, &index.pMask)
+}
+
+// SetDataMask sets the masks for data
+func (index *IGraph[Label, Datum]) SetDataMask(predicates map[Label]struct{}) error {
+	return index.setMask(predicates, &index.dMask)
+}
+
+func (index *IGraph[Label, Datum]) setMask(predicates map[Label]struct{}, dest *map[imap.ID]struct{}) error {
+	mask := make(map[imap.ID]struct{}, len(predicates))
+	for label := range predicates {
+		ids, err := index.labels.Add(label)
+		if err != nil {
+			return err
+		}
+		mask[ids.Canonical] = struct{}{}
+	}
+
+	*dest = mask
+	return nil
+}
+
+func (index *IGraph[Label, Datum]) addMask(predicate Label, mask map[imap.ID]struct{}) (imap.TripleID, bool, error) {
+	// no mask => add normally
+	if mask == nil {
+		id, err := index.labels.Add(predicate)
+		return id, true, err
+	}
+
+	// check if we have an id
+	ids, ok, err := index.labels.Get(predicate)
+	if err != nil {
+		return ids, false, err
+	}
+	if !ok {
+		return ids, false, err
+	}
+
+	// make sure it's contained in the map
+	_, ok = mask[ids.Literal]
+	return ids, ok, nil
 }
 
 // AddTriple inserts a subject-predicate-object triple into the index.
@@ -170,12 +224,20 @@ func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) e
 		return ErrFinalized
 	}
 
-	// store the labels for the triple values
-	s, err := index.labels.Add(subject)
+	// add a predicate (and check if it is masked)
+	p, masked, err := index.addMask(predicate, index.pMask)
 	if err != nil {
 		return err
 	}
-	p, err := index.labels.Add(predicate)
+
+	// was masked out!
+	if !masked {
+		index.stats.MaskedPredTriples++
+		return nil
+	}
+
+	// store the labels for the triple values
+	s, err := index.labels.Add(subject)
 	if err != nil {
 		return err
 	}
@@ -245,18 +307,25 @@ func (index *IGraph[Label, Datum]) AddData(subject, predicate Label, object Datu
 		return ErrFinalized
 	}
 
-	// get labels for subject, predicate and object
+	// add a predicate (and check if it is masked)
+	p, masked, err := index.addMask(predicate, index.dMask)
+	if err != nil {
+		return err
+	}
+
+	// was masked out!
+	if !masked {
+		index.stats.MaskedDataTriples++
+		return nil
+	}
+
+	// get labels for subject and object
 	o := index.labels.Next()
 	if err := index.data.Set(o, object); err != nil {
 		return err
 	}
 
 	s, err := index.labels.Add(subject)
-	if err != nil {
-		return err
-	}
-
-	p, err := index.labels.Add(predicate)
 	if err != nil {
 		return err
 	}

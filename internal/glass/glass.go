@@ -116,7 +116,7 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	var indexPerf perf.Diff
 	{
 		start := perf.Now()
-		index, err = sparkl.LoadIndex(nquadsPath, flags.Predicates, engine, sparkl.DefaultIndexOptions(), &progress.Progress{
+		index, err = sparkl.LoadIndex(nquadsPath, flags.Predicates, engine, sparkl.DefaultIndexOptions(&drincw.Pathbuilder), &progress.Progress{
 			Rewritable: progress.Rewritable{
 				FlushInterval: progress.DefaultFlushInterval,
 				Writer:        output,

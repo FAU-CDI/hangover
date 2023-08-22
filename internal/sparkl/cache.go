@@ -87,6 +87,7 @@ func (cache Cache) BundleNames() []string {
 // NewCache creates a new cache from a bundle-entity-map
 func NewCache(Data map[string][]wisski.Entity, SameAs map[URI]URI) (c Cache, err error) {
 	// reset the uris
+	c.uris = &imap.IMap[wisski.URI]{}
 	c.uris.Reset(&c.engine)
 
 	// store the bundle-entity index

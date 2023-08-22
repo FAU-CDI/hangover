@@ -142,6 +142,11 @@ func (mp *IMap[Label]) Add(label Label) (ids TripleID, err error) {
 	return
 }
 
+// Get behaves like Add, but in case the label has no associated mappings returns ok = false and does not modify the state.
+func (mp *IMap[Label]) Get(label Label) (ids TripleID, ok bool, err error) {
+	return mp.forward.Get(label)
+}
+
 // AddNew behaves like Add, except additionally returns a boolean indicating if the returned id existed previously.
 func (mp *IMap[Label]) AddNew(label Label) (ids TripleID, old bool, err error) {
 	// we were already finalized!

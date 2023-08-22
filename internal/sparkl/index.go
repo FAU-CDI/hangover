@@ -2,13 +2,16 @@
 package sparkl
 
 import (
+	"errors"
 	"io"
 	"os"
 
+	"github.com/FAU-CDI/drincw/pathbuilder"
+	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/progress"
 )
 
-// cspell:words nquads WissKI sparkl
+// cspell:words nquads WissKI sparkl pathbuilder
 
 // LoadIndex is like MakeIndex, but reads nquads from the given path.
 // When err != nil, the caller must eventually close the index.
@@ -22,12 +25,13 @@ func LoadIndex(path string, predicates Predicates, engine Engine, opts IndexOpti
 	return MakeIndex(&QuadSource{Reader: reader}, predicates, engine, opts, p)
 }
 
-func DefaultIndexOptions() IndexOptions {
-	return IndexOptions{CompactInterval: 100_000}
+func DefaultIndexOptions(pb *pathbuilder.Pathbuilder) IndexOptions {
+	return IndexOptions{CompactInterval: 100_000, Mask: pb}
 }
 
 type IndexOptions struct {
-	CompactInterval int // Interval during which to call internal compact. Set <= 0 to disable.
+	CompactInterval int                      // Interval during which to call internal compact. Set <= 0 to disable.
+	Mask            *pathbuilder.Pathbuilder // Pathbuilder to use as a mask when indexing
 }
 
 func (io IndexOptions) shouldCompact(index int) bool {
@@ -40,6 +44,12 @@ func MakeIndex(source Source, predicates Predicates, engine Engine, opts IndexOp
 	// create a new index
 	var index Index
 	if err := index.Reset(engine); err != nil {
+		return nil, err
+	}
+
+	// setup the mask for indexing the data
+	if err := setMask(&index, opts.Mask); err != nil {
+		index.Close()
 		return nil, err
 	}
 
@@ -90,6 +100,46 @@ func MakeIndex(source Source, predicates Predicates, engine Engine, opts IndexOp
 	}
 
 	return &index, nil
+}
+
+// set mask sets a mask while building the index, causing several triples to not be indexed at all
+func setMask(index *Index, pb *pathbuilder.Pathbuilder) error {
+	if pb == nil {
+		return nil
+	}
+
+	dmask := make(map[URI]struct{})
+
+	pmask := make(map[URI]struct{})
+	pmask[wisski.Type] = struct{}{}
+
+	for _, bundle := range pb.Bundles() {
+		addBundleToMasks(pmask, dmask, bundle)
+	}
+
+	return errors.Join(
+		index.SetPredicateMask(pmask),
+		index.SetDataMask(dmask),
+	)
+}
+
+func addBundleToMasks(pmask map[URI]struct{}, dmask map[URI]struct{}, bundle *pathbuilder.Bundle) {
+	addPathArrayToMasks(pmask, bundle.PathArray)
+	for _, field := range bundle.Fields() {
+		addPathArrayToMasks(pmask, field.PathArray)
+		dmask[URI(field.DatatypeProperty)] = struct{}{}
+	}
+	for _, child := range bundle.ChildBundles {
+		addBundleToMasks(pmask, dmask, child)
+	}
+}
+
+func addPathArrayToMasks(pmask map[URI]struct{}, ary []string) {
+	for i, pth := range ary {
+		if i%2 == 1 {
+			pmask[URI(pth)] = struct{}{}
+		}
+	}
 }
 
 // indexSameAs inserts SameAs pairs into the index
