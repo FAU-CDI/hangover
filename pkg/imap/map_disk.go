@@ -31,8 +31,8 @@ func (de DiskMap[Label]) Forward() (KeyValueStore[Label, TripleID], error) {
 		ds.UnmarshalKey = de.UnmarshalLabel
 	}
 
-	ds.MarshalValue = MarshalTripleID
-	ds.UnmarshalValue = UnmarshalTripleID
+	ds.MarshalValue = (TripleID).Marshal
+	ds.UnmarshalValue = (*TripleID).Unmarshal
 
 	return ds, nil
 }

@@ -156,12 +156,6 @@ func DecodeID(src []byte, index int) (id ID) {
 	return
 }
 
-// MarshalTripleID is like MarshalID but takes two ids
-// FIXME: move to type
-func MarshalTripleID(values TripleID) ([]byte, error) {
-	return EncodeIDs(values.Canonical, values.Literal), nil
-}
-
 var errUnmarshal = errors.New("unmarshalID: invalid length")
 
 // UnmarshalID behaves like [dest.Decode], but produces an error
@@ -183,10 +177,4 @@ func UnmarshalIDs(src []byte, dests ...*ID) error {
 		dest.Decode(src[i*IDLen:])
 	}
 	return nil
-}
-
-// UnmarshalTripleID marshals TripleID
-// FIXME: move to type
-func UnmarshalTripleID(dest *TripleID, src []byte) error {
-	return UnmarshalIDs(src, &(dest.Canonical), &(dest.Literal))
 }

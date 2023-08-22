@@ -34,6 +34,16 @@ type TripleID struct {
 	Literal ID
 }
 
+// Marshal marshals this TripleID into a []byte
+func (ti TripleID) Marshal() ([]byte, error) {
+	return EncodeIDs(ti.Canonical, ti.Literal), nil
+}
+
+// Unmarshal reads this TripleID from a []byte
+func (ti *TripleID) Unmarshal(src []byte) error {
+	return UnmarshalIDs(src, &(ti.Canonical), &(ti.Literal))
+}
+
 var ErrFinalized = errors.New("IMap is finalized")
 
 // Reset resets this IMap to be empty, closing any previously opened files
