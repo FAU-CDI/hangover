@@ -18,7 +18,7 @@ type DiskMap[Label comparable] struct {
 	UnmarshalLabel func(dest *Label, src []byte) error
 }
 
-func (de DiskMap[Label]) Forward() (KeyValueStore[Label, TripleID], error) {
+func (de DiskMap[Label]) Forward() (HashMap[Label, TripleID], error) {
 	forward := filepath.Join(de.Path, "forward.leveldb")
 
 	ds, err := NewDiskStorage[Label, TripleID](forward)
@@ -37,7 +37,7 @@ func (de DiskMap[Label]) Forward() (KeyValueStore[Label, TripleID], error) {
 	return ds, nil
 }
 
-func (de DiskMap[Label]) Reverse() (KeyValueStore[ID, Label], error) {
+func (de DiskMap[Label]) Reverse() (HashMap[ID, Label], error) {
 	reverse := filepath.Join(de.Path, "reverse.leveldb")
 
 	ds, err := NewDiskStorage[ID, Label](reverse)

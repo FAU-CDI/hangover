@@ -4,12 +4,12 @@ package imap
 
 // Map represents the backend of an Imap and creates appropriate key-value stores.
 type Map[Label comparable] interface {
-	Forward() (KeyValueStore[Label, TripleID], error)
-	Reverse() (KeyValueStore[ID, Label], error)
+	Forward() (HashMap[Label, TripleID], error)
+	Reverse() (HashMap[ID, Label], error)
 }
 
-// KeyValueStore is something that stores key-value pairs.
-type KeyValueStore[Key comparable, Value any] interface {
+// HashMap is something that stores key-value pairs
+type HashMap[Key comparable, Value any] interface {
 	// Close closes this store
 	Close() error
 

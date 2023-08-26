@@ -85,7 +85,7 @@ func (cache Cache) BundleNames() []string {
 // TODO: Do we want to use an IMap here?
 
 // NewCache creates a new cache from a bundle-entity-map
-func NewCache(Data map[string][]wisski.Entity, SameAs map[URI]URI) (c Cache, err error) {
+func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[URI, URI]) (c Cache, err error) {
 	// reset the uris
 	c.uris = &imap.IMap[wisski.URI]{}
 	c.uris.Reset(&c.engine)
@@ -109,21 +109,32 @@ func NewCache(Data map[string][]wisski.Entity, SameAs map[URI]URI) (c Cache, err
 	c.bundleNames = maps.Keys(c.beIndex)
 	slices.Sort(c.bundleNames)
 
+	sameAsCount, err := SameAs.Count()
+	if err != nil {
+		return c, err
+	}
+
 	// setup same-as and same-as-in
-	c.sameAs = make(map[imap.ID]imap.ID, len(SameAs))
-	c.aliasOf = make(map[imap.ID][]imap.ID, len(c.sameAs))
-	for alias, canon := range SameAs {
+	c.sameAs = make(map[imap.ID]imap.ID, sameAsCount)
+	c.aliasOf = make(map[imap.ID][]imap.ID, sameAsCount)
+
+	err = SameAs.Iterate(func(alias, canon wisski.URI) error {
 		aliass, err := c.uris.Add(alias)
 		if err != nil {
-			return c, err
+			return err
 		}
 		canons, err := c.uris.Add(canon)
 		if err != nil {
-			return c, err
+			return err
 		}
 
 		c.sameAs[aliass.Canonical] = canons.Canonical
 		c.aliasOf[canons.Canonical] = append(c.aliasOf[canons.Canonical], aliass.Canonical)
+
+		return nil
+	})
+	if err != nil {
+		return c, err
 	}
 
 	return c, nil

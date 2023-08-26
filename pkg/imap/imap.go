@@ -17,9 +17,9 @@ type IMap[Label comparable] struct {
 	finalized atomic.Bool // stores if the map has been finalized
 
 	// mapping from labels to the ids of their trippings
-	forward KeyValueStore[Label, TripleID]
+	forward HashMap[Label, TripleID]
 	// mapping from literal back to their labels
-	reverse KeyValueStore[ID, Label]
+	reverse HashMap[ID, Label]
 
 	id ID // last id inserted
 }
@@ -259,7 +259,7 @@ func (mp *IMap[Label]) Reverse(id ID) (Label, error) {
 // Concretely a pair (L1, L2) is written to storage iff
 //
 //	mp.Reverse(mp.Forward(L1)) == L2 && L1 != L2
-func (mp *IMap[Label]) IdentityMap(storage KeyValueStore[Label, Label]) error {
+func (mp *IMap[Label]) IdentityMap(storage HashMap[Label, Label]) error {
 	// TODO: Do we really want this right now
 	return mp.forward.Iterate(func(label Label, id TripleID) error {
 		value, err := mp.reverse.GetZero(id.Canonical)

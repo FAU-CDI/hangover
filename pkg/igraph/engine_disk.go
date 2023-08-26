@@ -19,7 +19,7 @@ type DiskEngine[Label comparable, Datum any] struct {
 	UnmarshalDatum func(dest *Datum, src []byte) error
 }
 
-func (de DiskEngine[Label, Datum]) Data() (imap.KeyValueStore[imap.ID, Datum], error) {
+func (de DiskEngine[Label, Datum]) Data() (imap.HashMap[imap.ID, Datum], error) {
 	data := filepath.Join(de.Path, "data.leveldb")
 
 	ds, err := imap.NewDiskStorage[imap.ID, Datum](data)
@@ -38,7 +38,7 @@ func (de DiskEngine[Label, Datum]) Data() (imap.KeyValueStore[imap.ID, Datum], e
 	return ds, nil
 }
 
-func (de DiskEngine[Label, Datum]) Triples() (imap.KeyValueStore[imap.ID, IndexTriple], error) {
+func (de DiskEngine[Label, Datum]) Triples() (imap.HashMap[imap.ID, IndexTriple], error) {
 	data := filepath.Join(de.Path, "triples.leveldb")
 
 	ds, err := imap.NewDiskStorage[imap.ID, IndexTriple](data)
@@ -55,7 +55,7 @@ func (de DiskEngine[Label, Datum]) Triples() (imap.KeyValueStore[imap.ID, IndexT
 	return ds, nil
 }
 
-func (de DiskEngine[Label, Datum]) Inverses() (imap.KeyValueStore[imap.ID, imap.ID], error) {
+func (de DiskEngine[Label, Datum]) Inverses() (imap.HashMap[imap.ID, imap.ID], error) {
 	inverses := filepath.Join(de.Path, "inverses.leveldb")
 
 	ds, err := imap.NewDiskStorage[imap.ID, imap.ID](inverses)

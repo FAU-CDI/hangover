@@ -163,8 +163,10 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) BundleStorage {
 
 				for paths.Next() {
 					path := paths.Datum()
+
 					nodes, err := path.Nodes()
 					context.reportError(err)
+
 					triples, err := path.Triples()
 					context.reportError(err)
 

@@ -10,9 +10,9 @@ import (
 type Engine[Label comparable, Datum any] interface {
 	imap.Map[Label]
 
-	Data() (imap.KeyValueStore[imap.ID, Datum], error)
-	Triples() (imap.KeyValueStore[imap.ID, IndexTriple], error)
-	Inverses() (imap.KeyValueStore[imap.ID, imap.ID], error)
+	Data() (imap.HashMap[imap.ID, Datum], error)
+	Triples() (imap.HashMap[imap.ID, IndexTriple], error)
+	Inverses() (imap.HashMap[imap.ID, imap.ID], error)
 	PSOIndex() (ThreeStorage, error)
 	POSIndex() (ThreeStorage, error)
 }

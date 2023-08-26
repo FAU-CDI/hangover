@@ -151,10 +151,10 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	{
 		start := perf.Now()
 
-		identities := make(imap.MemoryStorage[sparkl.URI, sparkl.URI])
+		identities := imap.MakeMemory[sparkl.URI, sparkl.URI](0)
 		index.IdentityMap(&identities)
 
-		cache, err := sparkl.NewCache(bundles, identities)
+		cache, err := sparkl.NewCache(bundles, &identities)
 		if err != nil {
 			log.Fatalf("unable to build cache: %s", err)
 		}
