@@ -111,14 +111,13 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		path := paths.Datum()
 
 		// extract the datum
-		datum, ok, err := path.Datum()
-		if err != nil || !ok {
+		if !path.HasDatum {
 			t.Errorf("Unable to retrieve Datum: %s", err)
 		}
-		encountered[datum] = struct{}{}
+		encountered[path.Datum] = struct{}{}
 
 		// find the integer!
-		i64, err := strconv.ParseInt(datum, 10, 64)
+		i64, err := strconv.ParseInt(path.Datum, 10, 64)
 		if err != nil {
 			t.Errorf("Unable to parse datum: %s", err)
 		}
@@ -234,18 +233,9 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		}
 
 		// actually extract them all
-		nodes, err := path.Nodes()
-		if err != nil {
-			t.Errorf("Unable to retrieve Nodes: %s", err)
-		}
-		edges, err := path.Edges()
-		if err != nil {
-			t.Errorf("Unable to retrieve Edges: %s", err)
-		}
-		triples, err := path.Triples()
-		if err != nil {
-			t.Errorf("Unable to retrieve Triples: %s", err)
-		}
+		nodes := path.Nodes
+		edges := path.Edges
+		triples := path.Triples
 
 		// reset the ids, as those are an implementation detail
 		// and may change in the future

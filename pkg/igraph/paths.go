@@ -11,6 +11,8 @@ import (
 
 // cspell:words sparql twiesing
 
+const invalidSize = -1
+
 // Paths represents a set of paths in a related GraphIndex.
 // It implements a very simple sparql-like query engine.
 //
@@ -18,11 +20,10 @@ import (
 // A Paths object should only be created from a GraphIndex; the zero value is invalid.
 // It can be further refined using the [Connected] and [Ending] methods.
 type Paths struct {
+	elements   iterator.Iterator[element]
 	index      *Index
 	predicates []imap.ID
-
-	elements iterator.Iterator[element]
-	size     int
+	size       int // if known, otherwise invalidSize
 }
 
 // PathsStarting creates a new [PathSet] that represents all one-element paths
@@ -61,7 +62,7 @@ func (index *Index) newQuery(source func(sender iterator.Generator[element])) (q
 	q = &Paths{
 		index:    index,
 		elements: iterator.New(source),
-		size:     -1,
+		size:     invalidSize,
 	}
 	return q
 }
@@ -139,7 +140,7 @@ func (set *Paths) restrict(p, o imap.ID) error {
 //
 // NOTE(twiesing): This potentially takes a lot of memory, because we need to expand the stream.
 func (set *Paths) Size() (int, error) {
-	if set.size != -1 {
+	if set.size != invalidSize {
 		return set.size, nil
 	}
 
@@ -199,24 +200,18 @@ func (set *Paths) makePath(elem element) (path Path, err error) {
 
 // element represents an element of a path
 type element struct {
-	// node this path ends at
-	Node imap.ID
-
-	// triple this label had (if applicable)
+	Parent  *element
 	Triples []imap.ID
-
-	// previous element of this path (if any)
-	Parent *element
+	Node    imap.ID
 }
 
 // Path represents a path inside a GraphIndex
 type Path struct {
-	nodes   []imap.Label
-	edges   []imap.Label
-	triples []Triple
-
-	hasDatum bool
-	datum    imap.Datum
+	Datum    imap.Datum
+	Nodes    []imap.Label
+	Edges    []imap.Label
+	Triples  []Triple
+	HasDatum bool
 }
 
 // newPath creates a new path from the given index, with the given ids
@@ -225,20 +220,20 @@ func newPath(index *Index, rNodeIDs []imap.ID, edgeIDs []imap.ID, rTripleIDs []i
 	// process nodes
 	if len(rNodeIDs) != 0 {
 		// split off the first value to use as a datum (if any)
-		path.datum, path.hasDatum, err = index.data.Get(rNodeIDs[0])
+		path.Datum, path.HasDatum, err = index.data.Get(rNodeIDs[0])
 		if err != nil {
 			return Path{}, err
 		}
-		if path.hasDatum {
+		if path.HasDatum {
 			rNodeIDs = rNodeIDs[1:]
 		}
 
 		// turn the nodes into a set of labels
 		// reverse the passed nodes here!
-		path.nodes = make([]imap.Label, len(rNodeIDs))
+		path.Nodes = make([]imap.Label, len(rNodeIDs))
 		last := len(rNodeIDs) - 1
 		for j, label := range rNodeIDs {
-			path.nodes[last-j], err = index.labels.Reverse(label)
+			path.Nodes[last-j], err = index.labels.Reverse(label)
 			if err != nil {
 				return Path{}, err
 			}
@@ -246,19 +241,19 @@ func newPath(index *Index, rNodeIDs []imap.ID, edgeIDs []imap.ID, rTripleIDs []i
 	}
 
 	// process edges
-	path.edges = make([]imap.Label, len(edgeIDs))
-	last := len(path.edges) - 1
+	path.Edges = make([]imap.Label, len(edgeIDs))
 	for j, label := range edgeIDs {
-		path.edges[last-j], err = index.labels.Reverse(label)
+		path.Edges[j], err = index.labels.Reverse(label)
 		if err != nil {
 			return Path{}, err
 		}
 	}
 
 	// process triples
-	path.triples = make([]Triple, len(rTripleIDs))
+	path.Triples = make([]Triple, len(rTripleIDs))
+	last := len(rTripleIDs) - 1
 	for j, label := range rTripleIDs {
-		path.triples[j], err = index.Triple(label)
+		path.Triples[last-j], err = index.Triple(label)
 		if err != nil {
 			return Path{}, err
 		}
@@ -268,37 +263,6 @@ func newPath(index *Index, rNodeIDs []imap.ID, edgeIDs []imap.ID, rTripleIDs []i
 
 }
 
-// Nodes returns the nodes this path consists of, in order.
-func (path *Path) Nodes() ([]imap.Label, error) {
-	return path.nodes, nil
-}
-
-var errOutOfBounds = errors.New("Path.Node: index out of bounds")
-
-// Node returns the label of the node at the given index of path.
-func (path *Path) Node(index int) (label imap.Label, err error) {
-	if index < 0 || index > len(path.nodes) {
-		return label, errOutOfBounds
-	}
-	return path.nodes[index], nil
-}
-
-// Datum returns the datum attached to the last node of this path, if any.
-func (path *Path) Datum() (datum imap.Datum, ok bool, err error) {
-	return path.datum, path.hasDatum, nil
-}
-
-// Edges returns the labels of the edges this path consists of.
-func (path *Path) Edges() ([]imap.Label, error) {
-	return path.edges, nil
-}
-
-// Triples returns the triples that this Path consists of.
-// Triples are guaranteed to be returned in query order, that is in the order they were required for the query to be fulfilled.
-func (path *Path) Triples() ([]Triple, error) {
-	return path.triples, nil
-}
-
 // String turns this result into a string
 //
 // NOTE(twiesing): This is for debugging only, and ignores all errors.
@@ -306,15 +270,15 @@ func (path *Path) Triples() ([]Triple, error) {
 func (result *Path) String() string {
 	var builder strings.Builder
 
-	for i, edge := range result.edges {
-		fmt.Fprintf(&builder, "%v %v ", result.nodes[i], edge)
+	for i, edge := range result.Edges {
+		fmt.Fprintf(&builder, "%v %v ", result.Nodes[i], edge)
 	}
 
-	if len(result.nodes) > 0 {
-		fmt.Fprintf(&builder, "%v", result.nodes[len(result.nodes)-1])
+	if len(result.Nodes) > 0 {
+		fmt.Fprintf(&builder, "%v", result.Nodes[len(result.Nodes)-1])
 	}
-	if result.hasDatum {
-		fmt.Fprintf(&builder, " %#v", result.datum)
+	if result.HasDatum {
+		fmt.Fprintf(&builder, " %#v", result.Datum)
 	}
 	return builder.String()
 }

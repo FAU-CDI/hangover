@@ -137,14 +137,8 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage
 
 			for paths.Next() {
 				path := paths.Datum()
-				nodes, err := path.Nodes()
-				if context.reportError(err) {
-					return err
-				}
-				triples, err := path.Triples()
-				if context.reportError(err) {
-					return err
-				}
+				nodes := path.Nodes
+				triples := path.Triples
 				storage.Add(nodes[entityURIIndex], nodes, triples)
 			}
 
@@ -166,15 +160,10 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage
 				for paths.Next() {
 					path := paths.Datum()
 
-					nodes, err := path.Nodes()
-					context.reportError(err)
+					nodes := path.Nodes
+					triples := path.Triples
 
-					triples, err := path.Triples()
-					context.reportError(err)
-
-					datum, hasDatum, err := path.Datum()
-					context.reportError(err)
-
+					datum, hasDatum := path.Datum, path.HasDatum
 					if !hasDatum && len(nodes) > 0 {
 						datum = nodes[len(nodes)-1]
 					}
