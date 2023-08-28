@@ -49,6 +49,9 @@ func main() {
 		panic(err)
 	}
 
+	// start tracking performance for everything
+	loadStart := perf.Now()
+
 	var drincw glass.Glass
 	if idx == "" {
 		sparkl.ParsePredicateString(&flags.Predicates.SameAs, sameAs)
@@ -71,6 +74,8 @@ func main() {
 
 	// otherwise create a viewer
 	var handler viewer.Viewer
+	defer handler.Close()
+
 	var handlerPerf perf.Diff
 	{
 		start := perf.Now()
@@ -85,6 +90,9 @@ func main() {
 		log.Printf("built handler, took %s", handlerPerf)
 	}
 
+	loadPerformance := perf.Since(loadStart)
+
+	log.Printf("loading overall took %s", loadPerformance)
 	log.Println(perf.Now())
 
 	http.Serve(listener, &handler)

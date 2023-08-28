@@ -36,6 +36,10 @@ type Glass struct {
 	Cache *sparkl.Cache
 }
 
+func (glass *Glass) Close() error {
+	return glass.Cache.Close()
+}
+
 // EncodeTo encodes a glass to a given encoder
 func (glass *Glass) EncodeTo(encoder *gob.Encoder) error {
 	// encode the pathbuilder as xml

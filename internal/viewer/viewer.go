@@ -26,6 +26,13 @@ type Viewer struct {
 	mux  mux.Router
 }
 
+func (viewer *Viewer) Close() error {
+	if viewer == nil {
+		return nil
+	}
+	return viewer.Cache.Close()
+}
+
 type RenderFlags struct {
 	HTMLRender  bool // should we render "text_long" as actual html?
 	ImageRender bool // should we render "image" as actual images

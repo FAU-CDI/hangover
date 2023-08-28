@@ -1,10 +1,19 @@
 package imap
 
+import "errors"
+
 // MemoryMap holds forward and backward maps in memory.
 // It implements Map.
 type MemoryMap struct {
 	FStorage Memory[Label, TripleID]
 	RStorage Memory[ID, Label]
+}
+
+func (me *MemoryMap) Close() error {
+	return errors.Join(
+		me.FStorage.Close(),
+		me.RStorage.Close(),
+	)
 }
 
 var (

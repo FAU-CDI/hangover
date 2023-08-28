@@ -2,6 +2,8 @@ package sparkl
 
 import (
 	"encoding/gob"
+	"errors"
+	"runtime"
 
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/imap"
@@ -26,6 +28,22 @@ type Cache struct {
 
 	engine imap.MemoryMap // the engine used for the imap
 	uris   *imap.IMap     // holds mappings between ids and uris
+}
+
+func (cache *Cache) Close() error {
+	defer runtime.GC()
+
+	cache.beIndex = nil
+	cache.biIndex = nil
+	cache.ebIndex = nil
+	cache.bundleNames = nil
+	cache.sameAs = nil
+	cache.aliasOf = nil
+
+	return errors.Join(
+		cache.engine.Close(),
+		cache.uris.Close(),
+	)
 }
 
 // EncodeTo encodes this cache object to the given gob.Encoder.
