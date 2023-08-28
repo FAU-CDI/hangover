@@ -15,6 +15,8 @@ import (
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
 	"github.com/FAU-CDI/hangover/internal/viewer"
+	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
 	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/FAU-CDI/hangover/pkg/perf"
 	"github.com/FAU-CDI/hangover/pkg/progress"
@@ -112,7 +114,7 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	}
 
 	// build an index
-	var index *sparkl.Index
+	var index *igraph.Index
 	var indexPerf perf.Diff
 	{
 		start := perf.Now()
@@ -134,7 +136,7 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	}
 
 	// generate bundles
-	var bundles map[string][]sparkl.Entity
+	var bundles map[string][]wisski.Entity
 	var bundlesPerf perf.Diff
 	{
 		start := perf.Now()
@@ -151,7 +153,7 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	{
 		start := perf.Now()
 
-		identities := imap.MakeMemory[sparkl.URI, sparkl.URI](0)
+		identities := imap.MakeMemory[imap.Label, imap.Label](0)
 		index.IdentityMap(&identities)
 
 		cache, err := sparkl.NewCache(bundles, &identities)

@@ -12,17 +12,14 @@ import (
 )
 
 // DiskEngine represents an engine that stores everything on disk
-type DiskEngine[Label comparable, Datum any] struct {
-	imap.DiskMap[Label]
-
-	MarshalDatum   func(datum Datum) ([]byte, error)
-	UnmarshalDatum func(dest *Datum, src []byte) error
+type DiskEngine struct {
+	imap.DiskMap
 }
 
-func (de DiskEngine[Label, Datum]) Data() (imap.HashMap[imap.ID, Datum], error) {
+func (de DiskEngine) Data() (imap.HashMap[imap.ID, imap.Datum], error) {
 	data := filepath.Join(de.Path, "data.leveldb")
 
-	ds, err := imap.NewDiskStorage[imap.ID, Datum](data)
+	ds, err := imap.NewDiskStorage[imap.ID, imap.Datum](data)
 	if err != nil {
 		return nil, err
 	}
@@ -30,15 +27,17 @@ func (de DiskEngine[Label, Datum]) Data() (imap.HashMap[imap.ID, Datum], error) 
 	ds.MarshalKey = imap.MarshalID
 	ds.UnmarshalKey = imap.UnmarshalID
 
-	if de.MarshalDatum != nil && de.UnmarshalDatum != nil {
-		ds.MarshalValue = de.MarshalDatum
-		ds.UnmarshalValue = de.UnmarshalDatum
+	ds.MarshalValue = func(value imap.Datum) ([]byte, error) {
+		return imap.DatumAsByte(value), nil
 	}
-
+	ds.UnmarshalValue = func(dest *imap.Datum, src []byte) error {
+		*dest = imap.ByteAsDatum(src)
+		return nil
+	}
 	return ds, nil
 }
 
-func (de DiskEngine[Label, Datum]) Triples() (imap.HashMap[imap.ID, IndexTriple], error) {
+func (de DiskEngine) Triples() (imap.HashMap[imap.ID, IndexTriple], error) {
 	data := filepath.Join(de.Path, "triples.leveldb")
 
 	ds, err := imap.NewDiskStorage[imap.ID, IndexTriple](data)
@@ -55,7 +54,7 @@ func (de DiskEngine[Label, Datum]) Triples() (imap.HashMap[imap.ID, IndexTriple]
 	return ds, nil
 }
 
-func (de DiskEngine[Label, Datum]) Inverses() (imap.HashMap[imap.ID, imap.ID], error) {
+func (de DiskEngine) Inverses() (imap.HashMap[imap.ID, imap.ID], error) {
 	inverses := filepath.Join(de.Path, "inverses.leveldb")
 
 	ds, err := imap.NewDiskStorage[imap.ID, imap.ID](inverses)
@@ -71,11 +70,11 @@ func (de DiskEngine[Label, Datum]) Inverses() (imap.HashMap[imap.ID, imap.ID], e
 
 	return ds, nil
 }
-func (de DiskEngine[Label, Datum]) PSOIndex() (ThreeStorage, error) {
+func (de DiskEngine) PSOIndex() (ThreeStorage, error) {
 	pso := filepath.Join(de.Path, "pso.leveldb")
 	return NewDiskHash(pso)
 }
-func (de DiskEngine[Label, Datum]) POSIndex() (ThreeStorage, error) {
+func (de DiskEngine) POSIndex() (ThreeStorage, error) {
 	pos := filepath.Join(de.Path, "pos.leveldb")
 	return NewDiskHash(pos)
 }

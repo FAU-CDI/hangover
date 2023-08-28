@@ -11,14 +11,15 @@ import (
 )
 
 // DiskMap represents an engine that persistently stores data on disk.
-type DiskMap[Label comparable] struct {
+type DiskMap struct {
 	Path string
-
-	MarshalLabel   func(label Label) ([]byte, error)
-	UnmarshalLabel func(dest *Label, src []byte) error
 }
 
-func (de DiskMap[Label]) Forward() (HashMap[Label, TripleID], error) {
+var (
+	_ Map = (*DiskMap)(nil)
+)
+
+func (de DiskMap) Forward() (HashMap[Label, TripleID], error) {
 	forward := filepath.Join(de.Path, "forward.leveldb")
 
 	ds, err := NewDiskStorage[Label, TripleID](forward)
@@ -26,9 +27,12 @@ func (de DiskMap[Label]) Forward() (HashMap[Label, TripleID], error) {
 		return nil, err
 	}
 
-	if de.MarshalLabel != nil && de.UnmarshalLabel != nil {
-		ds.MarshalKey = de.MarshalLabel
-		ds.UnmarshalKey = de.UnmarshalLabel
+	ds.MarshalKey = func(key Label) ([]byte, error) {
+		return LabelAsByte(key), nil
+	}
+	ds.UnmarshalKey = func(dest *Label, src []byte) error {
+		*dest = ByteAsLabel(src)
+		return nil
 	}
 
 	ds.MarshalValue = (TripleID).Marshal
@@ -37,7 +41,7 @@ func (de DiskMap[Label]) Forward() (HashMap[Label, TripleID], error) {
 	return ds, nil
 }
 
-func (de DiskMap[Label]) Reverse() (HashMap[ID, Label], error) {
+func (de DiskMap) Reverse() (HashMap[ID, Label], error) {
 	reverse := filepath.Join(de.Path, "reverse.leveldb")
 
 	ds, err := NewDiskStorage[ID, Label](reverse)
@@ -48,9 +52,12 @@ func (de DiskMap[Label]) Reverse() (HashMap[ID, Label], error) {
 	ds.MarshalKey = MarshalID
 	ds.UnmarshalKey = UnmarshalID
 
-	if de.MarshalLabel != nil && de.UnmarshalLabel != nil {
-		ds.MarshalValue = de.MarshalLabel
-		ds.UnmarshalValue = de.UnmarshalLabel
+	ds.MarshalValue = func(key Label) ([]byte, error) {
+		return LabelAsByte(key), nil
+	}
+	ds.UnmarshalValue = func(dest *Label, src []byte) error {
+		*dest = ByteAsLabel(src)
+		return nil
 	}
 
 	return ds, nil

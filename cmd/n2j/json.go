@@ -8,14 +8,16 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
 	"github.com/FAU-CDI/hangover/pkg/perf"
 )
 
-func doJSON(pb *pathbuilder.Pathbuilder, index *sparkl.Index, bEngine storages.BundleEngine) {
+func doJSON(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine) {
 	var err error
 
 	// generate bundles
-	var bundles map[string][]sparkl.Entity
+	var bundles map[string][]wisski.Entity
 	{
 		start := perf.Now()
 		bundles, err = sparkl.LoadPathbuilder(pb, index, bEngine)

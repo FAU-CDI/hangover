@@ -7,6 +7,8 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/tkw1536/pkglib/iterator"
 )
 
@@ -34,14 +36,14 @@ type BundleStorage interface {
 	// to this bundle.
 	//
 	// Calls to add for a specific bundle storage are serialized.
-	Add(uri wisski.URI, path []wisski.URI, triples []wisski.Triple) error
+	Add(uri imap.Label, path []imap.Label, triples []igraph.Triple) error
 
 	// AddFieldValue adds a value to the given field for the entity with the given uri.
 	//
 	// Concurrent calls to distinct fields may take place, however within each field calls are always synchronized.
 	//
 	// A non-existing parent should return ErrNoEntity.
-	AddFieldValue(uri wisski.URI, field string, value any, path []wisski.URI, triples []wisski.Triple) error
+	AddFieldValue(uri imap.Label, field string, value any, path []imap.Label, triples []igraph.Triple) error
 
 	// RegisterChildStorage register the given storage as a BundleStorage for the child bundle.
 	// The Storage should delete the reference to the child storage when it is closed.
@@ -52,7 +54,7 @@ type BundleStorage interface {
 	// Multiple concurrent calls to AddChild may take place, but every concurrent call will be for a different bundle.
 	//
 	// A non-existing parent should return ErrNoEntity.
-	AddChild(parent wisski.URI, bundle string, child wisski.URI) error
+	AddChild(parent imap.Label, bundle string, child imap.Label) error
 
 	// Finalize is called to signal to this storage that no more write operations will take place.
 	Finalize() error
@@ -61,22 +63,22 @@ type BundleStorage interface {
 	// The iterator is guaranteed to iterate in some consistent order, but no further guarantees beyond that.
 	//
 	// parentPathIndex returns the index of the parent uri in child paths.
-	Get(parentPathIndex int) iterator.Iterator[URIWithParent]
+	Get(parentPathIndex int) iterator.Iterator[LabelWithParent]
 
 	// Count counts the number of entities in this storage.
 	Count() (int64, error)
 
 	// Load loads an entity with the given URI from this storage.
 	// A non-existing entity should return err = ErrNoEntity.
-	Load(uri wisski.URI) (wisski.Entity, error)
+	Load(uri imap.Label) (wisski.Entity, error)
 }
 
 var (
 	ErrNoEntity = errors.New("no such entity")
 )
 
-// URIWithParent represents a URI along with it's parent
-type URIWithParent struct {
-	URI    wisski.URI
-	Parent wisski.URI
+// LabelWithParent represents a URI along with it's parent
+type LabelWithParent struct {
+	Label  imap.Label
+	Parent imap.Label
 }

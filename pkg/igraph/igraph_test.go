@@ -23,9 +23,9 @@ func d(i int) imap.Datum {
 // It makes use of both inverses and identical relationships.
 //
 // It then forms a single query against this graph, ensuring that the correct result set is returned.
-func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
+func graphTest(t *testing.T, engine Engine, N int) {
 
-	var g IGraph[imap.Label, imap.Datum]
+	var g Index
 	defer g.Close()
 
 	if err := g.Reset(engine); err != nil {
@@ -128,9 +128,9 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 		wantNodes := []imap.Label{l(3*i + 6), l(3*i + 7), l(3*i + 8)}
 		wantEdges := []imap.Label{l(0), l(1), l(3)}
 
-		wantTriples := make([]Triple[imap.Label, imap.Datum], 0, 5)
+		wantTriples := make([]Triple, 0, 5)
 		{
-			wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+			wantTriples = append(wantTriples, Triple{
 				Role: Regular,
 
 				Subject:   l(3*i + 6),
@@ -142,7 +142,7 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 				SObject:    l(2),
 			})
 
-			wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+			wantTriples = append(wantTriples, Triple{
 				Role: Regular,
 
 				Subject:   l(3*i + 7),
@@ -155,7 +155,7 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 			})
 
 			if i%4 == 0 || i%4 == 1 {
-				wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+				wantTriples = append(wantTriples, Triple{
 					Role: Regular,
 
 					Subject:   l(3*i + 6),
@@ -167,7 +167,7 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 					SObject:    l(3*i + 7),
 				})
 			} else {
-				wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+				wantTriples = append(wantTriples, Triple{
 					Role: Inverse,
 
 					Subject:   l(3*i + 7),
@@ -181,7 +181,7 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 			}
 
 			if i%4 == 0 || i%4 == 2 {
-				wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+				wantTriples = append(wantTriples, Triple{
 					Role: Regular,
 
 					Subject:   l(3*i + 7),
@@ -193,7 +193,7 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 					SObject:    l(3*i + 8),
 				})
 			} else {
-				wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+				wantTriples = append(wantTriples, Triple{
 					Role: Inverse,
 
 					Subject:   l(3*i + 8),
@@ -208,7 +208,7 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 		}
 
 		if i%4 == 0 {
-			wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+			wantTriples = append(wantTriples, Triple{
 				Role: Data,
 
 				Subject:   l(-(3*i + 8)),
@@ -220,7 +220,7 @@ func graphTest(t *testing.T, engine Engine[imap.Label, imap.Datum], N int) {
 				Datum: d(i),
 			})
 		} else {
-			wantTriples = append(wantTriples, Triple[imap.Label, imap.Datum]{
+			wantTriples = append(wantTriples, Triple{
 				Role: Data,
 
 				Subject:   l(3*i + 8),

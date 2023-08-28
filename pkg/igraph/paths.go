@@ -17,8 +17,8 @@ import (
 // A Paths object is stateful.
 // A Paths object should only be created from a GraphIndex; the zero value is invalid.
 // It can be further refined using the [Connected] and [Ending] methods.
-type Paths[Label comparable, Datum any] struct {
-	index      *IGraph[Label, Datum]
+type Paths struct {
+	index      *Index
 	predicates []imap.ID
 
 	elements iterator.Iterator[element]
@@ -27,7 +27,7 @@ type Paths[Label comparable, Datum any] struct {
 
 // PathsStarting creates a new [PathSet] that represents all one-element paths
 // starting at a vertex which is connected to object with the given predicate
-func (index *IGraph[Label, Datum]) PathsStarting(predicate, object Label) (*Paths[Label, Datum], error) {
+func (index *Index) PathsStarting(predicate, object imap.Label) (*Paths, error) {
 	p, err := index.labels.Forward(predicate)
 	if err != nil {
 		return nil, err
@@ -57,8 +57,8 @@ func (index *IGraph[Label, Datum]) PathsStarting(predicate, object Label) (*Path
 }
 
 // newQuery creates a new Query object that contains nodes with the given ids
-func (index *IGraph[URI, Datum]) newQuery(source func(sender iterator.Generator[element])) (q *Paths[URI, Datum]) {
-	q = &Paths[URI, Datum]{
+func (index *Index) newQuery(source func(sender iterator.Generator[element])) (q *Paths) {
+	q = &Paths{
 		index:    index,
 		elements: iterator.New(source),
 		size:     -1,
@@ -68,7 +68,7 @@ func (index *IGraph[URI, Datum]) newQuery(source func(sender iterator.Generator[
 
 // Connected extends the sets of in this PathSet by those which
 // continue the existing paths using an edge labeled with predicate.
-func (set *Paths[Label, Datum]) Connected(predicate Label) error {
+func (set *Paths) Connected(predicate imap.Label) error {
 	p, err := set.index.labels.Forward(predicate)
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (set *Paths[Label, Datum]) Connected(predicate Label) error {
 var errAborted = errors.New("paths: aborted")
 
 // expand expands the nodes in this query by adding a link to each element found in the index
-func (set *Paths[URI, Datum]) expand(p imap.ID) error {
+func (set *Paths) expand(p imap.ID) error {
 	set.elements = iterator.Connect(set.elements, func(subject element, sender iterator.Generator[element]) (stop bool) {
 		err := set.index.psoIndex.Fetch(p, subject.Node, func(object imap.ID, l imap.ID) error {
 			if sender.Yield(element{
@@ -104,7 +104,7 @@ func (set *Paths[URI, Datum]) expand(p imap.ID) error {
 
 // Ending restricts this set of paths to those that end in a node
 // which is connected to object via predicate.
-func (set *Paths[URI, Datum]) Ending(predicate URI, object URI) error {
+func (set *Paths) Ending(predicate, object imap.Label) error {
 	p, err := set.index.labels.Forward(predicate)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (set *Paths[URI, Datum]) Ending(predicate URI, object URI) error {
 }
 
 // restrict restricts the set of nodes by those mapped in the index
-func (set *Paths[URI, Datum]) restrict(p, o imap.ID) error {
+func (set *Paths) restrict(p, o imap.ID) error {
 	set.elements = iterator.Connect(set.elements, func(subject element, sender iterator.Generator[element]) bool {
 		tid, has, err := set.index.posIndex.Has(p, o, subject.Node)
 		if err != nil {
@@ -138,7 +138,7 @@ func (set *Paths[URI, Datum]) restrict(p, o imap.ID) error {
 // Size returns the number of elements in this path.
 //
 // NOTE(twiesing): This potentially takes a lot of memory, because we need to expand the stream.
-func (set *Paths[Label, Datum]) Size() (int, error) {
+func (set *Paths) Size() (int, error) {
 	if set.size != -1 {
 		return set.size, nil
 	}
@@ -155,12 +155,12 @@ func (set *Paths[Label, Datum]) Size() (int, error) {
 
 // Paths returns an iterator over paths contained in this Paths.
 // It may only be called once, afterwards further calls may be invalid.
-func (set *Paths[Label, Datum]) Paths() iterator.Iterator[Path[Label, Datum]] {
+func (set *Paths) Paths() iterator.Iterator[Path] {
 	return iterator.Map(set.elements, set.makePath)
 }
 
 // makePath creates a path from an element
-func (set *Paths[Label, Datum]) makePath(elem element) (path Path[Label, Datum]) {
+func (set *Paths) makePath(elem element) (path Path) {
 	path.index = set.index
 	path.edgeIDs = set.predicates
 
@@ -205,47 +205,45 @@ type element struct {
 }
 
 // Path represents a path inside a GraphIndex
-type Path[Label comparable, Datum any] struct {
+type Path struct {
 	// index is the index this Path belongs to
-	index *IGraph[Label, Datum]
+	index *Index
 
 	errNodes error
 	nodeIDs  []imap.ID
-	nodes    []Label
+	nodes    []imap.Label
 	hasDatum bool
-	datum    Datum
+	datum    imap.Datum
 
 	errEdges error
 	edgeIDs  []imap.ID
-	edges    []Label
+	edges    []imap.Label
 
 	errTriples error
 	tripleIDs  []imap.ID
-	triples    []Triple[Label, Datum]
+	triples    []Triple
 }
 
 // Nodes returns the nodes this path consists of, in order.
-func (path *Path[Label, Datum]) Nodes() ([]Label, error) {
+func (path *Path) Nodes() ([]imap.Label, error) {
 	path.processNodes()
 	return path.nodes, path.errNodes
 }
 
 // Node returns the label of the node at the given index of path.
-func (path *Path[Label, Datum]) Node(index int) (Label, error) {
+func (path *Path) Node(index int) (label imap.Label, err error) {
 	switch {
 	case len(path.nodes) > index:
 		// already computed!
 		return path.nodes[index], nil
 	case index >= len(path.nodeIDs):
 		// path does not exist
-		var label Label
 		return label, nil
 	case index == len(path.nodeIDs)-1:
 		// check if the last element has data associated with it
 		last := path.nodeIDs[len(path.nodeIDs)-1]
 		has, err := path.index.data.Has(last)
 		if has || err != nil {
-			var label Label
 			return label, err
 		}
 		fallthrough
@@ -256,17 +254,17 @@ func (path *Path[Label, Datum]) Node(index int) (Label, error) {
 }
 
 // Datum returns the datum attached to the last node of this path, if any.
-func (path *Path[Label, Datum]) Datum() (datum Datum, ok bool, err error) {
+func (path *Path) Datum() (datum imap.Datum, ok bool, err error) {
 	return path.datum, path.hasDatum, path.errNodes
 }
 
-func (path *Path[Label, Datum]) process() {
+func (path *Path) process() {
 	path.processNodes()
 	path.processEdges()
 	path.processTriples()
 }
 
-func (path *Path[Label, Datum]) processNodes() {
+func (path *Path) processNodes() {
 	if len(path.nodeIDs) == 0 {
 		return
 	}
@@ -282,7 +280,7 @@ func (path *Path[Label, Datum]) processNodes() {
 	}
 
 	// turn the nodes into a set of labels
-	path.nodes = make([]Label, len(path.nodeIDs))
+	path.nodes = make([]imap.Label, len(path.nodeIDs))
 	for j, label := range path.nodeIDs {
 		path.nodes[j], path.errNodes = path.index.labels.Reverse(label)
 		if path.errNodes != nil {
@@ -292,13 +290,13 @@ func (path *Path[Label, Datum]) processNodes() {
 }
 
 // Edges returns the labels of the edges this path consists of.
-func (path *Path[Label, Datum]) Edges() ([]Label, error) {
+func (path *Path) Edges() ([]imap.Label, error) {
 	path.processEdges()
 	return path.edges, path.errEdges
 }
 
-func (path *Path[Label, Datum]) processEdges() {
-	path.edges = make([]Label, len(path.edgeIDs))
+func (path *Path) processEdges() {
+	path.edges = make([]imap.Label, len(path.edgeIDs))
 	for j, label := range path.edgeIDs {
 		path.edges[j], path.errEdges = path.index.labels.Reverse(label)
 		if path.errEdges != nil {
@@ -309,13 +307,13 @@ func (path *Path[Label, Datum]) processEdges() {
 
 // Triples returns the triples that this Path consists of.
 // Triples are guaranteed to be returned in query order, that is in the order they were required for the query to be fulfilled.
-func (path *Path[Label, Datum]) Triples() ([]Triple[Label, Datum], error) {
+func (path *Path) Triples() ([]Triple, error) {
 	path.processTriples()
 	return path.triples, path.errTriples
 }
 
-func (path *Path[Label, Datum]) processTriples() {
-	path.triples = make([]Triple[Label, Datum], len(path.tripleIDs))
+func (path *Path) processTriples() {
+	path.triples = make([]Triple, len(path.tripleIDs))
 	for j, label := range path.tripleIDs {
 		path.triples[j], path.errTriples = path.index.Triple(label)
 		if path.errEdges != nil {
@@ -328,7 +326,7 @@ func (path *Path[Label, Datum]) processTriples() {
 //
 // NOTE(twiesing): This is for debugging only, and ignores all errors.
 // It should not be used in production code.
-func (result *Path[URI, Datum]) String() string {
+func (result *Path) String() string {
 	var builder strings.Builder
 
 	result.processNodes()

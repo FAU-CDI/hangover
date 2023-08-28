@@ -2,6 +2,7 @@ package wisski
 
 import (
 	"github.com/FAU-CDI/hangover/pkg/igraph"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"golang.org/x/exp/slices"
 )
 
@@ -9,9 +10,9 @@ import (
 
 // Entity represents an Entity inside a WissKI Bundle
 type Entity struct {
-	URI     URI      // URI of this entity
-	Path    []URI    // the path of this entity
-	Triples []Triple // the triples that define this entity itself
+	URI     imap.Label      // URI of this entity
+	Path    []imap.Label    // the path of this entity
+	Triples []igraph.Triple // the triples that define this entity itself
 
 	Fields   map[string][]FieldValue // values for specific fields
 	Children map[string][]Entity     // child paths for specific entities
@@ -27,9 +28,9 @@ type Entity struct {
 // Triples are returned in globally consistent order.
 // Triples are guaranteed not to be repeated.
 // This means that any two calls to AllTriples() use the same order.
-func (entity Entity) AllTriples() (triples []Triple) {
+func (entity Entity) AllTriples() (triples []igraph.Triple) {
 	triples = entity.appendTriples(triples)
-	slices.SortFunc(triples, func(left, right Triple) int {
+	slices.SortFunc(triples, func(left, right igraph.Triple) int {
 		// TODO: fixme
 		if left == right {
 			return 0
@@ -40,14 +41,14 @@ func (entity Entity) AllTriples() (triples []Triple) {
 		return 1
 	})
 
-	return slices.CompactFunc(triples, func(left, right Triple) bool {
+	return slices.CompactFunc(triples, func(left, right igraph.Triple) bool {
 		return left.ID == right.ID
 	})
 }
 
 // appendTriples appends triples for this entity to triples
 // It does not deduplicate, and does not return
-func (entity Entity) appendTriples(triples []Triple) []Triple {
+func (entity Entity) appendTriples(triples []igraph.Triple) []igraph.Triple {
 	triples = append(triples, entity.Triples...)
 	for _, fields := range entity.Fields {
 		for _, field := range fields {
@@ -65,10 +66,7 @@ func (entity Entity) appendTriples(triples []Triple) []Triple {
 
 // FieldValue represents the value of a field inside an entity
 type FieldValue struct {
-	Path    []URI
-	Triples []Triple
+	Path    []imap.Label
+	Triples []igraph.Triple
 	Value   any
 }
-
-// Triple represents a triple of WissKI Data
-type Triple = igraph.Triple[URI, any]

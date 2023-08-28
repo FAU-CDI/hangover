@@ -9,6 +9,8 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
 	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/tkw1536/pkglib/iterator"
 )
 
@@ -16,7 +18,7 @@ import (
 //
 // Storages for any child bundles, and the bundle itself, are created using the makeStorage function.
 // The storage for this bundle is returned.
-func StoreBundle(bundle *pathbuilder.Bundle, index *Index, engine BundleEngine) (BundleStorage, func() error, error) {
+func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine) (storages.BundleStorage, func() error, error) {
 	storages, closer, err := StoreBundles([]*pathbuilder.Bundle{bundle}, index, engine)
 	if err != nil {
 		return nil, nil, err
@@ -25,14 +27,14 @@ func StoreBundle(bundle *pathbuilder.Bundle, index *Index, engine BundleEngine) 
 }
 
 // StoreBundles is like StoreBundle, but takes multiple bundles
-func StoreBundles(bundles []*pathbuilder.Bundle, index *Index, engine BundleEngine) ([]BundleStorage, func() error, error) {
+func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine) ([]storages.BundleStorage, func() error, error) {
 	context := &Context{
 		Index:  index,
 		Engine: engine,
 	}
 	context.Open()
 
-	storages := make([]BundleStorage, len(bundles))
+	storages := make([]storages.BundleStorage, len(bundles))
 	for i := range storages {
 		storages[i] = context.Store(bundles[i])
 	}
@@ -46,8 +48,8 @@ func StoreBundles(bundles []*pathbuilder.Bundle, index *Index, engine BundleEngi
 // A Context must be opened, and eventually waited on.
 // See [Open] and [Close].
 type Context struct {
-	Index  *Index
-	Engine BundleEngine
+	Index  *igraph.Index
+	Engine storages.BundleEngine
 
 	errOnce sync.Once
 	err     error
@@ -108,7 +110,7 @@ func (context *Context) reportError(err error) bool {
 // May only be called between calls [Open] and [Wait].
 //
 // Any error that occurs is returned only by Wait.
-func (context *Context) Store(bundle *pathbuilder.Bundle) BundleStorage {
+func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage {
 	context.extractWait.Add(1)
 
 	// create a new context
@@ -188,7 +190,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) BundleStorage {
 		}
 
 		// stage 3: read child paths
-		cstorages := make([]BundleStorage, len(bundle.ChildBundles))
+		cstorages := make([]storages.BundleStorage, len(bundle.ChildBundles))
 		for i, bundle := range bundle.ChildBundles {
 			cstorages[i] = context.Store(bundle)
 			if cstorages[i] == nil {
@@ -211,14 +213,14 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) BundleStorage {
 
 			for i, cstorage := range cstorages {
 				wg.Add(1)
-				go func(cstorage BundleStorage, bundle *pathbuilder.Bundle) {
+				go func(cstorage storages.BundleStorage, bundle *pathbuilder.Bundle) {
 					defer wg.Done()
 					defer context.childAddWait.Done()
 
 					children := cstorage.Get(entityURIIndex)
 					for children.Next() {
 						child := children.Datum()
-						err := storage.AddChild(child.Parent, bundle.MachineName(), child.URI)
+						err := storage.AddChild(child.Parent, bundle.MachineName(), child.Label)
 						if err != storages.ErrNoEntity {
 							context.reportError(err)
 						}
@@ -249,11 +251,11 @@ var debugLogID int64 // id of the current log id
 //
 // Any values found along the path are written to the returned channel which is then closed.
 // If an error occurs, it is written to errDst before the channel is closed.
-func extractPath(path pathbuilder.Path, index *Index) iterator.Iterator[Path] {
+func extractPath(path pathbuilder.Path, index *igraph.Index) iterator.Iterator[igraph.Path] {
 	// start with the path array
 	uris := append([]string{}, path.PathArray...)
 	if len(uris) == 0 {
-		return iterator.Empty[Path](nil)
+		return iterator.Empty[igraph.Path](nil)
 	}
 
 	// add the datatype property if are not a group
@@ -268,33 +270,33 @@ func extractPath(path pathbuilder.Path, index *Index) iterator.Iterator[Path] {
 		debugID = atomic.AddInt64(&debugLogID, 1)
 	}
 
-	set, err := index.PathsStarting(wisski.Type, URI(uris[0]))
+	set, err := index.PathsStarting(wisski.Type, imap.Label(uris[0]))
 	if err != nil {
-		return iterator.Empty[Path](err)
+		return iterator.Empty[igraph.Path](err)
 	}
 	if debugLogAllPaths {
 		size, err := set.Size()
 		if err != nil {
-			return iterator.Empty[Path](err)
+			return iterator.Empty[igraph.Path](err)
 		}
 		log.Println(debugID, uris[0], size)
 	}
 
 	for i := 1; i < len(uris); i++ {
 		if i%2 == 0 {
-			if err := set.Ending(wisski.Type, URI(uris[i])); err != nil {
-				return iterator.Empty[Path](err)
+			if err := set.Ending(wisski.Type, imap.Label(uris[i])); err != nil {
+				return iterator.Empty[igraph.Path](err)
 			}
 		} else {
-			if err := set.Connected(URI(uris[i])); err != nil {
-				return iterator.Empty[Path](err)
+			if err := set.Connected(imap.Label(uris[i])); err != nil {
+				return iterator.Empty[igraph.Path](err)
 			}
 		}
 
 		if debugLogAllPaths {
 			size, err := set.Size()
 			if err != nil {
-				return iterator.Empty[Path](err)
+				return iterator.Empty[igraph.Path](err)
 			}
 			log.Println(debugID, uris[i], size)
 		}

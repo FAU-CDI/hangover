@@ -9,6 +9,7 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -239,7 +240,7 @@ var (
 )
 
 // inserts performs inserts into the table for the provided bundle.
-func (sql *SQL) insert(bundle *pathbuilder.Bundle, parent wisski.URI, entities []wisski.Entity) error {
+func (sql *SQL) insert(bundle *pathbuilder.Bundle, parent imap.Label, entities []wisski.Entity) error {
 
 	// 1. insert into the bundle table
 	if err := sql.insertBundleTable(bundle, parent, entities); err != nil {
@@ -288,7 +289,7 @@ func (sql *SQL) insertFieldTables(bundle *pathbuilder.Bundle, field pathbuilder.
 	return sql.execInsert(sql.FieldTable(bundle, field), columns, values)
 }
 
-func (sql *SQL) insertBundleTable(bundle *pathbuilder.Bundle, parent wisski.URI, entities []wisski.Entity) error {
+func (sql *SQL) insertBundleTable(bundle *pathbuilder.Bundle, parent imap.Label, entities []wisski.Entity) error {
 	// determine all the columns to insert
 	var columns []string
 	columns = append(columns, uriColumn)

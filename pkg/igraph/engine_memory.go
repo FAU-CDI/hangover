@@ -7,28 +7,28 @@ import (
 )
 
 // MemoryEngine represents an engine that stores everything in memory
-type MemoryEngine[Label comparable, Datum any] struct {
-	imap.MemoryMap[Label]
+type MemoryEngine struct {
+	imap.MemoryMap
 }
 
-func (MemoryEngine[Label, Datum]) Data() (imap.HashMap[imap.ID, Datum], error) {
-	ms := imap.MakeMemory[imap.ID, Datum](0)
+func (MemoryEngine) Data() (imap.HashMap[imap.ID, imap.Datum], error) {
+	ms := imap.MakeMemory[imap.ID, imap.Datum](0)
 	return &ms, nil
 }
-func (MemoryEngine[Label, Datum]) Triples() (imap.HashMap[imap.ID, IndexTriple], error) {
+func (MemoryEngine) Triples() (imap.HashMap[imap.ID, IndexTriple], error) {
 	ms := imap.MakeMemory[imap.ID, IndexTriple](0)
 	return &ms, nil
 }
-func (MemoryEngine[Label, Datum]) Inverses() (imap.HashMap[imap.ID, imap.ID], error) {
+func (MemoryEngine) Inverses() (imap.HashMap[imap.ID, imap.ID], error) {
 	ms := imap.MakeMemory[imap.ID, imap.ID](0)
 	return &ms, nil
 }
-func (MemoryEngine[Label, Datum]) PSOIndex() (ThreeStorage, error) {
+func (MemoryEngine) PSOIndex() (ThreeStorage, error) {
 	th := make(ThreeHash)
 	return &th, nil
 
 }
-func (MemoryEngine[Label, Datum]) POSIndex() (ThreeStorage, error) {
+func (MemoryEngine) POSIndex() (ThreeStorage, error) {
 	th := make(ThreeHash)
 	return &th, nil
 }

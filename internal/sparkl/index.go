@@ -3,11 +3,14 @@ package sparkl
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/FAU-CDI/hangover/pkg/progress"
 )
 
@@ -15,7 +18,7 @@ import (
 
 // LoadIndex is like MakeIndex, but reads nquads from the given path.
 // When err != nil, the caller must eventually close the index.
-func LoadIndex(path string, predicates Predicates, engine Engine, opts IndexOptions, p *progress.Progress) (*Index, error) {
+func LoadIndex(path string, predicates Predicates, engine igraph.Engine, opts IndexOptions, p *progress.Progress) (*igraph.Index, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -40,9 +43,9 @@ func (io IndexOptions) shouldCompact(index int) bool {
 
 // MakeIndex creates a new Index from the given source.
 // When err != nil, the caller must eventually close the index.
-func MakeIndex(source Source, predicates Predicates, engine Engine, opts IndexOptions, p *progress.Progress) (*Index, error) {
+func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts IndexOptions, p *progress.Progress) (*igraph.Index, error) {
 	// create a new index
-	var index Index
+	var index igraph.Index
 	if err := index.Reset(engine); err != nil {
 		return nil, err
 	}
@@ -103,14 +106,14 @@ func MakeIndex(source Source, predicates Predicates, engine Engine, opts IndexOp
 }
 
 // set mask sets a mask while building the index, causing several triples to not be indexed at all
-func setMask(index *Index, pb *pathbuilder.Pathbuilder) error {
+func setMask(index *igraph.Index, pb *pathbuilder.Pathbuilder) error {
 	if pb == nil {
 		return nil
 	}
 
-	dmask := make(map[URI]struct{})
+	dmask := make(map[imap.Label]struct{})
 
-	pmask := make(map[URI]struct{})
+	pmask := make(map[imap.Label]struct{})
 	pmask[wisski.Type] = struct{}{}
 
 	for _, bundle := range pb.Bundles() {
@@ -123,34 +126,34 @@ func setMask(index *Index, pb *pathbuilder.Pathbuilder) error {
 	)
 }
 
-func addBundleToMasks(pmask map[URI]struct{}, dmask map[URI]struct{}, bundle *pathbuilder.Bundle) {
+func addBundleToMasks(pmask map[imap.Label]struct{}, dmask map[imap.Label]struct{}, bundle *pathbuilder.Bundle) {
 	addPathArrayToMasks(pmask, bundle.PathArray)
 	for _, field := range bundle.Fields() {
 		addPathArrayToMasks(pmask, field.PathArray)
-		dmask[URI(field.DatatypeProperty)] = struct{}{}
+		dmask[imap.Label(field.DatatypeProperty)] = struct{}{}
 	}
 	for _, child := range bundle.ChildBundles {
 		addBundleToMasks(pmask, dmask, child)
 	}
 }
 
-func addPathArrayToMasks(pmask map[URI]struct{}, ary []string) {
+func addPathArrayToMasks(pmask map[imap.Label]struct{}, ary []string) {
 	for i, pth := range ary {
 		if i%2 == 1 {
-			pmask[URI(pth)] = struct{}{}
+			pmask[imap.Label(pth)] = struct{}{}
 		}
 	}
 }
 
 // indexSameAs inserts SameAs pairs into the index
-func indexSameAs(source Source, index *Index, sameAsPredicates []URI, opts IndexOptions, p *progress.Progress) (count int, err error) {
+func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []imap.Label, opts IndexOptions, p *progress.Progress) (count int, err error) {
 	err = source.Open()
 	if err != nil {
 		return 0, err
 	}
 	defer source.Close()
 
-	sameAss := make(map[URI]struct{}, len(sameAsPredicates))
+	sameAss := make(map[imap.Label]struct{}, len(sameAsPredicates))
 	for _, sameAs := range sameAsPredicates {
 		sameAss[sameAs] = struct{}{}
 	}
@@ -183,7 +186,7 @@ func indexSameAs(source Source, index *Index, sameAsPredicates []URI, opts Index
 }
 
 // indexInverseOf inserts InverseOf pairs into the index
-func indexInverseOf(source Source, index *Index, inversePredicates []URI, total int, opts IndexOptions, p *progress.Progress) error {
+func indexInverseOf(source Source, index *igraph.Index, inversePredicates []imap.Label, total int, opts IndexOptions, p *progress.Progress) error {
 	if len(inversePredicates) == 0 {
 		return nil
 	}
@@ -194,7 +197,7 @@ func indexInverseOf(source Source, index *Index, inversePredicates []URI, total 
 	}
 	defer source.Close()
 
-	inverses := make(map[URI]struct{})
+	inverses := make(map[imap.Label]struct{})
 	for _, inverse := range inversePredicates {
 		inverses[inverse] = struct{}{}
 	}
@@ -228,7 +231,7 @@ func indexInverseOf(source Source, index *Index, inversePredicates []URI, total 
 }
 
 // indexData inserts data into the index
-func indexData(source Source, index *Index, total int, opts IndexOptions, p *progress.Progress) error {
+func indexData(source Source, index *igraph.Index, total int, opts IndexOptions, p *progress.Progress) error {
 	err := source.Open()
 	if err != nil {
 		return err
@@ -256,7 +259,7 @@ func indexData(source Source, index *Index, total int, opts IndexOptions, p *pro
 		case tok.Err != nil:
 			return tok.Err
 		case tok.HasDatum:
-			index.AddData(tok.Subject, tok.Predicate, tok.Datum)
+			index.AddData(tok.Subject, tok.Predicate, fmt.Sprint(tok.Datum))
 		case !tok.HasDatum:
 			index.AddTriple(tok.Subject, tok.Predicate, tok.Object)
 		}

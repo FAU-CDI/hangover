@@ -9,8 +9,8 @@ import (
 
 func ExampleIMap() {
 
-	var mp IMap[string]
-	mp.Reset(&MemoryMap[string]{})
+	var mp IMap
+	mp.Reset(&MemoryMap{})
 
 	lid := func(prefix string) func(id ID, err error) {
 		return func(id ID, err error) {
@@ -75,8 +75,10 @@ func ExampleIMap() {
 }
 
 // mapTest performs a test for a given engine
-func mapTest(t *testing.T, engine Map[string], N int) {
-	var mp IMap[string]
+func mapTest(t *testing.T, engine Map, N int) {
+	t.Helper()
+
+	var mp IMap
 	mp.Reset(engine)
 	defer mp.Close()
 

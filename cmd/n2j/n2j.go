@@ -14,6 +14,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
 	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
 	"github.com/FAU-CDI/hangover/pkg/perf"
 	"github.com/FAU-CDI/hangover/pkg/progress"
 	"github.com/pkg/profile"
@@ -64,7 +65,7 @@ func main() {
 	}
 
 	// build an index
-	var index *sparkl.Index
+	var index *igraph.Index
 	{
 		start := perf.Now()
 		index, err = sparkl.LoadIndex(nqp, predicates, engine, sparkl.DefaultIndexOptions(&pb), &progress.Progress{

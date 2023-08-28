@@ -12,8 +12,9 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/assets"
-	"github.com/FAU-CDI/hangover/internal/sparkl"
+	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/htmlx"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/gorilla/mux"
 )
 
@@ -141,7 +142,7 @@ type htmlBundleContext struct {
 	Globals contextGlobal
 
 	Bundle *pathbuilder.Bundle
-	URIS   []sparkl.URI
+	URIS   []imap.Label
 }
 
 func (viewer *Viewer) htmlBundle(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +185,7 @@ func (viewer *Viewer) htmlPathbuilder(w http.ResponseWriter, r *http.Request) {
 
 func (viewer *Viewer) htmlEntityResolve(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	uri := sparkl.URI(strings.TrimSpace(vars["uri"]))
+	uri := imap.Label(strings.TrimSpace(vars["uri"]))
 
 	bundle, ok := viewer.Cache.Bundle(uri)
 	if !ok {
@@ -201,13 +202,13 @@ func (viewer *Viewer) htmlEntityResolve(w http.ResponseWriter, r *http.Request) 
 
 func (viewer *Viewer) sendToResolver(w http.ResponseWriter, r *http.Request) {
 	publics := viewer.RenderFlags.PublicURIS()
-	uris := make([]sparkl.URI, 0, len(publics))
+	uris := make([]imap.Label, 0, len(publics))
 	for _, public := range publics {
 		uri, err := url.JoinPath(public, r.URL.Path)
 		if err != nil {
 			continue
 		}
-		uris = append(uris, sparkl.URI(uri))
+		uris = append(uris, imap.Label(uri))
 	}
 
 	uri, _, ok := viewer.Cache.FirstBundle(uris...)
@@ -224,14 +225,14 @@ type htmlEntityContext struct {
 	Globals contextGlobal
 
 	Bundle  *pathbuilder.Bundle
-	Entity  *sparkl.Entity
-	Aliases []sparkl.URI
+	Entity  *wisski.Entity
+	Aliases []imap.Label
 }
 
 func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	bundle, entity, ok := viewer.findEntity(vars["bundle"], sparkl.URI(vars["uri"]))
+	bundle, entity, ok := viewer.findEntity(vars["bundle"], imap.Label(vars["uri"]))
 	if !ok {
 		http.NotFound(w, r)
 		return

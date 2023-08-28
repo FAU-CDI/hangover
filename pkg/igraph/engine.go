@@ -7,10 +7,10 @@ import (
 )
 
 // Engine represents an object that creates storages for an IGraph
-type Engine[Label comparable, Datum any] interface {
-	imap.Map[Label]
+type Engine interface {
+	imap.Map
 
-	Data() (imap.HashMap[imap.ID, Datum], error)
+	Data() (imap.HashMap[imap.ID, imap.Datum], error)
 	Triples() (imap.HashMap[imap.ID, IndexTriple], error)
 	Inverses() (imap.HashMap[imap.ID, imap.ID], error)
 	PSOIndex() (ThreeStorage, error)

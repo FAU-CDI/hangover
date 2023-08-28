@@ -3,6 +3,7 @@ package sparkl
 import (
 	"io"
 
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/cayleygraph/quad"
 	"github.com/cayleygraph/quad/nquads"
 )
@@ -37,9 +38,7 @@ type Source interface {
 // In the case of 2, Error == nil && HasDatum = False
 // In the case of 3, Error == nil && HasDatum = True
 type Token struct {
-	Subject   URI
-	Predicate URI
-	Object    URI
+	Subject, Predicate, Object imap.Label
 
 	HasDatum bool
 	Datum    any
@@ -109,12 +108,12 @@ func (qs *QuadSource) Close() error {
 	return nil
 }
 
-func asURILike(value quad.Value) (uri URI, ok bool) {
+func asURILike(value quad.Value) (uri imap.Label, ok bool) {
 	switch datum := value.(type) {
 	case quad.IRI:
-		return URI(string(datum)), true
+		return imap.Label(string(datum)), true
 	case quad.BNode:
-		return URI(string(datum)), true
+		return imap.Label(string(datum)), true
 	default:
 		return "", false
 	}

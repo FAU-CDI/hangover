@@ -2,7 +2,8 @@ package viewer
 
 import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
-	"github.com/FAU-CDI/hangover/internal/sparkl"
+	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 )
 
 // cspell:words pathbuilder
@@ -18,7 +19,7 @@ func (viewer *Viewer) findBundle(machine string) (bundle *pathbuilder.Bundle, ok
 }
 
 // findEntity finds an entity by the given bundle machine name
-func (viewer *Viewer) findEntity(bundle_machine string, uri sparkl.URI) (bundle *pathbuilder.Bundle, entity *sparkl.Entity, ok bool) {
+func (viewer *Viewer) findEntity(bundle_machine string, uri imap.Label) (bundle *pathbuilder.Bundle, entity *wisski.Entity, ok bool) {
 	bundle, ok = viewer.findBundle(bundle_machine)
 	if !ok {
 		return nil, nil, false
@@ -50,14 +51,14 @@ func (viewer *Viewer) getBundles() (bundles []*pathbuilder.Bundle, ok bool) {
 
 // getEntityURIs returns the URIs belonging to a single bundle
 // TODO: Make this stream
-func (viewer *Viewer) getEntityURIs(id string) (bundle *pathbuilder.Bundle, uris []sparkl.URI, ok bool) {
+func (viewer *Viewer) getEntityURIs(id string) (bundle *pathbuilder.Bundle, uris []imap.Label, ok bool) {
 	bundle, ok = viewer.findBundle(id)
 	if !ok {
 		return nil, nil, false
 	}
 
 	entities := viewer.Cache.Entities(bundle.MachineName())
-	uris = make([]sparkl.URI, len(entities))
+	uris = make([]imap.Label, len(entities))
 	for i, entity := range entities {
 		uris[i] = entity.URI
 	}
@@ -66,7 +67,7 @@ func (viewer *Viewer) getEntityURIs(id string) (bundle *pathbuilder.Bundle, uris
 
 // getEntityURIs returns the URIs belonging to a single bundle
 // TODO: Make this stream
-func (viewer *Viewer) getEntity(id string, uri sparkl.URI) (entity *sparkl.Entity, ok bool) {
+func (viewer *Viewer) getEntity(id string, uri imap.Label) (entity *wisski.Entity, ok bool) {
 	_, entity, ok = viewer.findEntity(id, uri)
 	return
 }

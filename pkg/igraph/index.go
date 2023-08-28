@@ -11,7 +11,7 @@ import (
 
 // cSpell:words imap
 
-// IGraph represents a searchable index of a directed labeled graph with optionally attached Data.
+// Index represents a searchable index of a directed labeled graph with optionally attached Data.
 //
 // Labels are used for nodes and edges.
 // This means that the graph is defined by triples of the form (subject Label, predicate Label, object Label).
@@ -23,16 +23,16 @@ import (
 // The zero value represents an empty index, but is otherwise not ready to be used.
 // To fill an index, it first needs to be [Reset], and then [Finalize]d.
 //
-// IGraph may not be modified concurrently, however it is possible to run several queries concurrently.
-type IGraph[Label comparable, Datum any] struct {
+// Index may not be modified concurrently, however it is possible to run several queries concurrently.
+type Index struct {
 	finalized atomic.Bool
 
 	stats Stats
 
-	labels imap.IMap[Label]
+	labels imap.IMap
 
 	// data holds mappings between internal IDs and data
-	data imap.HashMap[imap.ID, Datum]
+	data imap.HashMap[imap.ID, imap.Datum]
 
 	inverses imap.HashMap[imap.ID, imap.ID] // inverse ids for a given id
 
@@ -49,13 +49,13 @@ type IGraph[Label comparable, Datum any] struct {
 }
 
 // Stats returns statistics from this graph
-func (index *IGraph[Label, Datum]) Stats() Stats {
+func (index *Index) Stats() Stats {
 	return index.stats
 }
 
 // TripleCount returns the total number of (distinct) triples in this graph.
 // Triples which have been identified will only count once.
-func (index *IGraph[Label, Datum]) TripleCount() (count uint64, err error) {
+func (index *Index) TripleCount() (count uint64, err error) {
 	if index == nil {
 		return 0, nil
 	}
@@ -63,7 +63,7 @@ func (index *IGraph[Label, Datum]) TripleCount() (count uint64, err error) {
 }
 
 // Triple returns the triple with the given id
-func (index *IGraph[Label, Datum]) Triple(id imap.ID) (triple Triple[Label, Datum], err error) {
+func (index *Index) Triple(id imap.ID) (triple Triple, err error) {
 	t, _, err := index.triples.Get(id)
 	if err != nil {
 		return triple, err
@@ -108,7 +108,7 @@ func (index *IGraph[Label, Datum]) Triple(id imap.ID) (triple Triple[Label, Datu
 }
 
 // Reset resets this index and prepares all internal structures for use.
-func (index *IGraph[Label, Datum]) Reset(engine Engine[Label, Datum]) (err error) {
+func (index *Index) Reset(engine Engine) (err error) {
 
 	if err = index.Close(); err != nil {
 		return err
@@ -170,16 +170,16 @@ func (index *IGraph[Label, Datum]) Reset(engine Engine[Label, Datum]) (err error
 }
 
 // SetPredicateMask sets the masks for predicates
-func (index *IGraph[Label, Datum]) SetPredicateMask(predicates map[Label]struct{}) error {
+func (index *Index) SetPredicateMask(predicates map[imap.Label]struct{}) error {
 	return index.setMask(predicates, &index.pMask)
 }
 
 // SetDataMask sets the masks for data
-func (index *IGraph[Label, Datum]) SetDataMask(predicates map[Label]struct{}) error {
+func (index *Index) SetDataMask(predicates map[imap.Label]struct{}) error {
 	return index.setMask(predicates, &index.dMask)
 }
 
-func (index *IGraph[Label, Datum]) setMask(predicates map[Label]struct{}, dest *map[imap.ID]struct{}) error {
+func (index *Index) setMask(predicates map[imap.Label]struct{}, dest *map[imap.ID]struct{}) error {
 	mask := make(map[imap.ID]struct{}, len(predicates))
 	for label := range predicates {
 		ids, err := index.labels.Add(label)
@@ -193,7 +193,7 @@ func (index *IGraph[Label, Datum]) setMask(predicates map[Label]struct{}, dest *
 	return nil
 }
 
-func (index *IGraph[Label, Datum]) addMask(predicate Label, mask map[imap.ID]struct{}) (imap.TripleID, bool, error) {
+func (index *Index) addMask(predicate imap.Label, mask map[imap.ID]struct{}) (imap.TripleID, bool, error) {
 	// no mask => add normally
 	if mask == nil {
 		id, err := index.labels.Add(predicate)
@@ -219,7 +219,7 @@ func (index *IGraph[Label, Datum]) addMask(predicate Label, mask map[imap.ID]str
 //
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
-func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) error {
+func (index *Index) AddTriple(subject, predicate, object imap.Label) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -302,7 +302,7 @@ func (index *IGraph[Label, Datum]) AddTriple(subject, predicate, object Label) e
 //
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
-func (index *IGraph[Label, Datum]) AddData(subject, predicate Label, object Datum) error {
+func (index *Index) AddData(subject, predicate imap.Label, object imap.Datum) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -353,7 +353,7 @@ func (index *IGraph[Label, Datum]) AddData(subject, predicate Label, object Datu
 
 var errResolveConflictCorrupt = errors.New("errResolveConflict: Corrupted triple data")
 
-func (index *IGraph[Label, Datum]) resolveLabelConflict(old, new imap.ID) (imap.ID, error) {
+func (index *Index) resolveLabelConflict(old, new imap.ID) (imap.ID, error) {
 	if old == new {
 		return old, nil
 	}
@@ -387,7 +387,7 @@ func (index *IGraph[Label, Datum]) resolveLabelConflict(old, new imap.ID) (imap.
 }
 
 // insert inserts the provided (subject, predicate, object) ids into the graph
-func (index *IGraph[Label, Datum]) insert(subject, predicate, object imap.ID, label imap.ID) (conflicted bool, err error) {
+func (index *Index) insert(subject, predicate, object imap.ID, label imap.ID) (conflicted bool, err error) {
 	var conflicted1, conflicted2 bool
 
 	conflicted1, err = index.psoIndex.Add(predicate, subject, object, label, index.resolveLabelConflict)
@@ -402,7 +402,7 @@ func (index *IGraph[Label, Datum]) insert(subject, predicate, object imap.ID, la
 
 // MarkIdentical identifies the new and old labels.
 // See [imap.IMap.MarkIdentical].
-func (index *IGraph[Label, Datum]) MarkIdentical(new, old Label) error {
+func (index *Index) MarkIdentical(new, old imap.Label) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -418,7 +418,7 @@ func (index *IGraph[Label, Datum]) MarkIdentical(new, old Label) error {
 // A label may not be it's own inverse.
 //
 // This means that each call to AddTriple(s, left, o) will also result in a call to AddTriple(o, right, s).
-func (index *IGraph[Label, Datum]) MarkInverse(left, right Label) error {
+func (index *Index) MarkInverse(left, right imap.Label) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -449,12 +449,12 @@ func (index *IGraph[Label, Datum]) MarkInverse(left, right Label) error {
 
 // IdentityMap writes all Labels for which has a semantically equivalent label.
 // See [imap.Storage.IdentityMap].
-func (index *IGraph[Label, Datum]) IdentityMap(storage imap.HashMap[Label, Label]) error {
+func (index *Index) IdentityMap(storage imap.HashMap[imap.Label, imap.Label]) error {
 	return index.labels.IdentityMap(storage)
 }
 
 // Compact informs the implementation to perform any internal optimizations.
-func (index *IGraph[Label, Datum]) Compact() error {
+func (index *Index) Compact() error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -505,7 +505,7 @@ var ErrFinalized = errors.New("IGraph: Finalized")
 // Finalize must be called before any query is performed,
 // but after any calls to the Add* methods.
 // Calling finalize multiple times is invalid.
-func (index *IGraph[Label, Datum]) Finalize() error {
+func (index *Index) Finalize() error {
 	if index.finalized.Swap(true) {
 		return ErrFinalized
 	}
@@ -550,7 +550,7 @@ func (index *IGraph[Label, Datum]) Finalize() error {
 }
 
 // Close closes any storages attached to this storage
-func (index *IGraph[Label, Datum]) Close() error {
+func (index *Index) Close() error {
 	var errors [5]error
 	errors[0] = index.labels.Close()
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/FAU-CDI/hangover/internal/sparkl"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/gorilla/mux"
 )
 
@@ -31,7 +31,7 @@ func (viewer *Viewer) jsonBundle(w http.ResponseWriter, r *http.Request) {
 func (viewer *Viewer) jsonEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	entity, ok := viewer.getEntity(vars["bundle"], sparkl.URI(vars["uri"]))
+	entity, ok := viewer.getEntity(vars["bundle"], imap.Label(vars["uri"]))
 	if !ok {
 		http.NotFound(w, r)
 		return

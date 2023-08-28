@@ -1,11 +1,8 @@
 package imap
 
-// Label is the type of labels used across the implementation.
-// It must be comparable.
+// Label represents the label of individual triple members.
+// A label is a uri.
 type Label = string
-
-// ZeroLabel represents the zero label
-const ZeroLabel Label = ""
 
 // LabelAsByte encodes a label as a set of bytes.
 func LabelAsByte(label Label) []byte {

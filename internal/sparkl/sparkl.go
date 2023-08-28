@@ -4,58 +4,40 @@ package sparkl
 import (
 	"strings"
 
-	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
-	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/igraph"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 )
 
 // cspell:words sparkl
 
-type (
-	Entity = wisski.Entity
-	URI    = wisski.URI
-
-	BundleStorage = storages.BundleStorage
-	BundleEngine  = storages.BundleEngine
-
-	Engine       = igraph.Engine[URI, any]
-	MemoryEngine = igraph.MemoryEngine[URI, any]
-	DiskEngine   = igraph.DiskEngine[URI, any]
-
-	Triple = igraph.Triple[URI, any] // Triple inside the index
-	Index  = igraph.IGraph[URI, any] // Index represents an index of a RDF Graph
-	Paths  = igraph.Paths[URI, any]  // Set of Paths inside the index
-	Path   = igraph.Path[URI, any]   // Single Path in the index
-)
-
 // Predicates represent special predicates
 type Predicates struct {
-	SameAs    []URI
-	InverseOf []URI
+	SameAs    []imap.Label
+	InverseOf []imap.Label
 }
 
-// ParsePredicateString parses a value of comma-separate value into a list of URIs
-func ParsePredicateString(target *[]URI, value string) {
+// ParsePredicateString parses a value of comma-separate value into a list of imap.Labels
+func ParsePredicateString(target *[]imap.Label, value string) {
 	if value == "" {
 		*target = nil
 		return
 	}
 
 	values := strings.Split(value, ",")
-	*target = make([]URI, len(values))
+	*target = make([]imap.Label, len(values))
 	for i, value := range values {
-		(*target)[i] = URI(value)
+		(*target)[i] = imap.Label(value)
 	}
 }
 
 // NewEngine creates an engine that stores data at the specified path.
 // When path is the empty string, stores data in memory.
-func NewEngine(path string) Engine {
+func NewEngine(path string) igraph.Engine {
 	if path == "" {
-		return &MemoryEngine{}
+		return &igraph.MemoryEngine{}
 	}
 
-	var de DiskEngine
+	var de igraph.DiskEngine
 	de.Path = path
 	return de
 }

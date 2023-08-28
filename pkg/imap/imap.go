@@ -13,15 +13,14 @@ import (
 // An IMap may be read concurrently; however any operations which change internal state are not safe to access concurrently.
 //
 // The zero map is not ready for use; it should be initialized using a call to [Reset].
-type IMap[Label comparable] struct {
+type IMap struct {
+	id ID // last id inserted
+
 	finalized atomic.Bool // stores if the map has been finalized
 
-	// mapping from labels to the ids of their trippings
-	forward HashMap[Label, TripleID]
-	// mapping from literal back to their labels
-	reverse HashMap[ID, Label]
+	forward HashMap[Label, TripleID] // mapping from labels to the ids of their trippings
+	reverse HashMap[ID, Label]       // mapping from literal back to their labels
 
-	id ID // last id inserted
 }
 
 // TripleID represents the id of a tripleID
@@ -47,7 +46,7 @@ func (ti *TripleID) Unmarshal(src []byte) error {
 var ErrFinalized = errors.New("IMap is finalized")
 
 // Reset resets this IMap to be empty, closing any previously opened files
-func (mp *IMap[Label]) Reset(engine Map[Label]) error {
+func (mp *IMap) Reset(engine Map) error {
 	if err := mp.Close(); err != nil {
 		return err
 	}
@@ -76,12 +75,12 @@ func (mp *IMap[Label]) Reset(engine Map[Label]) error {
 
 // Next returns a new unused id within this map
 // It is always valid.
-func (mp *IMap[Label]) Next() ID {
+func (mp *IMap) Next() ID {
 	return mp.id.Inc()
 }
 
 // Compact indicates to the implementation to perform any optimization of internal data structures.
-func (mp *IMap[Label]) Compact() error {
+func (mp *IMap) Compact() error {
 	var errs [2]error
 
 	var wg sync.WaitGroup
@@ -103,7 +102,7 @@ func (mp *IMap[Label]) Compact() error {
 
 // Finalize indicates that no more mutating calls will be made.
 // A mutable call is one made to Compact, Add, AddNew or MarkIdentical.
-func (mp *IMap[Label]) Finalize() error {
+func (mp *IMap) Finalize() error {
 	// store that we finalized!
 	if mp.finalized.Swap(true) {
 		return ErrFinalized
@@ -132,7 +131,7 @@ func (mp *IMap[Label]) Finalize() error {
 // The first is the canonical id (for use in lookups) whereas the second is the original id.
 //
 // When label (or any object marked identical to ID) already exists in this IMap, returns the corresponding ID.
-func (mp *IMap[Label]) Add(label Label) (ids TripleID, err error) {
+func (mp *IMap) Add(label Label) (ids TripleID, err error) {
 	// we were already finalized!
 	if mp.finalized.Load() {
 		return ids, ErrFinalized
@@ -143,12 +142,12 @@ func (mp *IMap[Label]) Add(label Label) (ids TripleID, err error) {
 }
 
 // Get behaves like Add, but in case the label has no associated mappings returns ok = false and does not modify the state.
-func (mp *IMap[Label]) Get(label Label) (ids TripleID, ok bool, err error) {
+func (mp *IMap) Get(label Label) (ids TripleID, ok bool, err error) {
 	return mp.forward.Get(label)
 }
 
 // AddNew behaves like Add, except additionally returns a boolean indicating if the returned id existed previously.
-func (mp *IMap[Label]) AddNew(label Label) (ids TripleID, old bool, err error) {
+func (mp *IMap) AddNew(label Label) (ids TripleID, old bool, err error) {
 	// we were already finalized!
 	if mp.finalized.Load() {
 		return ids, false, ErrFinalized
@@ -186,7 +185,7 @@ func (mp *IMap[Label]) AddNew(label Label) (ids TripleID, old bool, err error) {
 //
 // NOTE(twiesing): Each call to MarkIdentical potentially requires iterating over all calls that were previously added to this map.
 // This is a potentially slow operation and should be avoided.
-func (mp *IMap[Label]) MarkIdentical(new, old Label) (canonical ID, err error) {
+func (mp *IMap) MarkIdentical(new, old Label) (canonical ID, err error) {
 	// we were already finalized!
 	if mp.finalized.Load() {
 		return canonical, ErrFinalized
@@ -242,7 +241,7 @@ func (mp *IMap[Label]) MarkIdentical(new, old Label) (canonical ID, err error) {
 //
 // If the label is not contained in this map, the zero ID is returned.
 // The zero ID is never returned for a valid id.
-func (mp *IMap[Label]) Forward(label Label) (ID, error) {
+func (mp *IMap) Forward(label Label) (ID, error) {
 	// TODO: This stores, but discards the original value.
 	value, err := mp.forward.GetZero(label)
 	return value.Canonical, err
@@ -250,7 +249,7 @@ func (mp *IMap[Label]) Forward(label Label) (ID, error) {
 
 // Reverse returns the label corresponding to the given id.
 // When id is not contained in this map, the zero value of the label type is contained.
-func (mp *IMap[Label]) Reverse(id ID) (Label, error) {
+func (mp *IMap) Reverse(id ID) (Label, error) {
 	return mp.reverse.GetZero(id)
 }
 
@@ -259,7 +258,7 @@ func (mp *IMap[Label]) Reverse(id ID) (Label, error) {
 // Concretely a pair (L1, L2) is written to storage iff
 //
 //	mp.Reverse(mp.Forward(L1)) == L2 && L1 != L2
-func (mp *IMap[Label]) IdentityMap(storage HashMap[Label, Label]) error {
+func (mp *IMap) IdentityMap(storage HashMap[Label, Label]) error {
 	// TODO: Do we really want this right now
 	return mp.forward.Iterate(func(label Label, id TripleID) error {
 		value, err := mp.reverse.GetZero(id.Canonical)
@@ -276,7 +275,7 @@ func (mp *IMap[Label]) IdentityMap(storage HashMap[Label, Label]) error {
 // Close closes any storages related to this IMap.
 //
 // Calling close multiple times results in err = nil.
-func (mp *IMap[Label]) Close() error {
+func (mp *IMap) Close() error {
 	var errors [2]error
 
 	if mp.forward != nil {

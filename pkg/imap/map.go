@@ -3,7 +3,7 @@ package imap
 // cspell:words imap
 
 // Map represents the backend of an Imap and creates appropriate key-value stores.
-type Map[Label comparable] interface {
+type Map interface {
 	Forward() (HashMap[Label, TripleID], error)
 	Reverse() (HashMap[ID, Label], error)
 }

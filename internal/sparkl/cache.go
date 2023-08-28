@@ -15,7 +15,7 @@ import (
 // Cache represents an easily accessible cache of WissKIObjects.
 // It is held entirely in memory.
 type Cache struct {
-	beIndex map[string][]Entity        // mappings from bundles to entities
+	beIndex map[string][]wisski.Entity // mappings from bundles to entities
 	biIndex map[string]map[imap.ID]int // index into beIndex by uri
 	ebIndex map[imap.ID]string         // index from entity uri into bundle
 
@@ -24,8 +24,8 @@ type Cache struct {
 	sameAs  map[imap.ID]imap.ID   // canonical name mappings from entities
 	aliasOf map[imap.ID][]imap.ID // opposite of sameAs
 
-	engine imap.MemoryMap[URI] // the engine used for the imap
-	uris   *imap.IMap[URI]     // holds mappings between ids and uris
+	engine imap.MemoryMap // the engine used for the imap
+	uris   *imap.IMap     // holds mappings between ids and uris
 }
 
 // EncodeTo encodes this cache object to the given gob.Encoder.
@@ -70,11 +70,11 @@ func (cache *Cache) DecodeFrom(decoder *gob.Decoder) error {
 		}
 	}
 
-	cache.uris = &imap.IMap[wisski.URI]{}
+	cache.uris = &imap.IMap{}
 	return cache.uris.Reset(&cache.engine)
 }
 
-func (cache Cache) Entities(bundle_machine string) []Entity {
+func (cache Cache) Entities(bundle_machine string) []wisski.Entity {
 	return cache.beIndex[bundle_machine]
 }
 
@@ -85,9 +85,9 @@ func (cache Cache) BundleNames() []string {
 // TODO: Do we want to use an IMap here?
 
 // NewCache creates a new cache from a bundle-entity-map
-func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[URI, URI]) (c Cache, err error) {
+func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[imap.Label, imap.Label]) (c Cache, err error) {
 	// reset the uris
-	c.uris = &imap.IMap[wisski.URI]{}
+	c.uris = &imap.IMap{}
 	c.uris.Reset(&c.engine)
 
 	// store the bundle-entity index
@@ -118,7 +118,7 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[URI, URI]) (c
 	c.sameAs = make(map[imap.ID]imap.ID, sameAsCount)
 	c.aliasOf = make(map[imap.ID][]imap.ID, sameAsCount)
 
-	err = SameAs.Iterate(func(alias, canon wisski.URI) error {
+	err = SameAs.Iterate(func(alias, canon imap.Label) error {
 		aliass, err := c.uris.Add(alias)
 		if err != nil {
 			return err
@@ -140,7 +140,7 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[URI, URI]) (c
 	return c, nil
 }
 
-func (c Cache) canonical(uri URI) imap.ID {
+func (c Cache) canonical(uri imap.Label) imap.ID {
 	id, err := c.uris.Forward(uri)
 	if err != nil {
 		return id
@@ -152,20 +152,20 @@ func (c Cache) canonical(uri URI) imap.ID {
 }
 
 // Canonical returns the canonical version of the given uri
-func (c Cache) Canonical(uri URI) URI {
+func (c Cache) Canonical(uri imap.Label) imap.Label {
 	canon, _ := c.uris.Reverse(c.canonical(uri))
 	return canon
 }
 
-// Aliases returns the Aliases of the given URI, excluding itself
-func (c Cache) Aliases(uri URI) []URI {
+// Aliases returns the Aliases of the given imap.Label, excluding itself
+func (c Cache) Aliases(uri imap.Label) []imap.Label {
 	id, err := c.uris.Forward(uri)
 	if err != nil {
 		return nil
 	}
 
 	aids := c.aliasOf[id]
-	aliases := make([]URI, 0, len(aids))
+	aliases := make([]imap.Label, 0, len(aids))
 	for _, id := range aids {
 		alias, err := c.uris.Reverse(id)
 		if err != nil {
@@ -177,14 +177,14 @@ func (c Cache) Aliases(uri URI) []URI {
 }
 
 // Bundle returns the bundle of the given uri, if any
-func (c Cache) Bundle(uri URI) (string, bool) {
+func (c Cache) Bundle(uri imap.Label) (string, bool) {
 	cid := c.canonical(uri)
 	bundle, ok := c.ebIndex[cid]
 	return bundle, ok
 }
 
-// FirstBundle returns the first bundle for which the given URI exists
-func (c Cache) FirstBundle(uris ...URI) (uri URI, bundle string, ok bool) {
+// FirstBundle returns the first bundle for which the given imap.Label exists
+func (c Cache) FirstBundle(uris ...imap.Label) (uri imap.Label, bundle string, ok bool) {
 	for _, uri := range uris {
 		bundle, ok = c.Bundle(uri)
 		if ok {
@@ -195,7 +195,7 @@ func (c Cache) FirstBundle(uris ...URI) (uri URI, bundle string, ok bool) {
 }
 
 // Entity looks up the given entity
-func (c Cache) Entity(uri URI, bundle string) (*Entity, bool) {
+func (c Cache) Entity(uri imap.Label, bundle string) (*wisski.Entity, bool) {
 	index, ok := c.biIndex[bundle][c.canonical(uri)]
 	if !ok {
 		return nil, false

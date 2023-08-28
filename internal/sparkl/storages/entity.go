@@ -7,6 +7,7 @@ import (
 
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/igraph"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 )
 
 // sEntityPool is a pool of stored entities
@@ -24,12 +25,12 @@ var bufferPool = sync.Pool{
 
 // sEntity represents a stored entity that does not hold references to child entities
 type sEntity struct {
-	URI     wisski.URI      // URI of this entity
-	Path    []wisski.URI    // the path of this entity
-	Triples []wisski.Triple // the triples that make up the entity
+	URI     imap.Label      // URI of this entity
+	Path    []imap.Label    // the path of this entity
+	Triples []igraph.Triple // the triples that make up the entity
 
 	Fields   map[string][]wisski.FieldValue // values for specific fields
-	Children map[string][]wisski.URI        // child entities
+	Children map[string][]imap.Label        // child entities
 }
 
 // Reset resets this stored entity
@@ -78,10 +79,10 @@ func (s *sEntity) Decode(data []byte) error {
 }
 
 func init() {
-	gob.Register(wisski.URI(""))
+	gob.Register(imap.Label(""))
 	gob.Register(igraph.Role(0))
 
 	gob.Register(wisski.FieldValue{})
-	gob.Register(wisski.Triple{})
+	gob.Register(igraph.Triple{})
 	gob.Register(sEntity{})
 }

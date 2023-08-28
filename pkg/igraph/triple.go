@@ -62,7 +62,7 @@ func UnmarshalTriple(dest *IndexTriple, src []byte) error {
 }
 
 // Triple represents a triple found inside a graph
-type Triple[Label comparable, Datum any] struct {
+type Triple struct {
 	// ID uniquely identifies this triple.
 	// Two triples are identical iff their IDs are identical.
 	ID imap.ID
@@ -71,17 +71,17 @@ type Triple[Label comparable, Datum any] struct {
 	Role Role
 
 	// the literal SPO for this triple, as found in the original data.
-	Subject, Predicate, Object Label
+	Subject, Predicate, Object imap.Label
 
 	// the canonical (normalized for sameAs) for this triple.
 	// FIXME: change this to say canonical in the name
-	SSubject, SPredicate, SObject Label
+	SSubject, SPredicate, SObject imap.Label
 
-	Datum Datum
+	Datum imap.Datum
 }
 
 // Inferred returns if this triple has been inferred
-func (triple Triple[Label, Datum]) Inferred() bool {
+func (triple Triple) Inferred() bool {
 	return triple.Role == Inverse
 }
 

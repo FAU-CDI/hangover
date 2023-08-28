@@ -113,10 +113,14 @@ func TestID_Valid(t *testing.T) {
 }
 
 func BenchmarkID_Less(b *testing.B) {
+	b.StopTimer()
+
 	var idI, idJ ID
 
 	idI.LoadInt(big.NewInt(10000))
 	idJ.LoadInt(big.NewInt(12))
+
+	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
 		idI.Less(idJ)

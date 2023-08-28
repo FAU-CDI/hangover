@@ -8,6 +8,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/exporter"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
 	"github.com/FAU-CDI/hangover/pkg/perf"
 	_ "github.com/glebarez/go-sqlite"
 	_ "github.com/go-sql-driver/mysql"
@@ -18,7 +19,7 @@ const (
 	sqlLiteBatchSize  = 1000
 )
 
-func doSQL(pb *pathbuilder.Pathbuilder, index *sparkl.Index, bEngine storages.BundleEngine, proto, addr string) {
+func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, proto, addr string) {
 	var err error
 
 	// setup the sqlite

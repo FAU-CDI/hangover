@@ -8,6 +8,8 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/igraph"
+	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/tkw1536/pkglib/iterator"
@@ -70,7 +72,7 @@ func (ds *Disk) put(f func(*sEntity) error) error {
 	return ds.DB.Put([]byte(entity.URI), data, nil)
 }
 
-func (ds *Disk) get(uri wisski.URI, f func(*sEntity) error) error {
+func (ds *Disk) get(uri imap.Label, f func(*sEntity) error) error {
 	entity := sEntityPool.Get().(*sEntity)
 	entity.Reset()
 	defer sEntityPool.Put(entity)
@@ -108,7 +110,7 @@ func (ds *Disk) decode(data []byte, f func(*sEntity) error) error {
 	return f(entity)
 }
 
-func (ds *Disk) update(uri wisski.URI, update func(*sEntity) error) error {
+func (ds *Disk) update(uri imap.Label, update func(*sEntity) error) error {
 	entity := sEntityPool.Get().(*sEntity)
 	entity.Reset()
 	defer sEntityPool.Put(entity)
@@ -146,19 +148,19 @@ func (ds *Disk) update(uri wisski.URI, update func(*sEntity) error) error {
 }
 
 // Add adds an entity to this BundleSlice
-func (ds *Disk) Add(uri wisski.URI, path []wisski.URI, triples []wisski.Triple) error {
+func (ds *Disk) Add(uri imap.Label, path []imap.Label, triples []igraph.Triple) error {
 	atomic.AddInt64(&ds.count, 1)
 	return ds.put(func(se *sEntity) error {
 		se.URI = uri
 		se.Path = path
 		se.Triples = triples
 		se.Fields = make(map[string][]wisski.FieldValue)
-		se.Children = make(map[string][]wisski.URI)
+		se.Children = make(map[string][]imap.Label)
 		return nil
 	})
 }
 
-func (ds *Disk) AddFieldValue(uri wisski.URI, field string, value any, path []wisski.URI, triples []wisski.Triple) error {
+func (ds *Disk) AddFieldValue(uri imap.Label, field string, value any, path []imap.Label, triples []igraph.Triple) error {
 	return ds.update(uri, func(se *sEntity) error {
 		if se.Fields == nil {
 			se.Fields = make(map[string][]wisski.FieldValue)
@@ -177,10 +179,10 @@ func (ds *Disk) RegisterChildStorage(bundle string, storage BundleStorage) error
 	return nil
 }
 
-func (ds *Disk) AddChild(parent wisski.URI, bundle string, child wisski.URI) error {
+func (ds *Disk) AddChild(parent imap.Label, bundle string, child imap.Label) error {
 	return ds.update(parent, func(se *sEntity) error {
 		if se.Children == nil {
-			se.Children = make(map[string][]wisski.URI)
+			se.Children = make(map[string][]imap.Label)
 		}
 		se.Children[bundle] = append(se.Children[bundle], child)
 		return nil
@@ -191,27 +193,27 @@ func (ds *Disk) Finalize() error {
 	return ds.DB.SetReadOnly()
 }
 
-func (ds *Disk) Get(parentPathIndex int) iterator.Iterator[URIWithParent] {
-	return iterator.New(func(sender iterator.Generator[URIWithParent]) {
+func (ds *Disk) Get(parentPathIndex int) iterator.Iterator[LabelWithParent] {
+	return iterator.New(func(sender iterator.Generator[LabelWithParent]) {
 		defer sender.Return()
 
 		it := ds.DB.NewIterator(nil, nil)
 		defer it.Release()
 
 		for it.Next() {
-			var uri URIWithParent
+			var uri LabelWithParent
 			var err error
 
 			if parentPathIndex > 0 {
 				err = ds.decode(it.Value(), func(se *sEntity) error {
-					uri.URI = se.URI
+					uri.Label = se.URI
 					if parentPathIndex != -1 {
 						uri.Parent = se.Path[parentPathIndex]
 					}
 					return nil
 				})
 			} else {
-				uri.URI = wisski.URI(it.Key())
+				uri.Label = imap.Label(it.Key())
 			}
 
 			if sender.YieldError(err) {
@@ -231,7 +233,7 @@ func (ds *Disk) Count() (int64, error) {
 	return atomic.LoadInt64(&ds.count), nil
 }
 
-func (ds *Disk) Load(uri wisski.URI) (entity wisski.Entity, err error) {
+func (ds *Disk) Load(uri imap.Label) (entity wisski.Entity, err error) {
 	err = ds.get(uri, func(se *sEntity) error {
 		// copy simple fields
 		entity.URI = se.URI
