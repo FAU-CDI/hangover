@@ -35,7 +35,7 @@ func main() {
 	var err error
 
 	// start listening, so that even during loading we are not performing that badly
-	if export == "" {
+	if export == "" && !benchMode {
 		listener, err = net.Listen("tcp", addr)
 		if err != nil {
 			log.Fatal(err)
@@ -54,11 +54,13 @@ func main() {
 
 	var drincw glass.Glass
 	if idx == "" {
+		log.Printf("pathbuilder=%q nquads=%q", pb, nq)
 		sparkl.ParsePredicateString(&flags.Predicates.SameAs, sameAs)
 		sparkl.ParsePredicateString(&flags.Predicates.InverseOf, inverseOf)
 
 		drincw, err = glass.Create(pb, nq, cache, flags, os.Stderr)
 	} else {
+		log.Printf("index=%q", idx)
 		drincw, err = glass.Import(idx, os.Stderr)
 	}
 	if err != nil {
@@ -95,6 +97,10 @@ func main() {
 	log.Printf("loading overall took %s", loadPerformance)
 	log.Println(perf.Now())
 
+	if benchMode {
+		return
+	}
+
 	http.Serve(listener, &handler)
 }
 
@@ -109,6 +115,7 @@ var inverseOf string = string(wisski.InverseOf)
 var cache string
 var export string
 var debugServer string
+var benchMode bool
 
 func init() {
 	var legalFlag bool = false
@@ -129,6 +136,7 @@ func init() {
 	flag.StringVar(&cache, "cache", cache, "During indexing, cache data in the given directory as opposed to memory")
 	flag.StringVar(&debugServer, "debug-listen", debugServer, "start a profiling server on the given address")
 	flag.StringVar(&export, "export", export, "export completed index to path and exit")
+	flag.BoolVar(&benchMode, "bench", benchMode, "benchmarking mode: only load for statistics and exit")
 
 	flag.Parse()
 	nArgs = flag.Args()
