@@ -38,8 +38,8 @@ func TestSGob_Long(t *testing.T) {
 
 func TestSGob(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
 			name:  "slice",

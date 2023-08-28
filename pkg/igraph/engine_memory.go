@@ -41,8 +41,8 @@ func (th *ThreeHash) Compact() error {
 }
 
 type ThreeItem struct {
-	Keys []imap.ID
 	Data map[imap.ID]imap.ID
+	Keys []imap.ID
 }
 
 func (tlm ThreeHash) Add(a, b, c imap.ID, l imap.ID, conflict func(old, new imap.ID) (imap.ID, error)) (conflicted bool, err error) {

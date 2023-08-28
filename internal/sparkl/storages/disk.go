@@ -42,14 +42,10 @@ func (de DiskEngine) NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, erro
 
 // Disk represents a disk-backed storage
 type Disk struct {
-	count int64
-
-	DB *leveldb.DB
-
+	DB            *leveldb.DB
 	childStorages map[string]BundleStorage
-
-	// l protects modifying data on disk
-	l sync.RWMutex
+	count         int64
+	l             sync.RWMutex // protects modifying data on disk
 }
 
 func (ds *Disk) put(f func(*sEntity) error) error {

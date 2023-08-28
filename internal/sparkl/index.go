@@ -33,8 +33,8 @@ func DefaultIndexOptions(pb *pathbuilder.Pathbuilder) IndexOptions {
 }
 
 type IndexOptions struct {
-	CompactInterval int                      // Interval during which to call internal compact. Set <= 0 to disable.
 	Mask            *pathbuilder.Pathbuilder // Pathbuilder to use as a mask when indexing
+	CompactInterval int                      // Interval during which to call internal compact. Set <= 0 to disable.
 }
 
 func (io IndexOptions) shouldCompact(index int) bool {

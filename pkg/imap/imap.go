@@ -14,13 +14,11 @@ import (
 //
 // The zero map is not ready for use; it should be initialized using a call to [Reset].
 type IMap struct {
-	id ID // last id inserted
-
-	finalized atomic.Bool // stores if the map has been finalized
-
 	forward HashMap[Label, TripleID] // mapping from labels to the ids of their trippings
 	reverse HashMap[ID, Label]       // mapping from literal back to their labels
 
+	finalized atomic.Bool // stores if the map has been finalized
+	id        ID          // last id inserted
 }
 
 // TripleID represents the id of a tripleID

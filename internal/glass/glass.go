@@ -30,10 +30,8 @@ const GlassVersion = 1
 // Glass represents a stand-alone representation of a WissKI
 type Glass struct {
 	Pathbuilder pathbuilder.Pathbuilder
-
-	Flags viewer.RenderFlags
-
-	Cache *sparkl.Cache
+	Cache       *sparkl.Cache
+	Flags       viewer.RenderFlags
 }
 
 func (glass *Glass) Close() error {

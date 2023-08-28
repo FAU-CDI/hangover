@@ -25,27 +25,17 @@ import (
 //
 // Index may not be modified concurrently, however it is possible to run several queries concurrently.
 type Index struct {
+	data      imap.HashMap[imap.ID, imap.Datum]  // holds data mappings
+	inverses  imap.HashMap[imap.ID, imap.ID]     // inverse ids for a given id
+	psoIndex  ThreeStorage                       // <predicate> <subject> <object>
+	posIndex  ThreeStorage                       // <predicate> <object> <subject>
+	triples   imap.HashMap[imap.ID, IndexTriple] // values for the triples
+	pMask     map[imap.ID]struct{}               // mask for predicates
+	dMask     map[imap.ID]struct{}               // mask for data
+	labels    imap.IMap
+	stats     Stats
 	finalized atomic.Bool
-
-	stats Stats
-
-	labels imap.IMap
-
-	// data holds mappings between internal IDs and data
-	data imap.HashMap[imap.ID, imap.Datum]
-
-	inverses imap.HashMap[imap.ID, imap.ID] // inverse ids for a given id
-
-	// the triple indexes, forward and backward
-	psoIndex ThreeStorage // <predicate> <subject> <object>
-	posIndex ThreeStorage // <predicate> <object> <subject>
-
-	// the id for a given triple
-	triple  imap.ID
-	triples imap.HashMap[imap.ID, IndexTriple]
-
-	pMask map[imap.ID]struct{} // mask for predicates
-	dMask map[imap.ID]struct{} // mask for data
+	triple    imap.ID // id for a given triple
 }
 
 // Stats returns statistics from this graph

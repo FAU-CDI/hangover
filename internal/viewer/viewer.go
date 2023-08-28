@@ -17,13 +17,11 @@ import (
 
 // Viewer implements an [http.Handler] that displays WissKI Entities.
 type Viewer struct {
+	mux         mux.Router
 	Cache       *sparkl.Cache
 	Pathbuilder *pathbuilder.Pathbuilder
-
 	RenderFlags RenderFlags
-
-	init sync.Once
-	mux  mux.Router
+	init        sync.Once
 }
 
 func (viewer *Viewer) Close() error {
@@ -34,12 +32,10 @@ func (viewer *Viewer) Close() error {
 }
 
 type RenderFlags struct {
-	HTMLRender  bool // should we render "text_long" as actual html?
-	ImageRender bool // should we render "image" as actual images
-
-	PublicURL string // should we replace links from the provided wisski?
-
-	Predicates sparkl.Predicates
+	PublicURL   string
+	Predicates  sparkl.Predicates
+	HTMLRender  bool
+	ImageRender bool
 }
 
 func (rf RenderFlags) PublicURIS() (public []string) {

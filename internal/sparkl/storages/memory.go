@@ -23,15 +23,12 @@ func (MemoryEngine) NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, error
 
 // Memory implements an in-memory bundle storage
 type Memory struct {
-	Entities []wisski.Entity
-
 	bundle        *pathbuilder.Bundle
 	childStorages map[string]BundleStorage
-
-	lookup map[imap.Label]int
-
-	addField sync.Mutex // mutex for adding fields
-	addChild sync.Mutex // mutex for adding children
+	lookup        map[imap.Label]int
+	Entities      []wisski.Entity
+	addField      sync.Mutex
+	addChild      sync.Mutex
 }
 
 // Add adds an entity to this BundleSlice

@@ -17,17 +17,14 @@ import (
 // Cache represents an easily accessible cache of WissKIObjects.
 // It is held entirely in memory.
 type Cache struct {
-	beIndex map[string][]wisski.Entity // mappings from bundles to entities
-	biIndex map[string]map[imap.ID]int // index into beIndex by uri
-	ebIndex map[imap.ID]string         // index from entity uri into bundle
-
-	bundleNames []string // names of all bundles
-
-	sameAs  map[imap.ID]imap.ID   // canonical name mappings from entities
-	aliasOf map[imap.ID][]imap.ID // opposite of sameAs
-
-	engine imap.MemoryMap // the engine used for the imap
-	uris   *imap.IMap     // holds mappings between ids and uris
+	engine      imap.MemoryMap             // the engine used for the imap
+	beIndex     map[string][]wisski.Entity // mappings from bundles to entities
+	biIndex     map[string]map[imap.ID]int // index into beIndex by uri
+	ebIndex     map[imap.ID]string         // index from entity uri into bundle
+	sameAs      map[imap.ID]imap.ID        // canonical name mappings from entities
+	aliasOf     map[imap.ID][]imap.ID      // opposite of sameAs
+	uris        *imap.IMap                 // holds mappings between ids and uris
+	bundleNames []string                   // names of all bundles
 }
 
 func (cache *Cache) Close() error {

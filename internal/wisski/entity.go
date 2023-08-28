@@ -10,12 +10,11 @@ import (
 
 // Entity represents an Entity inside a WissKI Bundle
 type Entity struct {
-	URI     imap.Label      // URI of this entity
-	Path    []imap.Label    // the path of this entity
-	Triples []igraph.Triple // the triples that define this entity itself
-
 	Fields   map[string][]FieldValue // values for specific fields
-	Children map[string][]Entity     // child paths for specific entities
+	Children map[string][]Entity     // child paths for child bundles
+	URI      imap.Label
+	Path     []imap.Label
+	Triples  []igraph.Triple
 }
 
 // AllTriples returns all triples that are related to this entity.
@@ -66,7 +65,7 @@ func (entity Entity) appendTriples(triples []igraph.Triple) []igraph.Triple {
 
 // FieldValue represents the value of a field inside an entity
 type FieldValue struct {
+	Value   any
 	Path    []imap.Label
 	Triples []igraph.Triple
-	Value   any
 }

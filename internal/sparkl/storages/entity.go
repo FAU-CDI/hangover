@@ -25,12 +25,11 @@ var bufferPool = sync.Pool{
 
 // sEntity represents a stored entity that does not hold references to child entities
 type sEntity struct {
-	URI     imap.Label      // URI of this entity
-	Path    []imap.Label    // the path of this entity
-	Triples []igraph.Triple // the triples that make up the entity
-
-	Fields   map[string][]wisski.FieldValue // values for specific fields
-	Children map[string][]imap.Label        // child entities
+	Fields   map[string][]wisski.FieldValue
+	Children map[string][]imap.Label // child entities
+	URI      imap.Label
+	Path     []imap.Label
+	Triples  []igraph.Triple
 }
 
 // Reset resets this stored entity

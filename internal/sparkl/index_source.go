@@ -38,12 +38,12 @@ type Source interface {
 // In the case of 2, Error == nil && HasDatum = False
 // In the case of 3, Error == nil && HasDatum = True
 type Token struct {
-	Subject, Predicate, Object imap.Label
-
-	HasDatum bool
-	Datum    any
-
-	Err error
+	Datum     any
+	Err       error
+	Subject   imap.Label
+	Predicate imap.Label
+	Object    imap.Label
+	HasDatum  bool
 }
 
 // QuadSource reads triples from a quad file

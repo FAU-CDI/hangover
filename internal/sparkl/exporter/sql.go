@@ -18,17 +18,14 @@ import (
 // SQL implements an exporter for storing data inside an sql database.
 // TODO(twiesing): For now this only supports string-like fields.
 type SQL struct {
-	dbLock sync.Mutex
-	DB     *sql.DB
-
-	BatchSize   int // BatchSize for top-level bundles
-	MaxQueryVar int // Maximum number of query variables (overrides BatchSize)
-
-	MakeFieldTables bool   // create tables for field values (if false, they get joined with "separator")
+	DB              *sql.DB
+	batches         map[string][]wisski.Entity
 	Separator       string // separator for database multi-valued fields
-
-	batchLock sync.Mutex
-	batches   map[string][]wisski.Entity
+	BatchSize       int    // BatchSize for top-level bundles
+	MaxQueryVar     int    // Maximum number of query variables (overrides BatchSize)
+	dbLock          sync.Mutex
+	batchLock       sync.Mutex
+	MakeFieldTables bool // create tables for field values (if false, they get joined with "separator")
 }
 
 // exec executes an sql query

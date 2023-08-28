@@ -75,10 +75,8 @@ var pbTemplate *template.Template = assets.Assetshangover.MustParseShared(
 )
 
 type contextGlobal struct {
+	InterceptedPrefixes []string // urls that are redirected to this server
 	RenderFlags
-
-	// InterceptedPrefixes are urls that are redirected to this server
-	InterceptedPrefixes []string
 }
 
 func (cg contextGlobal) ReplaceURL(u string) string {
@@ -116,8 +114,8 @@ func (viewer *Viewer) contextGlobal() (global contextGlobal) {
 }
 
 type htmlIndexContext struct {
-	Globals contextGlobal
 	Bundles []*pathbuilder.Bundle
+	Globals contextGlobal
 }
 
 func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
@@ -139,10 +137,9 @@ func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 type htmlBundleContext struct {
+	Bundle  *pathbuilder.Bundle
+	URIS    []imap.Label
 	Globals contextGlobal
-
-	Bundle *pathbuilder.Bundle
-	URIS   []imap.Label
 }
 
 func (viewer *Viewer) htmlBundle(w http.ResponseWriter, r *http.Request) {
@@ -167,8 +164,8 @@ func (viewer *Viewer) htmlBundle(w http.ResponseWriter, r *http.Request) {
 }
 
 type htmlPathbuilderContext struct {
-	Globals     contextGlobal
 	Pathbuilder *pathbuilder.Pathbuilder
+	Globals     contextGlobal
 }
 
 func (viewer *Viewer) htmlPathbuilder(w http.ResponseWriter, r *http.Request) {
@@ -222,11 +219,10 @@ func (viewer *Viewer) sendToResolver(w http.ResponseWriter, r *http.Request) {
 }
 
 type htmlEntityContext struct {
-	Globals contextGlobal
-
 	Bundle  *pathbuilder.Bundle
 	Entity  *wisski.Entity
 	Aliases []imap.Label
+	Globals contextGlobal
 }
 
 func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {

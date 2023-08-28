@@ -13,10 +13,9 @@ import (
 
 // Reader consistently writes the number of bytes read to Progress.
 type Reader struct {
-	io.Reader       // Reader to read from
-	Bytes     int64 // total number of bytes read (so far)
-
+	io.Reader // Reader to read from
 	Rewritable
+	Bytes int64 // total number of bytes read (so far)
 }
 
 func (cr *Reader) Read(bytes []byte) (int, error) {
@@ -28,10 +27,9 @@ func (cr *Reader) Read(bytes []byte) (int, error) {
 
 // Writer consistently writes the number of bytes written to Progress.
 type Writer struct {
-	io.Writer       // Writer to write to
-	Bytes     int64 // Total number of bytes written
-
+	io.Writer // Writer to write to
 	Rewritable
+	Bytes int64 // Total number of bytes written
 }
 
 func (cw *Writer) Write(bytes []byte) (int, error) {
@@ -44,12 +42,11 @@ func (cw *Writer) Write(bytes []byte) (int, error) {
 const DefaultFlushInterval = time.Second / 30
 
 type Rewritable struct {
-	Writer io.Writer
-
-	FlushInterval  time.Duration // minimum time between flushes of the progress
-	lastFlush      time.Time     // last time we flushed
-	longestContent int           // longest content ever flushed
+	lastFlush      time.Time // last time we flushed
+	Writer         io.Writer
 	content        string        // current content
+	FlushInterval  time.Duration // minimum time between flushes of the progress
+	longestContent int           // longest content ever flushed
 }
 
 func (rw *Rewritable) Write(value string) {

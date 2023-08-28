@@ -48,16 +48,13 @@ func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine sto
 // A Context must be opened, and eventually waited on.
 // See [Open] and [Close].
 type Context struct {
-	Index  *igraph.Index
-	Engine storages.BundleEngine
-
-	errOnce sync.Once
-	err     error
-
+	Engine       storages.BundleEngine
+	err          error          // error that occurred (if any)
+	Index        *igraph.Index  // index being used
+	closers      chan io.Closer // what to close when done
 	extractWait  sync.WaitGroup // waiting on extracting entities in all bundles
 	childAddWait sync.WaitGroup // loading child entities wait
-
-	closers chan io.Closer
+	errOnce      sync.Once      // to set the error
 }
 
 // Open opens this context, and signals that multiple calls to Store() may follow.
