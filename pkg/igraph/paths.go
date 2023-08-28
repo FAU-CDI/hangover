@@ -156,40 +156,45 @@ func (set *Paths) Size() (int, error) {
 // Paths returns an iterator over paths contained in this Paths.
 // It may only be called once, afterwards further calls may be invalid.
 func (set *Paths) Paths() iterator.Iterator[Path] {
-	return iterator.Map(set.elements, set.makePath)
+	return iterator.New(func(generator iterator.Generator[Path]) {
+		defer generator.Return()
+
+		for set.elements.Next() {
+			element := set.elements.Datum()
+			path, err := set.makePath(element)
+			if generator.YieldError(err) {
+				return
+			}
+			if generator.Yield(path) {
+				return
+			}
+		}
+
+		generator.YieldError(set.elements.Err())
+	})
 }
 
 // makePath creates a path from an element
-func (set *Paths) makePath(elem element) (path Path) {
-	path.index = set.index
-	path.edgeIDs = set.predicates
+func (set *Paths) makePath(elem element) (path Path, err error) {
+	var rNodes, rTriples []imap.ID
 
-	// insert nodes and triples
 	e := &elem
 	for {
-		path.nodeIDs = append(path.nodeIDs, e.Node)
-		path.tripleIDs = append(path.tripleIDs, e.Triples...)
+		rNodes = append(rNodes, e.Node)
+		rTriples = append(rTriples, e.Triples...)
 		e = e.Parent
 		if e == nil {
 			break
 		}
 	}
 
-	// reverse the triples and nodes
-	for i := len(path.nodeIDs)/2 - 1; i >= 0; i-- {
-		opp := len(path.nodeIDs) - 1 - i
-		path.nodeIDs[i], path.nodeIDs[opp] = path.nodeIDs[opp], path.nodeIDs[i]
-	}
-
-	for i := len(path.tripleIDs)/2 - 1; i >= 0; i-- {
-		opp := len(path.tripleIDs) - 1 - i
-		path.tripleIDs[i], path.tripleIDs[opp] = path.tripleIDs[opp], path.tripleIDs[i]
-	}
-
-	// resolve all the ids (once)
-	path.process()
-
-	return path
+	// make a new path
+	return newPath(
+		set.index,
+		rNodes,
+		set.predicates,
+		rTriples,
+	)
 }
 
 // element represents an element of a path
@@ -206,120 +211,92 @@ type element struct {
 
 // Path represents a path inside a GraphIndex
 type Path struct {
-	// index is the index this Path belongs to
-	index *Index
+	nodes   []imap.Label
+	edges   []imap.Label
+	triples []Triple
 
-	errNodes error
-	nodeIDs  []imap.ID
-	nodes    []imap.Label
 	hasDatum bool
 	datum    imap.Datum
+}
 
-	errEdges error
-	edgeIDs  []imap.ID
-	edges    []imap.Label
+// newPath creates a new path from the given index, with the given ids
+// an "r" in front of the variable indicates it is passed in reverse order
+func newPath(index *Index, rNodeIDs []imap.ID, edgeIDs []imap.ID, rTripleIDs []imap.ID) (path Path, err error) {
+	// process nodes
+	if len(rNodeIDs) != 0 {
+		// split off the first value to use as a datum (if any)
+		path.datum, path.hasDatum, err = index.data.Get(rNodeIDs[0])
+		if err != nil {
+			return Path{}, err
+		}
+		if path.hasDatum {
+			rNodeIDs = rNodeIDs[1:]
+		}
 
-	errTriples error
-	tripleIDs  []imap.ID
-	triples    []Triple
+		// turn the nodes into a set of labels
+		// reverse the passed nodes here!
+		path.nodes = make([]imap.Label, len(rNodeIDs))
+		last := len(rNodeIDs) - 1
+		for j, label := range rNodeIDs {
+			path.nodes[last-j], err = index.labels.Reverse(label)
+			if err != nil {
+				return Path{}, err
+			}
+		}
+	}
+
+	// process edges
+	path.edges = make([]imap.Label, len(edgeIDs))
+	last := len(path.edges) - 1
+	for j, label := range edgeIDs {
+		path.edges[last-j], err = index.labels.Reverse(label)
+		if err != nil {
+			return Path{}, err
+		}
+	}
+
+	// process triples
+	path.triples = make([]Triple, len(rTripleIDs))
+	for j, label := range rTripleIDs {
+		path.triples[j], err = index.Triple(label)
+		if err != nil {
+			return Path{}, err
+		}
+	}
+
+	return
+
 }
 
 // Nodes returns the nodes this path consists of, in order.
 func (path *Path) Nodes() ([]imap.Label, error) {
-	path.processNodes()
-	return path.nodes, path.errNodes
+	return path.nodes, nil
 }
+
+var errOutOfBounds = errors.New("Path.Node: index out of bounds")
 
 // Node returns the label of the node at the given index of path.
 func (path *Path) Node(index int) (label imap.Label, err error) {
-	switch {
-	case len(path.nodes) > index:
-		// already computed!
-		return path.nodes[index], nil
-	case index >= len(path.nodeIDs):
-		// path does not exist
-		return label, nil
-	case index == len(path.nodeIDs)-1:
-		// check if the last element has data associated with it
-		last := path.nodeIDs[len(path.nodeIDs)-1]
-		has, err := path.index.data.Has(last)
-		if has || err != nil {
-			return label, err
-		}
-		fallthrough
-	default:
-		// return the index
-		return path.index.labels.Reverse(path.nodeIDs[index])
+	if index < 0 || index > len(path.nodes) {
+		return label, errOutOfBounds
 	}
+	return path.nodes[index], nil
 }
 
 // Datum returns the datum attached to the last node of this path, if any.
 func (path *Path) Datum() (datum imap.Datum, ok bool, err error) {
-	return path.datum, path.hasDatum, path.errNodes
-}
-
-func (path *Path) process() {
-	path.processNodes()
-	path.processEdges()
-	path.processTriples()
-}
-
-func (path *Path) processNodes() {
-	if len(path.nodeIDs) == 0 {
-		return
-	}
-
-	// split off the last value as a datum (if any)
-	last := path.nodeIDs[len(path.nodeIDs)-1]
-	path.datum, path.hasDatum, path.errNodes = path.index.data.Get(last)
-	if path.errNodes != nil {
-		return
-	}
-	if path.hasDatum {
-		path.nodeIDs = path.nodeIDs[:len(path.nodeIDs)-1]
-	}
-
-	// turn the nodes into a set of labels
-	path.nodes = make([]imap.Label, len(path.nodeIDs))
-	for j, label := range path.nodeIDs {
-		path.nodes[j], path.errNodes = path.index.labels.Reverse(label)
-		if path.errNodes != nil {
-			return
-		}
-	}
+	return path.datum, path.hasDatum, nil
 }
 
 // Edges returns the labels of the edges this path consists of.
 func (path *Path) Edges() ([]imap.Label, error) {
-	path.processEdges()
-	return path.edges, path.errEdges
-}
-
-func (path *Path) processEdges() {
-	path.edges = make([]imap.Label, len(path.edgeIDs))
-	for j, label := range path.edgeIDs {
-		path.edges[j], path.errEdges = path.index.labels.Reverse(label)
-		if path.errEdges != nil {
-			return
-		}
-	}
+	return path.edges, nil
 }
 
 // Triples returns the triples that this Path consists of.
 // Triples are guaranteed to be returned in query order, that is in the order they were required for the query to be fulfilled.
 func (path *Path) Triples() ([]Triple, error) {
-	path.processTriples()
-	return path.triples, path.errTriples
-}
-
-func (path *Path) processTriples() {
-	path.triples = make([]Triple, len(path.tripleIDs))
-	for j, label := range path.tripleIDs {
-		path.triples[j], path.errTriples = path.index.Triple(label)
-		if path.errEdges != nil {
-			return
-		}
-	}
+	return path.triples, nil
 }
 
 // String turns this result into a string
@@ -328,9 +305,6 @@ func (path *Path) processTriples() {
 // It should not be used in production code.
 func (result *Path) String() string {
 	var builder strings.Builder
-
-	result.processNodes()
-	result.processEdges()
 
 	for i, edge := range result.edges {
 		fmt.Fprintf(&builder, "%v %v ", result.nodes[i], edge)
