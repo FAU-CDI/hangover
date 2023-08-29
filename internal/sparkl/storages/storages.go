@@ -43,7 +43,7 @@ type BundleStorage interface {
 	// Concurrent calls to distinct fields may take place, however within each field calls are always synchronized.
 	//
 	// A non-existing parent should return ErrNoEntity.
-	AddFieldValue(uri impl.Label, field string, value any, path []impl.Label, triples []igraph.Triple) error
+	AddFieldValue(uri impl.Label, field string, value impl.Datum, path []impl.Label, triples []igraph.Triple) error
 
 	// RegisterChildStorage register the given storage as a BundleStorage for the child bundle.
 	// The Storage should delete the reference to the child storage when it is closed.

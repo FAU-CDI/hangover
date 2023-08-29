@@ -54,7 +54,7 @@ func (bs *Memory) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple
 	return nil
 }
 
-func (bs *Memory) AddFieldValue(uri impl.Label, field string, value any, path []impl.Label, triples []igraph.Triple) error {
+func (bs *Memory) AddFieldValue(uri impl.Label, field string, value impl.Datum, path []impl.Label, triples []igraph.Triple) error {
 	id, ok := bs.lookup[uri]
 	if !ok {
 		return ErrNoEntity
