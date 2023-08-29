@@ -263,22 +263,41 @@ func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []i
 
 }
 
+// Value returns the value corresponding to a field represented by this path.
+//
+// The value returned tries the following options in order:
+//
+// - the datum corresponding to the path
+// - the last node, interpreted as a datum
+// - the zero value of the datum type
+func (path Path) Value() (value impl.Datum) {
+	if path.HasDatum {
+		return path.Datum
+	}
+
+	if len(path.Nodes) > 0 {
+		return impl.Datum(path.Nodes[len(path.Nodes)-1])
+	}
+
+	return
+}
+
 // String turns this result into a string
 //
 // NOTE(twiesing): This is for debugging only, and ignores all errors.
 // It should not be used in production code.
-func (result *Path) String() string {
+func (path Path) String() string {
 	var builder strings.Builder
 
-	for i, edge := range result.Edges {
-		fmt.Fprintf(&builder, "%v %v ", result.Nodes[i], edge)
+	for i, edge := range path.Edges {
+		fmt.Fprintf(&builder, "%v %v ", path.Nodes[i], edge)
 	}
 
-	if len(result.Nodes) > 0 {
-		fmt.Fprintf(&builder, "%v", result.Nodes[len(result.Nodes)-1])
+	if len(path.Nodes) > 0 {
+		fmt.Fprintf(&builder, "%v", path.Nodes[len(path.Nodes)-1])
 	}
-	if result.HasDatum {
-		fmt.Fprintf(&builder, " %#v", result.Datum)
+	if path.HasDatum {
+		fmt.Fprintf(&builder, " %#v", path.Datum)
 	}
 	return builder.String()
 }

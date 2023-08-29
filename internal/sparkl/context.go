@@ -157,16 +157,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage
 				for paths.Next() {
 					path := paths.Datum()
 
-					nodes := path.Nodes
-					triples := path.Triples
-
-					datum, hasDatum := path.Datum, path.HasDatum
-					if !hasDatum && len(nodes) > 0 {
-						datum = nodes[len(nodes)-1]
-					}
-					uri := nodes[entityURIIndex]
-
-					err = storage.AddFieldValue(uri, field.MachineName(), datum, nodes, triples)
+					err = storage.AddFieldValue(path.Nodes[entityURIIndex], field.MachineName(), path.Value(), path.Nodes, path.Triples)
 					if err != storages.ErrNoEntity {
 						context.reportError(err)
 					}

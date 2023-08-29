@@ -259,7 +259,7 @@ func indexData(source Source, index *igraph.Index, total int, opts IndexOptions,
 		case tok.Err != nil:
 			return tok.Err
 		case tok.HasDatum:
-			index.AddData(tok.Subject, tok.Predicate, fmt.Sprint(tok.Datum))
+			index.AddData(tok.Subject, tok.Predicate, impl.Datum(fmt.Sprint(tok.Datum)))
 		case !tok.HasDatum:
 			index.AddTriple(tok.Subject, tok.Predicate, tok.Object)
 		}

@@ -9,25 +9,27 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
+// cspell:words itol
+
 func ExampleIMap() {
 
 	var mp IMap
 	mp.Reset(&MemoryMap{})
 
-	lid := func(prefix string) func(id impl.ID, err error) {
+	lid := func(prefix impl.Label) func(id impl.ID, err error) {
 		return func(id impl.ID, err error) {
 			fmt.Println(prefix, id, err)
 		}
 	}
 
-	lid2 := func(prefix string) func(id TripleID, err error) {
+	lid2 := func(prefix impl.Label) func(id TripleID, err error) {
 		return func(id TripleID, err error) {
 			fmt.Println(prefix, id.Canonical, err)
 		}
 	}
 
-	lstr := func(prefix string) func(value string, err error) {
-		return func(value string, err error) {
+	lstr := func(prefix impl.Label) func(value impl.Label, err error) {
+		return func(value impl.Label, err error) {
 			fmt.Println(prefix, value, err)
 		}
 	}
@@ -76,6 +78,11 @@ func ExampleIMap() {
 	// add<again> ID(3) <nil>
 }
 
+// itol is like strconv.itoa, but returns a label
+func itol(i int) impl.Label {
+	return impl.Label(strconv.Itoa(i))
+}
+
 // mapTest performs a test for a given engine
 func mapTest(t *testing.T, engine Map, N int) {
 	t.Helper()
@@ -86,7 +93,7 @@ func mapTest(t *testing.T, engine Map, N int) {
 
 	// make i == i + 1
 	for i := 0; i < N; i += 2 {
-		canon, err := mp.MarkIdentical(strconv.Itoa(i), strconv.Itoa(i+1))
+		canon, err := mp.MarkIdentical(itol(i), itol(i+1))
 		if err != nil {
 			t.Fatalf("MarkIdentical returned error %s", err)
 		}
@@ -99,7 +106,7 @@ func mapTest(t *testing.T, engine Map, N int) {
 
 	// check that forward mappings work
 	for i := 0; i < N; i++ {
-		id, err := mp.Forward(strconv.Itoa(i))
+		id, err := mp.Forward(itol(i))
 		if err != nil {
 			t.Errorf("Forward() returned error %s", err)
 		}
@@ -120,7 +127,7 @@ func mapTest(t *testing.T, engine Map, N int) {
 		if err != nil {
 			t.Errorf("Reverse() returned error %s", err)
 		}
-		want := strconv.Itoa(i - 1)
+		want := itol(i - 1)
 
 		if got != want {
 			t.Errorf("Reverse(%s) got = %q, want = %q", &big, got, want)

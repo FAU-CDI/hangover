@@ -9,12 +9,23 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
+// l returns a label from an int
 func l(i int) impl.Label {
-	return strconv.Itoa(i)
+	return impl.Label(strconv.Itoa(i))
 }
 
+// d returns a datum from an int
 func d(i int) impl.Datum {
-	return strconv.Itoa(i)
+	return impl.Datum(strconv.Itoa(i))
+}
+
+// di is the inverse of the [d] function
+func di(d impl.Datum) int {
+	i64, err := strconv.ParseInt(string(d), 10, 64)
+	if err != nil {
+		panic("di: failed to parse")
+	}
+	return int(i64)
 }
 
 // graphTest implements an integration test for an IGraph with the given engine.
@@ -117,11 +128,7 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		encountered[path.Datum] = struct{}{}
 
 		// find the integer!
-		i64, err := strconv.ParseInt(path.Datum, 10, 64)
-		if err != nil {
-			t.Errorf("Unable to parse datum: %s", err)
-		}
-		i := int(i64)
+		i := di(path.Datum)
 
 		// determine the nodes and edges we expect
 		wantNodes := []impl.Label{l(3*i + 6), l(3*i + 7), l(3*i + 8)}
@@ -259,7 +266,7 @@ func graphTest(t *testing.T, engine Engine, N int) {
 	counter := 0
 	for i := 0; i < N; i++ {
 		counter++
-		_, ok := encountered[l(i)]
+		_, ok := encountered[d(i)]
 		if !ok {
 			t.Errorf("missing index %d", i)
 		}

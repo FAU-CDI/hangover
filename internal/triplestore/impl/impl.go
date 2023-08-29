@@ -2,7 +2,12 @@ package impl
 
 // Label represents the label of individual triple members.
 // A label is a uri.
-type Label = string
+type Label string
+
+// AsDatum returns a Datum representing a label.
+func (label Label) AsDatum() Datum {
+	return Datum(label)
+}
 
 // LabelAsByte encodes a label as a set of bytes.
 func LabelAsByte(label Label) []byte {
@@ -16,7 +21,7 @@ func ByteAsLabel(label []byte) Label {
 
 // Datum is the type of data used across the implementation.
 // It may or may not be comparable.
-type Datum = string
+type Datum string
 
 // DatumAsByte encodes a datum as a set of bytes.
 func DatumAsByte(datum Datum) []byte {
