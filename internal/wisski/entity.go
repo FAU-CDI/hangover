@@ -29,16 +29,7 @@ type Entity struct {
 // This means that any two calls to AllTriples() use the same order.
 func (entity Entity) AllTriples() (triples []igraph.Triple) {
 	triples = entity.appendTriples(triples)
-	slices.SortFunc(triples, func(left, right igraph.Triple) int {
-		// TODO: fixme
-		if left == right {
-			return 0
-		}
-		if left.ID.Less(right.ID) {
-			return -1
-		}
-		return 1
-	})
+	slices.SortFunc(triples, igraph.Triple.Compare)
 
 	return slices.CompactFunc(triples, func(left, right igraph.Triple) bool {
 		return left.ID == right.ID

@@ -83,15 +83,7 @@ func (tlm ThreeHash) Finalize() error {
 	for _, a := range tlm {
 		for _, b := range a {
 			b.Keys = maps.Keys(b.Data)
-			slices.SortFunc(b.Keys, func(a impl.ID, b impl.ID) int {
-				if a.Less(b) {
-					return -1
-				}
-				if a == b {
-					return 0
-				}
-				return 1
-			})
+			slices.SortFunc(b.Keys, impl.ID.Compare)
 		}
 	}
 	return nil

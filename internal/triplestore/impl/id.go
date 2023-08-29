@@ -3,31 +3,28 @@ package impl
 // cspell:words twiesing
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math/big"
 )
 
-// ID represents an ID of an element within the distillery context.
+// ID uniquely identifies an object within this implementation.
 // Not all IDs are valid, see [Valid].
-//
-// Users should not rely on the exact size of this data type.
-// Instead they should use appropriate methods to compare values.
-//
-// Internally, an ID is represented in big endian array of bytes.
-// It effectively corresponds to a uint32.
-// The
-type ID [4]byte
+type ID struct {
+	// A big endian array of bytes, so that we can compare lexicographically.
+	data [IDLen]byte
+}
 
-// IDLen is the length of the ID type
-const IDLen = len(ID{})
+// IDLen is the size of an encoded ID struct in bytes
+const IDLen = 4
 
 // Valid checks if this ID is valid
 func (id ID) Valid() bool {
 	// NOTE(twiesing): We start this loop from the back as a performance optimization
 	// because most IDs are expected to be small, so most of them will be faster
 	for i := IDLen - 1; i >= 0; i-- {
-		if id[i] != 0 {
+		if id.data[i] != 0 {
 			return true
 		}
 	}
@@ -36,26 +33,23 @@ func (id ID) Valid() bool {
 
 // Reset resets this id to an invalid value
 func (id *ID) Reset() {
-	// TODO: Untested
-	for i := 0; i < IDLen; i++ {
-		(*id)[i] = 0
-	}
+	id.data = [IDLen]byte{}
 }
 
-// Inc increments this ID, returning a copy of the new value.
+// Inc increments this ID, and then returns a copy of the new value.
 // It is the equivalent of the "++" operator.
 //
 // When Inc() exceeds the maximum possible value for an ID, panics.
-func (id *ID) Inc() ID {
+func (id *ID) Inc() (next ID) {
 	for i := IDLen - 1; i >= 0; i-- {
-		(*id)[i]++
-		if (*id)[i] != 0 {
-			return *id
+		id.data[i]++
+		if id.data[i] != 0 {
+			return (*id)
 		}
 	}
 
 	// NOTE(twiesing): If this line is ever reached we should increase the size of the ID type.
-	panic("Inc: Overflow")
+	panic("ID.Inc: Overflow (not enough IDs)")
 }
 
 // Int writes the numerical value of this id into the given big int.
@@ -71,24 +65,16 @@ func (id ID) Int(value *big.Int) *big.Int {
 //
 // The ID is returned for convenience.
 func (id *ID) LoadInt(value *big.Int) *ID {
-	value.FillBytes(id[:])
-	id.Decode(id[:])
+	value.FillBytes(id.data[:])
+	id.Decode(id.data[:])
 
 	return id
 }
 
-// Less compares this ID to another id.
-// An id is less than another id iff Inc() has been called fewer times.
-func (id ID) Less(other ID) bool {
-	for i := 0; i < IDLen; i++ {
-		if id[i] < other[i] {
-			return true
-		}
-		if id[i] > other[i] {
-			return false
-		}
-	}
-	return false
+// Compare compares this ID to another id, based on how many times Inc() has been called.
+// The result will be 0 if id == other, -1 if id < other, and +1 if id > other.
+func (id ID) Compare(other ID) int {
+	return bytes.Compare(id.data[:], other.data[:])
 }
 
 // String formats this id as a string.
@@ -99,19 +85,16 @@ func (id ID) String() string {
 
 // Encode encodes id using a big endian encoding into dest.
 // dest must be of at least size [IDLen].
-//
-// Comparing two distinct slices using [bytes.Compare] produces the same result
-// as using appropriate calls [Less].
 func (id ID) Encode(dest []byte) {
 	_ = dest[IDLen-1] // boundary hint to compiler
-	copy(dest[:], id[:])
+	copy(dest[:], id.data[:])
 }
 
 // Decode sets this id to be the values that has been decoded from src.
 // src must be of at least size IDLen, or a runtime panic occurs.
 func (id *ID) Decode(src []byte) {
 	_ = src[IDLen-1] // boundary hint to compiler
-	copy(id[:], src[:])
+	copy(id.data[:], src[:])
 }
 
 var errMarshal = errors.New("MarshalIDs: invalid length")
@@ -128,7 +111,6 @@ func MarshalIDs(dst []byte, ids ...ID) error {
 }
 
 // MarshalID is like MarshalIDs, but takes takes only a single value
-// FIXME: Move to type
 func MarshalID(value ID) ([]byte, error) {
 	dest := make([]byte, IDLen)
 	return dest, MarshalIDs(dest, value)
@@ -162,7 +144,6 @@ var errUnmarshal = errors.New("unmarshalID: invalid length")
 
 // UnmarshalID behaves like [dest.Decode], but produces an error
 // when there are insufficient number of bytes in src.
-// FIXME: Move to type
 func UnmarshalID(dest *ID, src []byte) error {
 	if len(src) < IDLen {
 		return errUnmarshal

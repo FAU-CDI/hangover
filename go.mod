@@ -1,6 +1,6 @@
 module github.com/FAU-CDI/hangover
 
-go 1.20
+go 1.21
 
 require (
 	github.com/FAU-CDI/drincw v0.1.3

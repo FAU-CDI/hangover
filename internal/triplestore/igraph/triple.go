@@ -84,6 +84,11 @@ type Triple struct {
 	Role Role
 }
 
+// Compare compares this triple to another triple based on it's id
+func (triple Triple) Compare(other Triple) int {
+	return triple.ID.Compare(other.ID)
+}
+
 // Inferred returns if this triple has been inferred
 func (triple Triple) Inferred() bool {
 	return triple.Role == Inverse

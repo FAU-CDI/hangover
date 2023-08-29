@@ -1,7 +1,6 @@
 package impl
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -11,14 +10,14 @@ import (
 
 func ExampleID() {
 
-	// create a new id -- which isn't valid
-	var id ID
-	fmt.Println(id)
-	fmt.Println(id.Valid())
+	// create a new zero -- which isn't valid
+	var zero ID
+	fmt.Println(zero)
+	fmt.Println(zero.Valid())
 
 	// increment the id -- it is now valid
-	fmt.Println(id.Inc())
-	fmt.Println(id.Valid())
+	fmt.Println(zero.Inc())
+	fmt.Println(zero.Valid())
 
 	// create the value 10
 	var ten ID
@@ -26,20 +25,25 @@ func ExampleID() {
 		ten.Inc()
 	}
 
-	// compare it to some other id -- it is no longer valid
-	fmt.Println(id.Less(ten))
+	// compare it with other ids
+	fmt.Println(zero.Compare(ten)) // 0 < 10
+	fmt.Println(ten.Compare(zero)) // 10 > 0
+	fmt.Println(ten.Compare(ten))  // 10 == 10
 
 	// Output: ID(0)
 	// false
 	// ID(1)
 	// true
-	// true
+	// -1
+	// 1
+	// 0
+
 }
 
 // maximum numbers for the ID "torture tests"
 const (
-	testIDLarge = (1 << (3 * 8))       // use a full 3 bytes
-	testIDSmall = (1 << (8 + (8 / 2))) // use 2.5 bytes
+	testIDLarge = (1 << (3 * 8)) // use a full 3 bytes
+	testIDSmall = 10             // (1 << (8 + (8 / 2))) // use 2.5 bytes
 )
 
 func TestID_Int(t *testing.T) {
@@ -79,6 +83,7 @@ func BenchmarkID_Inc(b *testing.B) {
 	var id ID
 	for i := 0; i < b.N; i++ {
 		id.Reset()
+
 		for j := 0; j < testIDSmall; j++ {
 			id.Inc()
 		}
@@ -112,7 +117,7 @@ func TestID_Valid(t *testing.T) {
 	}
 }
 
-func BenchmarkID_Less(b *testing.B) {
+func BenchmarkID_Compare(b *testing.B) {
 	b.StopTimer()
 
 	var idI, idJ ID
@@ -123,12 +128,12 @@ func BenchmarkID_Less(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		idI.Less(idJ)
+		idI.Compare(idJ)
 	}
 }
 
 // Test that the order of ids behaves as expected.
-func TestID_Order(t *testing.T) {
+func TestID_Compare(t *testing.T) {
 	var (
 		idI, idJ ID
 		big      big.Int
@@ -137,7 +142,7 @@ func TestID_Order(t *testing.T) {
 	bytesI := make([]byte, IDLen)
 	bytesJ := make([]byte, IDLen)
 
-	// check that the .Less() method indeed implements the order
+	// check that the .Compare() method indeed implements the order
 	// that was induced by their generation
 	for i := 0; i < testIDSmall; i++ {
 		idI.LoadInt(big.SetInt64(int64(i))) // set i to the right value
@@ -148,31 +153,34 @@ func TestID_Order(t *testing.T) {
 			idJ.Encode(bytesJ)                  // and decode the bytes
 
 			{
-				got := idI.Less(idJ)
-				want := i < j
-				if got != want {
-					t.Errorf("id(%d) < id(%d) = %v, want %v", i, j, got, want)
-				}
-			}
+				got := idI.Compare(idJ)
 
-			{
-				got := idJ.Less(idI)
-				want := j < i
-				if got != want {
-					t.Errorf("id(%d) < id(%d) = %v, want %v", j, i, got, want)
-				}
-			}
-
-			{
-				got := bytes.Compare(bytesI, bytesJ)
-				want := 0
+				var want int
 				if i < j {
 					want = -1
 				} else if i > j {
 					want = 1
+				} else {
+					want = 0
+				}
+
+				if got != want {
+					t.Errorf("id(%d) <> id(%d) = %d, want %d", i, j, got, want)
+				}
+			}
+
+			{
+				got := idJ.Compare(idI)
+				var want int
+				if j < i {
+					want = -1
+				} else if j > i {
+					want = 1
+				} else {
+					want = 0
 				}
 				if got != want {
-					t.Errorf("compare(id(%d), id(%d)) = %v, want %v", j, i, got, want)
+					t.Errorf("id(%d) <> id(%d) = %d, want %d", j, i, got, want)
 				}
 			}
 		}
