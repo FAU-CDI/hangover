@@ -1,6 +1,6 @@
 package wisski
 
-import "github.com/FAU-CDI/hangover/pkg/imap"
+import "github.com/FAU-CDI/hangover/internal/imap"
 
 // cspell:words WissKI
 

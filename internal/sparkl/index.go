@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
+	"github.com/FAU-CDI/hangover/internal/igraph"
+	"github.com/FAU-CDI/hangover/internal/imap"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/igraph"
-	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/FAU-CDI/hangover/pkg/progress"
 )
 

@@ -3,7 +3,7 @@ package igraph
 import (
 	"io"
 
-	"github.com/FAU-CDI/hangover/pkg/imap"
+	"github.com/FAU-CDI/hangover/internal/imap"
 )
 
 // Engine represents an object that creates storages for an IGraph

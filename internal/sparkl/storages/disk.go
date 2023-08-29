@@ -7,9 +7,9 @@ import (
 	"sync/atomic"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
+	"github.com/FAU-CDI/hangover/internal/igraph"
+	"github.com/FAU-CDI/hangover/internal/imap"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/igraph"
-	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/tkw1536/pkglib/iterator"

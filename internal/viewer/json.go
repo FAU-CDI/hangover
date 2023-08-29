@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/FAU-CDI/hangover/pkg/imap"
+	"github.com/FAU-CDI/hangover/internal/imap"
 	"github.com/gorilla/mux"
 )
 

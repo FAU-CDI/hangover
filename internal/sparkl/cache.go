@@ -5,8 +5,8 @@ import (
 	"errors"
 	"runtime"
 
+	"github.com/FAU-CDI/hangover/internal/imap"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/FAU-CDI/hangover/pkg/sgob"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"

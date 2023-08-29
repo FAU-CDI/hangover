@@ -4,8 +4,8 @@ package sparkl
 import (
 	"strings"
 
-	"github.com/FAU-CDI/hangover/pkg/igraph"
-	"github.com/FAU-CDI/hangover/pkg/imap"
+	"github.com/FAU-CDI/hangover/internal/igraph"
+	"github.com/FAU-CDI/hangover/internal/imap"
 )
 
 // cspell:words sparkl

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/FAU-CDI/hangover/pkg/imap"
+	"github.com/FAU-CDI/hangover/internal/imap"
 )
 
 func l(i int) imap.Label {

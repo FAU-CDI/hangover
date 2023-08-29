@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/FAU-CDI/hangover/pkg/imap"
+	"github.com/FAU-CDI/hangover/internal/imap"
 )
 
 // Stats holds statistics about triples in the index

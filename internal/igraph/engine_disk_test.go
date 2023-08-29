@@ -3,7 +3,7 @@ package igraph
 import (
 	"testing"
 
-	"github.com/FAU-CDI/hangover/pkg/imap"
+	"github.com/FAU-CDI/hangover/internal/imap"
 )
 
 func TestDiskEngine(t *testing.T) {

@@ -12,9 +12,9 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/assets"
+	"github.com/FAU-CDI/hangover/internal/imap"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/htmlx"
-	"github.com/FAU-CDI/hangover/pkg/imap"
 	"github.com/gorilla/mux"
 )
 

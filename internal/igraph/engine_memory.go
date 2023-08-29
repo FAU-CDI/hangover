@@ -1,7 +1,7 @@
 package igraph
 
 import (
-	"github.com/FAU-CDI/hangover/pkg/imap"
+	"github.com/FAU-CDI/hangover/internal/imap"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
