@@ -12,7 +12,7 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/assets"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/htmlx"
 	"github.com/gorilla/mux"
@@ -138,7 +138,7 @@ func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
 
 type htmlBundleContext struct {
 	Bundle  *pathbuilder.Bundle
-	URIS    []imap.Label
+	URIS    []impl.Label
 	Globals contextGlobal
 }
 
@@ -182,7 +182,7 @@ func (viewer *Viewer) htmlPathbuilder(w http.ResponseWriter, r *http.Request) {
 
 func (viewer *Viewer) htmlEntityResolve(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	uri := imap.Label(strings.TrimSpace(vars["uri"]))
+	uri := impl.Label(strings.TrimSpace(vars["uri"]))
 
 	bundle, ok := viewer.Cache.Bundle(uri)
 	if !ok {
@@ -199,13 +199,13 @@ func (viewer *Viewer) htmlEntityResolve(w http.ResponseWriter, r *http.Request) 
 
 func (viewer *Viewer) sendToResolver(w http.ResponseWriter, r *http.Request) {
 	publics := viewer.RenderFlags.PublicURIS()
-	uris := make([]imap.Label, 0, len(publics))
+	uris := make([]impl.Label, 0, len(publics))
 	for _, public := range publics {
 		uri, err := url.JoinPath(public, r.URL.Path)
 		if err != nil {
 			continue
 		}
-		uris = append(uris, imap.Label(uri))
+		uris = append(uris, impl.Label(uri))
 	}
 
 	uri, _, ok := viewer.Cache.FirstBundle(uris...)
@@ -221,14 +221,14 @@ func (viewer *Viewer) sendToResolver(w http.ResponseWriter, r *http.Request) {
 type htmlEntityContext struct {
 	Bundle  *pathbuilder.Bundle
 	Entity  *wisski.Entity
-	Aliases []imap.Label
+	Aliases []impl.Label
 	Globals contextGlobal
 }
 
 func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	bundle, entity, ok := viewer.findEntity(vars["bundle"], imap.Label(vars["uri"]))
+	bundle, entity, ok := viewer.findEntity(vars["bundle"], impl.Label(vars["uri"]))
 	if !ok {
 		http.NotFound(w, r)
 		return

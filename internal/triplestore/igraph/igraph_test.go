@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-func l(i int) imap.Label {
+func l(i int) impl.Label {
 	return strconv.Itoa(i)
 }
 
-func d(i int) imap.Datum {
+func d(i int) impl.Datum {
 	return strconv.Itoa(i)
 }
 
@@ -106,7 +106,7 @@ func graphTest(t *testing.T, engine Engine, N int) {
 	// check that the paths are correct
 	paths := query.Paths()
 
-	encountered := make(map[imap.Datum]struct{})
+	encountered := make(map[impl.Datum]struct{})
 	for paths.Next() {
 		path := paths.Datum()
 
@@ -124,8 +124,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		i := int(i64)
 
 		// determine the nodes and edges we expect
-		wantNodes := []imap.Label{l(3*i + 6), l(3*i + 7), l(3*i + 8)}
-		wantEdges := []imap.Label{l(0), l(1), l(3)}
+		wantNodes := []impl.Label{l(3*i + 6), l(3*i + 7), l(3*i + 8)}
+		wantEdges := []impl.Label{l(0), l(1), l(3)}
 
 		wantTriples := make([]Triple, 0, 5)
 		{

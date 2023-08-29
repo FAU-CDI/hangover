@@ -4,29 +4,29 @@ package sparkl
 import (
 	"strings"
 
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
 // cspell:words sparkl
 
 // Predicates represent special predicates
 type Predicates struct {
-	SameAs    []imap.Label
-	InverseOf []imap.Label
+	SameAs    []impl.Label
+	InverseOf []impl.Label
 }
 
-// ParsePredicateString parses a value of comma-separate value into a list of imap.Labels
-func ParsePredicateString(target *[]imap.Label, value string) {
+// ParsePredicateString parses a value of comma-separate value into a list of impl.Labels
+func ParsePredicateString(target *[]impl.Label, value string) {
 	if value == "" {
 		*target = nil
 		return
 	}
 
 	values := strings.Split(value, ",")
-	*target = make([]imap.Label, len(values))
+	*target = make([]impl.Label, len(values))
 	for i, value := range values {
-		(*target)[i] = imap.Label(value)
+		(*target)[i] = impl.Label(value)
 	}
 }
 

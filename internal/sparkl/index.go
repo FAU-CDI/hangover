@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/progress"
 )
@@ -111,9 +111,9 @@ func setMask(index *igraph.Index, pb *pathbuilder.Pathbuilder) error {
 		return nil
 	}
 
-	dmask := make(map[imap.Label]struct{})
+	dmask := make(map[impl.Label]struct{})
 
-	pmask := make(map[imap.Label]struct{})
+	pmask := make(map[impl.Label]struct{})
 	pmask[wisski.Type] = struct{}{}
 
 	for _, bundle := range pb.Bundles() {
@@ -126,34 +126,34 @@ func setMask(index *igraph.Index, pb *pathbuilder.Pathbuilder) error {
 	)
 }
 
-func addBundleToMasks(pmask map[imap.Label]struct{}, dmask map[imap.Label]struct{}, bundle *pathbuilder.Bundle) {
+func addBundleToMasks(pmask map[impl.Label]struct{}, dmask map[impl.Label]struct{}, bundle *pathbuilder.Bundle) {
 	addPathArrayToMasks(pmask, bundle.PathArray)
 	for _, field := range bundle.Fields() {
 		addPathArrayToMasks(pmask, field.PathArray)
-		dmask[imap.Label(field.DatatypeProperty)] = struct{}{}
+		dmask[impl.Label(field.DatatypeProperty)] = struct{}{}
 	}
 	for _, child := range bundle.ChildBundles {
 		addBundleToMasks(pmask, dmask, child)
 	}
 }
 
-func addPathArrayToMasks(pmask map[imap.Label]struct{}, ary []string) {
+func addPathArrayToMasks(pmask map[impl.Label]struct{}, ary []string) {
 	for i, pth := range ary {
 		if i%2 == 1 {
-			pmask[imap.Label(pth)] = struct{}{}
+			pmask[impl.Label(pth)] = struct{}{}
 		}
 	}
 }
 
 // indexSameAs inserts SameAs pairs into the index
-func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []imap.Label, opts IndexOptions, p *progress.Progress) (count int, err error) {
+func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Label, opts IndexOptions, p *progress.Progress) (count int, err error) {
 	err = source.Open()
 	if err != nil {
 		return 0, err
 	}
 	defer source.Close()
 
-	sameAss := make(map[imap.Label]struct{}, len(sameAsPredicates))
+	sameAss := make(map[impl.Label]struct{}, len(sameAsPredicates))
 	for _, sameAs := range sameAsPredicates {
 		sameAss[sameAs] = struct{}{}
 	}
@@ -186,7 +186,7 @@ func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []imap.Lab
 }
 
 // indexInverseOf inserts InverseOf pairs into the index
-func indexInverseOf(source Source, index *igraph.Index, inversePredicates []imap.Label, total int, opts IndexOptions, p *progress.Progress) error {
+func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl.Label, total int, opts IndexOptions, p *progress.Progress) error {
 	if len(inversePredicates) == 0 {
 		return nil
 	}
@@ -197,7 +197,7 @@ func indexInverseOf(source Source, index *igraph.Index, inversePredicates []imap
 	}
 	defer source.Close()
 
-	inverses := make(map[imap.Label]struct{})
+	inverses := make(map[impl.Label]struct{})
 	for _, inverse := range inversePredicates {
 		inverses[inverse] = struct{}{}
 	}

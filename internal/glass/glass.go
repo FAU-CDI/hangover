@@ -12,10 +12,11 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/drincw/pathbuilder/pbxml"
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/viewer"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/perf"
@@ -155,7 +156,7 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	{
 		start := perf.Now()
 
-		identities := imap.MakeMemory[imap.Label, imap.Label](0)
+		identities := imap.MakeMemory[impl.Label, impl.Label](0)
 		index.IdentityMap(&identities)
 
 		cache, err := sparkl.NewCache(bundles, &identities)

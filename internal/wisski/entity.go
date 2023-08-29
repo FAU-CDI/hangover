@@ -1,8 +1,8 @@
 package wisski
 
 import (
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"golang.org/x/exp/slices"
 )
 
@@ -12,8 +12,8 @@ import (
 type Entity struct {
 	Fields   map[string][]FieldValue // values for specific fields
 	Children map[string][]Entity     // child paths for child bundles
-	URI      imap.Label
-	Path     []imap.Label
+	URI      impl.Label
+	Path     []impl.Label
 	Triples  []igraph.Triple
 }
 
@@ -66,6 +66,6 @@ func (entity Entity) appendTriples(triples []igraph.Triple) []igraph.Triple {
 // FieldValue represents the value of a field inside an entity
 type FieldValue struct {
 	Value   any
-	Path    []imap.Label
+	Path    []impl.Label
 	Triples []igraph.Triple
 }

@@ -4,9 +4,9 @@ import (
 	"sync"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
-	"github.com/FAU-CDI/hangover/internal/igraph"
 	"github.com/FAU-CDI/hangover/internal/sparkl/exporter"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 

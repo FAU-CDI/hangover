@@ -1,4 +1,4 @@
-package imap
+package impl
 
 // cspell:words twiesing
 
@@ -8,7 +8,7 @@ import (
 	"math/big"
 )
 
-// ID represents an ID of a specific element.
+// ID represents an ID of an element within the distillery context.
 // Not all IDs are valid, see [Valid].
 //
 // Users should not rely on the exact size of this data type.
@@ -16,6 +16,7 @@ import (
 //
 // Internally, an ID is represented in big endian array of bytes.
 // It effectively corresponds to a uint32.
+// The
 type ID [4]byte
 
 // IDLen is the length of the ID type
@@ -127,6 +128,7 @@ func MarshalIDs(dst []byte, ids ...ID) error {
 }
 
 // MarshalID is like MarshalIDs, but takes takes only a single value
+// FIXME: Move to type
 func MarshalID(value ID) ([]byte, error) {
 	dest := make([]byte, IDLen)
 	return dest, MarshalIDs(dest, value)
@@ -160,6 +162,7 @@ var errUnmarshal = errors.New("unmarshalID: invalid length")
 
 // UnmarshalID behaves like [dest.Decode], but produces an error
 // when there are insufficient number of bytes in src.
+// FIXME: Move to type
 func UnmarshalID(dest *ID, src []byte) error {
 	if len(src) < IDLen {
 		return errUnmarshal

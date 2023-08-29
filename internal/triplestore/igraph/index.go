@@ -1,3 +1,4 @@
+// package igraph provides Index
 package igraph
 
 import (
@@ -6,10 +7,11 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// cSpell:words imap
+// cSpell:words igraph imap
 
 // Index represents a searchable index of a directed labeled graph with optionally attached Data.
 //
@@ -25,17 +27,17 @@ import (
 //
 // Index may not be modified concurrently, however it is possible to run several queries concurrently.
 type Index struct {
-	data      imap.HashMap[imap.ID, imap.Datum]  // holds data mappings
-	inverses  imap.HashMap[imap.ID, imap.ID]     // inverse ids for a given id
+	data      imap.HashMap[impl.ID, impl.Datum]  // holds data mappings
+	inverses  imap.HashMap[impl.ID, impl.ID]     // inverse ids for a given id
 	psoIndex  ThreeStorage                       // <predicate> <subject> <object>
 	posIndex  ThreeStorage                       // <predicate> <object> <subject>
-	triples   imap.HashMap[imap.ID, IndexTriple] // values for the triples
-	pMask     map[imap.ID]struct{}               // mask for predicates
-	dMask     map[imap.ID]struct{}               // mask for data
+	triples   imap.HashMap[impl.ID, IndexTriple] // values for the triples
+	pMask     map[impl.ID]struct{}               // mask for predicates
+	dMask     map[impl.ID]struct{}               // mask for data
 	labels    imap.IMap
 	stats     Stats
 	finalized atomic.Bool
-	triple    imap.ID // id for a given triple
+	triple    impl.ID // id for a given triple
 }
 
 // Stats returns statistics from this graph
@@ -53,7 +55,7 @@ func (index *Index) TripleCount() (count uint64, err error) {
 }
 
 // Triple returns the triple with the given id
-func (index *Index) Triple(id imap.ID) (triple Triple, err error) {
+func (index *Index) Triple(id impl.ID) (triple Triple, err error) {
 	t, _, err := index.triples.Get(id)
 	if err != nil {
 		return triple, err
@@ -160,17 +162,17 @@ func (index *Index) Reset(engine Engine) (err error) {
 }
 
 // SetPredicateMask sets the masks for predicates
-func (index *Index) SetPredicateMask(predicates map[imap.Label]struct{}) error {
+func (index *Index) SetPredicateMask(predicates map[impl.Label]struct{}) error {
 	return index.setMask(predicates, &index.pMask)
 }
 
 // SetDataMask sets the masks for data
-func (index *Index) SetDataMask(predicates map[imap.Label]struct{}) error {
+func (index *Index) SetDataMask(predicates map[impl.Label]struct{}) error {
 	return index.setMask(predicates, &index.dMask)
 }
 
-func (index *Index) setMask(predicates map[imap.Label]struct{}, dest *map[imap.ID]struct{}) error {
-	mask := make(map[imap.ID]struct{}, len(predicates))
+func (index *Index) setMask(predicates map[impl.Label]struct{}, dest *map[impl.ID]struct{}) error {
+	mask := make(map[impl.ID]struct{}, len(predicates))
 	for label := range predicates {
 		ids, err := index.labels.Add(label)
 		if err != nil {
@@ -183,7 +185,7 @@ func (index *Index) setMask(predicates map[imap.Label]struct{}, dest *map[imap.I
 	return nil
 }
 
-func (index *Index) addMask(predicate imap.Label, mask map[imap.ID]struct{}) (imap.TripleID, bool, error) {
+func (index *Index) addMask(predicate impl.Label, mask map[impl.ID]struct{}) (imap.TripleID, bool, error) {
 	// no mask => add normally
 	if mask == nil {
 		id, err := index.labels.Add(predicate)
@@ -209,7 +211,7 @@ func (index *Index) addMask(predicate imap.Label, mask map[imap.ID]struct{}) (im
 //
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
-func (index *Index) AddTriple(subject, predicate, object imap.Label) error {
+func (index *Index) AddTriple(subject, predicate, object impl.Label) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -292,7 +294,7 @@ func (index *Index) AddTriple(subject, predicate, object imap.Label) error {
 //
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
-func (index *Index) AddData(subject, predicate imap.Label, object imap.Datum) error {
+func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -343,7 +345,7 @@ func (index *Index) AddData(subject, predicate imap.Label, object imap.Datum) er
 
 var errResolveConflictCorrupt = errors.New("errResolveConflict: Corrupted triple data")
 
-func (index *Index) resolveLabelConflict(old, new imap.ID) (imap.ID, error) {
+func (index *Index) resolveLabelConflict(old, new impl.ID) (impl.ID, error) {
 	if old == new {
 		return old, nil
 	}
@@ -377,7 +379,7 @@ func (index *Index) resolveLabelConflict(old, new imap.ID) (imap.ID, error) {
 }
 
 // insert inserts the provided (subject, predicate, object) ids into the graph
-func (index *Index) insert(subject, predicate, object imap.ID, label imap.ID) (conflicted bool, err error) {
+func (index *Index) insert(subject, predicate, object impl.ID, label impl.ID) (conflicted bool, err error) {
 	var conflicted1, conflicted2 bool
 
 	conflicted1, err = index.psoIndex.Add(predicate, subject, object, label, index.resolveLabelConflict)
@@ -392,7 +394,7 @@ func (index *Index) insert(subject, predicate, object imap.ID, label imap.ID) (c
 
 // MarkIdentical identifies the new and old labels.
 // See [imap.IMap.MarkIdentical].
-func (index *Index) MarkIdentical(new, old imap.Label) error {
+func (index *Index) MarkIdentical(new, old impl.Label) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -408,7 +410,7 @@ func (index *Index) MarkIdentical(new, old imap.Label) error {
 // A label may not be it's own inverse.
 //
 // This means that each call to AddTriple(s, left, o) will also result in a call to AddTriple(o, right, s).
-func (index *Index) MarkInverse(left, right imap.Label) error {
+func (index *Index) MarkInverse(left, right impl.Label) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -439,7 +441,7 @@ func (index *Index) MarkInverse(left, right imap.Label) error {
 
 // IdentityMap writes all Labels for which has a semantically equivalent label.
 // See [imap.Storage.IdentityMap].
-func (index *Index) IdentityMap(storage imap.HashMap[imap.Label, imap.Label]) error {
+func (index *Index) IdentityMap(storage imap.HashMap[impl.Label, impl.Label]) error {
 	return index.labels.IdentityMap(storage)
 }
 

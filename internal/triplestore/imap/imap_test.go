@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"strconv"
 	"testing"
+
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
 func ExampleIMap() {
@@ -12,8 +14,8 @@ func ExampleIMap() {
 	var mp IMap
 	mp.Reset(&MemoryMap{})
 
-	lid := func(prefix string) func(id ID, err error) {
-		return func(id ID, err error) {
+	lid := func(prefix string) func(id impl.ID, err error) {
+		return func(id impl.ID, err error) {
 			fmt.Println(prefix, id, err)
 		}
 	}
@@ -42,14 +44,14 @@ func ExampleIMap() {
 	lid("get")(mp.Forward("world"))
 	lid("get")(mp.Forward("earth"))
 
-	lstr("reverse")(mp.Reverse(*new(ID).LoadInt(big.NewInt(1))))
-	lstr("reverse")(mp.Reverse(*new(ID).LoadInt(big.NewInt(2))))
-	lstr("reverse")(mp.Reverse(*new(ID).LoadInt(big.NewInt(3))))
+	lstr("reverse")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(1))))
+	lstr("reverse")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(2))))
+	lstr("reverse")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(3))))
 
 	mp.MarkIdentical("earth", "world")
 
-	lstr("reverse<again>")(mp.Reverse(*new(ID).LoadInt(big.NewInt(1))))
-	lstr("reverse<again>")(mp.Reverse(*new(ID).LoadInt(big.NewInt(3))))
+	lstr("reverse<again>")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(1))))
+	lstr("reverse<again>")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(3))))
 
 	lid2("add<again>")(mp.Add("hello"))
 	lid2("add<again>")(mp.Add("world"))
@@ -109,7 +111,7 @@ func mapTest(t *testing.T, engine Map, N int) {
 	}
 
 	// check that reverse mappings work
-	var id ID
+	var id impl.ID
 	var big big.Int
 	for i := 1; i < N; i++ {
 		big.SetInt64(int64(i))

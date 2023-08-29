@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"sync"
 
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
@@ -26,9 +26,9 @@ var bufferPool = sync.Pool{
 // sEntity represents a stored entity that does not hold references to child entities
 type sEntity struct {
 	Fields   map[string][]wisski.FieldValue
-	Children map[string][]imap.Label // child entities
-	URI      imap.Label
-	Path     []imap.Label
+	Children map[string][]impl.Label // child entities
+	URI      impl.Label
+	Path     []impl.Label
 	Triples  []igraph.Triple
 }
 
@@ -78,7 +78,7 @@ func (s *sEntity) Decode(data []byte) error {
 }
 
 func init() {
-	gob.Register(imap.Label(""))
+	gob.Register(impl.Label(""))
 	gob.Register(igraph.Role(0))
 
 	gob.Register(wisski.FieldValue{})

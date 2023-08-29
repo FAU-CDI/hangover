@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/tkw1536/pkglib/iterator"
 )
@@ -17,7 +17,7 @@ func (MemoryEngine) NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, error
 		bundle:        bundle,
 		childStorages: make(map[string]BundleStorage),
 
-		lookup: make(map[imap.Label]int),
+		lookup: make(map[impl.Label]int),
 	}, nil
 }
 
@@ -25,14 +25,14 @@ func (MemoryEngine) NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, error
 type Memory struct {
 	bundle        *pathbuilder.Bundle
 	childStorages map[string]BundleStorage
-	lookup        map[imap.Label]int
+	lookup        map[impl.Label]int
 	Entities      []wisski.Entity
 	addField      sync.Mutex
 	addChild      sync.Mutex
 }
 
 // Add adds an entity to this BundleSlice
-func (bs *Memory) Add(uri imap.Label, path []imap.Label, triples []igraph.Triple) error {
+func (bs *Memory) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple) error {
 	bs.lookup[uri] = len(bs.Entities)
 	entity := wisski.Entity{
 		URI:      uri,
@@ -54,7 +54,7 @@ func (bs *Memory) Add(uri imap.Label, path []imap.Label, triples []igraph.Triple
 	return nil
 }
 
-func (bs *Memory) AddFieldValue(uri imap.Label, field string, value any, path []imap.Label, triples []igraph.Triple) error {
+func (bs *Memory) AddFieldValue(uri impl.Label, field string, value any, path []impl.Label, triples []igraph.Triple) error {
 	id, ok := bs.lookup[uri]
 	if !ok {
 		return ErrNoEntity
@@ -77,7 +77,7 @@ func (bs *Memory) RegisterChildStorage(bundle string, storage BundleStorage) err
 	return nil
 }
 
-func (bs *Memory) AddChild(parent imap.Label, bundle string, child imap.Label) error {
+func (bs *Memory) AddChild(parent impl.Label, bundle string, child impl.Label) error {
 	id, ok := bs.lookup[parent]
 	if !ok {
 		return ErrNoEntity
@@ -103,7 +103,7 @@ func (bs *Memory) Get(parentPathIndex int) iterator.Iterator[LabelWithParent] {
 		defer sender.Return()
 
 		for _, entity := range bs.Entities {
-			var parent imap.Label
+			var parent impl.Label
 			if parentPathIndex > -1 {
 				parent = entity.Path[parentPathIndex]
 			}
@@ -122,7 +122,7 @@ func (bs *Memory) Count() (int64, error) {
 	return int64(len(bs.Entities)), nil
 }
 
-func (bs *Memory) Load(uri imap.Label) (entity wisski.Entity, err error) {
+func (bs *Memory) Load(uri impl.Label) (entity wisski.Entity, err error) {
 	index, ok := bs.lookup[uri]
 	if !ok {
 		return entity, ErrNoEntity

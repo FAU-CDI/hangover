@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
@@ -19,19 +20,19 @@ var (
 	_ Map = (*DiskMap)(nil)
 )
 
-func (de DiskMap) Forward() (HashMap[Label, TripleID], error) {
+func (de DiskMap) Forward() (HashMap[impl.Label, TripleID], error) {
 	forward := filepath.Join(de.Path, "forward.leveldb")
 
-	ds, err := NewDiskStorage[Label, TripleID](forward)
+	ds, err := NewDiskStorage[impl.Label, TripleID](forward)
 	if err != nil {
 		return nil, err
 	}
 
-	ds.MarshalKey = func(key Label) ([]byte, error) {
-		return LabelAsByte(key), nil
+	ds.MarshalKey = func(key impl.Label) ([]byte, error) {
+		return impl.LabelAsByte(key), nil
 	}
-	ds.UnmarshalKey = func(dest *Label, src []byte) error {
-		*dest = ByteAsLabel(src)
+	ds.UnmarshalKey = func(dest *impl.Label, src []byte) error {
+		*dest = impl.ByteAsLabel(src)
 		return nil
 	}
 
@@ -41,22 +42,22 @@ func (de DiskMap) Forward() (HashMap[Label, TripleID], error) {
 	return ds, nil
 }
 
-func (de DiskMap) Reverse() (HashMap[ID, Label], error) {
+func (de DiskMap) Reverse() (HashMap[impl.ID, impl.Label], error) {
 	reverse := filepath.Join(de.Path, "reverse.leveldb")
 
-	ds, err := NewDiskStorage[ID, Label](reverse)
+	ds, err := NewDiskStorage[impl.ID, impl.Label](reverse)
 	if err != nil {
 		return nil, err
 	}
 
-	ds.MarshalKey = MarshalID
-	ds.UnmarshalKey = UnmarshalID
+	ds.MarshalKey = impl.MarshalID
+	ds.UnmarshalKey = impl.UnmarshalID
 
-	ds.MarshalValue = func(key Label) ([]byte, error) {
-		return LabelAsByte(key), nil
+	ds.MarshalValue = func(key impl.Label) ([]byte, error) {
+		return impl.LabelAsByte(key), nil
 	}
-	ds.UnmarshalValue = func(dest *Label, src []byte) error {
-		*dest = ByteAsLabel(src)
+	ds.UnmarshalValue = func(dest *impl.Label, src []byte) error {
+		*dest = impl.ByteAsLabel(src)
 		return nil
 	}
 

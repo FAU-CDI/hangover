@@ -1,11 +1,13 @@
 package imap
 
+import "github.com/FAU-CDI/hangover/internal/triplestore/impl"
+
 // cspell:words imap
 
 // Map represents the backend of an Imap and creates appropriate key-value stores.
 type Map interface {
-	Forward() (HashMap[Label, TripleID], error)
-	Reverse() (HashMap[ID, Label], error)
+	Forward() (HashMap[impl.Label, TripleID], error)
+	Reverse() (HashMap[impl.ID, impl.Label], error)
 }
 
 // HashMap is something that stores key-value pairs

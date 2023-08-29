@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/tkw1536/pkglib/iterator"
 )
@@ -36,14 +36,14 @@ type BundleStorage interface {
 	// to this bundle.
 	//
 	// Calls to add for a specific bundle storage are serialized.
-	Add(uri imap.Label, path []imap.Label, triples []igraph.Triple) error
+	Add(uri impl.Label, path []impl.Label, triples []igraph.Triple) error
 
 	// AddFieldValue adds a value to the given field for the entity with the given uri.
 	//
 	// Concurrent calls to distinct fields may take place, however within each field calls are always synchronized.
 	//
 	// A non-existing parent should return ErrNoEntity.
-	AddFieldValue(uri imap.Label, field string, value any, path []imap.Label, triples []igraph.Triple) error
+	AddFieldValue(uri impl.Label, field string, value any, path []impl.Label, triples []igraph.Triple) error
 
 	// RegisterChildStorage register the given storage as a BundleStorage for the child bundle.
 	// The Storage should delete the reference to the child storage when it is closed.
@@ -54,7 +54,7 @@ type BundleStorage interface {
 	// Multiple concurrent calls to AddChild may take place, but every concurrent call will be for a different bundle.
 	//
 	// A non-existing parent should return ErrNoEntity.
-	AddChild(parent imap.Label, bundle string, child imap.Label) error
+	AddChild(parent impl.Label, bundle string, child impl.Label) error
 
 	// Finalize is called to signal to this storage that no more write operations will take place.
 	Finalize() error
@@ -70,7 +70,7 @@ type BundleStorage interface {
 
 	// Load loads an entity with the given URI from this storage.
 	// A non-existing entity should return err = ErrNoEntity.
-	Load(uri imap.Label) (wisski.Entity, error)
+	Load(uri impl.Label) (wisski.Entity, error)
 }
 
 var (
@@ -79,6 +79,6 @@ var (
 
 // LabelWithParent represents a URI along with it's parent
 type LabelWithParent struct {
-	Label  imap.Label
-	Parent imap.Label
+	Label  impl.Label
+	Parent impl.Label
 }

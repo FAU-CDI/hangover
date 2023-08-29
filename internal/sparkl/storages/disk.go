@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
-	"github.com/FAU-CDI/hangover/internal/igraph"
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
@@ -68,7 +68,7 @@ func (ds *Disk) put(f func(*sEntity) error) error {
 	return ds.DB.Put([]byte(entity.URI), data, nil)
 }
 
-func (ds *Disk) get(uri imap.Label, f func(*sEntity) error) error {
+func (ds *Disk) get(uri impl.Label, f func(*sEntity) error) error {
 	entity := sEntityPool.Get().(*sEntity)
 	entity.Reset()
 	defer sEntityPool.Put(entity)
@@ -106,7 +106,7 @@ func (ds *Disk) decode(data []byte, f func(*sEntity) error) error {
 	return f(entity)
 }
 
-func (ds *Disk) update(uri imap.Label, update func(*sEntity) error) error {
+func (ds *Disk) update(uri impl.Label, update func(*sEntity) error) error {
 	entity := sEntityPool.Get().(*sEntity)
 	entity.Reset()
 	defer sEntityPool.Put(entity)
@@ -144,19 +144,19 @@ func (ds *Disk) update(uri imap.Label, update func(*sEntity) error) error {
 }
 
 // Add adds an entity to this BundleSlice
-func (ds *Disk) Add(uri imap.Label, path []imap.Label, triples []igraph.Triple) error {
+func (ds *Disk) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple) error {
 	atomic.AddInt64(&ds.count, 1)
 	return ds.put(func(se *sEntity) error {
 		se.URI = uri
 		se.Path = path
 		se.Triples = triples
 		se.Fields = make(map[string][]wisski.FieldValue)
-		se.Children = make(map[string][]imap.Label)
+		se.Children = make(map[string][]impl.Label)
 		return nil
 	})
 }
 
-func (ds *Disk) AddFieldValue(uri imap.Label, field string, value any, path []imap.Label, triples []igraph.Triple) error {
+func (ds *Disk) AddFieldValue(uri impl.Label, field string, value any, path []impl.Label, triples []igraph.Triple) error {
 	return ds.update(uri, func(se *sEntity) error {
 		if se.Fields == nil {
 			se.Fields = make(map[string][]wisski.FieldValue)
@@ -175,10 +175,10 @@ func (ds *Disk) RegisterChildStorage(bundle string, storage BundleStorage) error
 	return nil
 }
 
-func (ds *Disk) AddChild(parent imap.Label, bundle string, child imap.Label) error {
+func (ds *Disk) AddChild(parent impl.Label, bundle string, child impl.Label) error {
 	return ds.update(parent, func(se *sEntity) error {
 		if se.Children == nil {
-			se.Children = make(map[string][]imap.Label)
+			se.Children = make(map[string][]impl.Label)
 		}
 		se.Children[bundle] = append(se.Children[bundle], child)
 		return nil
@@ -209,7 +209,7 @@ func (ds *Disk) Get(parentPathIndex int) iterator.Iterator[LabelWithParent] {
 					return nil
 				})
 			} else {
-				uri.Label = imap.Label(it.Key())
+				uri.Label = impl.Label(it.Key())
 			}
 
 			if sender.YieldError(err) {
@@ -229,7 +229,7 @@ func (ds *Disk) Count() (int64, error) {
 	return atomic.LoadInt64(&ds.count), nil
 }
 
-func (ds *Disk) Load(uri imap.Label) (entity wisski.Entity, err error) {
+func (ds *Disk) Load(uri impl.Label) (entity wisski.Entity, err error) {
 	err = ds.get(uri, func(se *sEntity) error {
 		// copy simple fields
 		entity.URI = se.URI

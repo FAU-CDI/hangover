@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/gorilla/mux"
 )
 
@@ -31,7 +31,7 @@ func (viewer *Viewer) jsonBundle(w http.ResponseWriter, r *http.Request) {
 func (viewer *Viewer) jsonEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	entity, ok := viewer.getEntity(vars["bundle"], imap.Label(vars["uri"]))
+	entity, ok := viewer.getEntity(vars["bundle"], impl.Label(vars["uri"]))
 	if !ok {
 		http.NotFound(w, r)
 		return

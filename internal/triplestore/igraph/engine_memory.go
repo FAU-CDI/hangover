@@ -1,7 +1,8 @@
 package igraph
 
 import (
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -11,16 +12,16 @@ type MemoryEngine struct {
 	imap.MemoryMap
 }
 
-func (MemoryEngine) Data() (imap.HashMap[imap.ID, imap.Datum], error) {
-	ms := imap.MakeMemory[imap.ID, imap.Datum](0)
+func (MemoryEngine) Data() (imap.HashMap[impl.ID, impl.Datum], error) {
+	ms := imap.MakeMemory[impl.ID, impl.Datum](0)
 	return &ms, nil
 }
-func (MemoryEngine) Triples() (imap.HashMap[imap.ID, IndexTriple], error) {
-	ms := imap.MakeMemory[imap.ID, IndexTriple](0)
+func (MemoryEngine) Triples() (imap.HashMap[impl.ID, IndexTriple], error) {
+	ms := imap.MakeMemory[impl.ID, IndexTriple](0)
 	return &ms, nil
 }
-func (MemoryEngine) Inverses() (imap.HashMap[imap.ID, imap.ID], error) {
-	ms := imap.MakeMemory[imap.ID, imap.ID](0)
+func (MemoryEngine) Inverses() (imap.HashMap[impl.ID, impl.ID], error) {
+	ms := imap.MakeMemory[impl.ID, impl.ID](0)
 	return &ms, nil
 }
 func (MemoryEngine) PSOIndex() (ThreeStorage, error) {
@@ -34,29 +35,29 @@ func (MemoryEngine) POSIndex() (ThreeStorage, error) {
 }
 
 // ThreeHash implements ThreeStorage in memory
-type ThreeHash map[imap.ID]map[imap.ID]*ThreeItem
+type ThreeHash map[impl.ID]map[impl.ID]*ThreeItem
 
 func (th *ThreeHash) Compact() error {
 	return nil // do nothing
 }
 
 type ThreeItem struct {
-	Data map[imap.ID]imap.ID
-	Keys []imap.ID
+	Data map[impl.ID]impl.ID
+	Keys []impl.ID
 }
 
-func (tlm ThreeHash) Add(a, b, c imap.ID, l imap.ID, conflict func(old, new imap.ID) (imap.ID, error)) (conflicted bool, err error) {
+func (tlm ThreeHash) Add(a, b, c impl.ID, l impl.ID, conflict func(old, new impl.ID) (impl.ID, error)) (conflicted bool, err error) {
 	switch {
 	case tlm[a] == nil:
-		tlm[a] = make(map[imap.ID]*ThreeItem)
+		tlm[a] = make(map[impl.ID]*ThreeItem)
 		fallthrough
 	case tlm[a][b] == nil:
 		tlm[a][b] = &ThreeItem{
-			Data: make(map[imap.ID]imap.ID, 1),
+			Data: make(map[impl.ID]impl.ID, 1),
 		}
 		fallthrough
 	default:
-		var old imap.ID
+		var old impl.ID
 		old, conflicted = tlm[a][b].Data[c]
 		if conflicted {
 			l, err = conflict(old, l)
@@ -82,7 +83,7 @@ func (tlm ThreeHash) Finalize() error {
 	for _, a := range tlm {
 		for _, b := range a {
 			b.Keys = maps.Keys(b.Data)
-			slices.SortFunc(b.Keys, func(a imap.ID, b imap.ID) int {
+			slices.SortFunc(b.Keys, func(a impl.ID, b impl.ID) int {
 				if a.Less(b) {
 					return -1
 				}
@@ -96,7 +97,7 @@ func (tlm ThreeHash) Finalize() error {
 	return nil
 }
 
-func (tlm ThreeHash) Fetch(a, b imap.ID, f func(c imap.ID, l imap.ID) error) error {
+func (tlm ThreeHash) Fetch(a, b impl.ID, f func(c impl.ID, l impl.ID) error) error {
 	three := tlm[a][b]
 	if three == nil {
 		return nil
@@ -110,10 +111,10 @@ func (tlm ThreeHash) Fetch(a, b imap.ID, f func(c imap.ID, l imap.ID) error) err
 	return nil
 }
 
-func (tlm ThreeHash) Has(a, b, c imap.ID) (imap.ID, bool, error) {
+func (tlm ThreeHash) Has(a, b, c impl.ID) (impl.ID, bool, error) {
 	three := tlm[a][b]
 	if three == nil {
-		var invalid imap.ID
+		var invalid impl.ID
 		return invalid, false, nil
 	}
 	l, ok := three.Data[c]

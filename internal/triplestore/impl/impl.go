@@ -1,4 +1,4 @@
-package imap
+package impl
 
 // Label represents the label of individual triple members.
 // A label is a uri.

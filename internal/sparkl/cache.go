@@ -5,7 +5,8 @@ import (
 	"errors"
 	"runtime"
 
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/sgob"
 	"golang.org/x/exp/maps"
@@ -19,10 +20,10 @@ import (
 type Cache struct {
 	engine      imap.MemoryMap             // the engine used for the imap
 	beIndex     map[string][]wisski.Entity // mappings from bundles to entities
-	biIndex     map[string]map[imap.ID]int // index into beIndex by uri
-	ebIndex     map[imap.ID]string         // index from entity uri into bundle
-	sameAs      map[imap.ID]imap.ID        // canonical name mappings from entities
-	aliasOf     map[imap.ID][]imap.ID      // opposite of sameAs
+	biIndex     map[string]map[impl.ID]int // index into beIndex by uri
+	ebIndex     map[impl.ID]string         // index from entity uri into bundle
+	sameAs      map[impl.ID]impl.ID        // canonical name mappings from entities
+	aliasOf     map[impl.ID][]impl.ID      // opposite of sameAs
 	uris        *imap.IMap                 // holds mappings between ids and uris
 	bundleNames []string                   // names of all bundles
 }
@@ -100,17 +101,17 @@ func (cache Cache) BundleNames() []string {
 // TODO: Do we want to use an IMap here?
 
 // NewCache creates a new cache from a bundle-entity-map
-func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[imap.Label, imap.Label]) (c Cache, err error) {
+func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, impl.Label]) (c Cache, err error) {
 	// reset the uris
 	c.uris = &imap.IMap{}
 	c.uris.Reset(&c.engine)
 
 	// store the bundle-entity index
 	c.beIndex = Data
-	c.biIndex = make(map[string]map[imap.ID]int, len(c.beIndex))
-	c.ebIndex = make(map[imap.ID]string)
+	c.biIndex = make(map[string]map[impl.ID]int, len(c.beIndex))
+	c.ebIndex = make(map[impl.ID]string)
 	for bundle, entities := range c.beIndex {
-		c.biIndex[bundle] = make(map[imap.ID]int, len(entities))
+		c.biIndex[bundle] = make(map[impl.ID]int, len(entities))
 		for i, entity := range entities {
 			id, err := c.uris.Add(entity.URI)
 			if err != nil {
@@ -130,10 +131,10 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[imap.Label, i
 	}
 
 	// setup same-as and same-as-in
-	c.sameAs = make(map[imap.ID]imap.ID, sameAsCount)
-	c.aliasOf = make(map[imap.ID][]imap.ID, sameAsCount)
+	c.sameAs = make(map[impl.ID]impl.ID, sameAsCount)
+	c.aliasOf = make(map[impl.ID][]impl.ID, sameAsCount)
 
-	err = SameAs.Iterate(func(alias, canon imap.Label) error {
+	err = SameAs.Iterate(func(alias, canon impl.Label) error {
 		aliass, err := c.uris.Add(alias)
 		if err != nil {
 			return err
@@ -155,7 +156,7 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[imap.Label, i
 	return c, nil
 }
 
-func (c Cache) canonical(uri imap.Label) imap.ID {
+func (c Cache) canonical(uri impl.Label) impl.ID {
 	id, err := c.uris.Forward(uri)
 	if err != nil {
 		return id
@@ -167,20 +168,20 @@ func (c Cache) canonical(uri imap.Label) imap.ID {
 }
 
 // Canonical returns the canonical version of the given uri
-func (c Cache) Canonical(uri imap.Label) imap.Label {
+func (c Cache) Canonical(uri impl.Label) impl.Label {
 	canon, _ := c.uris.Reverse(c.canonical(uri))
 	return canon
 }
 
-// Aliases returns the Aliases of the given imap.Label, excluding itself
-func (c Cache) Aliases(uri imap.Label) []imap.Label {
+// Aliases returns the Aliases of the given impl.Label, excluding itself
+func (c Cache) Aliases(uri impl.Label) []impl.Label {
 	id, err := c.uris.Forward(uri)
 	if err != nil {
 		return nil
 	}
 
 	aids := c.aliasOf[id]
-	aliases := make([]imap.Label, 0, len(aids))
+	aliases := make([]impl.Label, 0, len(aids))
 	for _, id := range aids {
 		alias, err := c.uris.Reverse(id)
 		if err != nil {
@@ -192,14 +193,14 @@ func (c Cache) Aliases(uri imap.Label) []imap.Label {
 }
 
 // Bundle returns the bundle of the given uri, if any
-func (c Cache) Bundle(uri imap.Label) (string, bool) {
+func (c Cache) Bundle(uri impl.Label) (string, bool) {
 	cid := c.canonical(uri)
 	bundle, ok := c.ebIndex[cid]
 	return bundle, ok
 }
 
-// FirstBundle returns the first bundle for which the given imap.Label exists
-func (c Cache) FirstBundle(uris ...imap.Label) (uri imap.Label, bundle string, ok bool) {
+// FirstBundle returns the first bundle for which the given impl.Label exists
+func (c Cache) FirstBundle(uris ...impl.Label) (uri impl.Label, bundle string, ok bool) {
 	for _, uri := range uris {
 		bundle, ok = c.Bundle(uri)
 		if ok {
@@ -210,7 +211,7 @@ func (c Cache) FirstBundle(uris ...imap.Label) (uri imap.Label, bundle string, o
 }
 
 // Entity looks up the given entity
-func (c Cache) Entity(uri imap.Label, bundle string) (*wisski.Entity, bool) {
+func (c Cache) Entity(uri impl.Label, bundle string) (*wisski.Entity, bool) {
 	index, ok := c.biIndex[bundle][c.canonical(uri)]
 	if !ok {
 		return nil, false

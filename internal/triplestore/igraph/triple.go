@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
 // Stats holds statistics about triples in the index
@@ -28,8 +29,8 @@ type IndexTriple struct {
 }
 
 func MarshalTriple(triple IndexTriple) ([]byte, error) {
-	result := make([]byte, 6*imap.IDLen+1)
-	imap.MarshalIDs(
+	result := make([]byte, 6*impl.IDLen+1)
+	impl.MarshalIDs(
 		result[1:],
 		triple.Items[0].Literal,
 		triple.Items[1].Literal,
@@ -45,11 +46,11 @@ func MarshalTriple(triple IndexTriple) ([]byte, error) {
 var errDecodeTriple = errors.New("DecodeTriple: src too short")
 
 func UnmarshalTriple(dest *IndexTriple, src []byte) error {
-	if len(src) < 6*imap.IDLen+1 {
+	if len(src) < 6*impl.IDLen+1 {
 		return errDecodeTriple
 	}
 	dest.Role = Role(src[0])
-	imap.UnmarshalIDs(
+	impl.UnmarshalIDs(
 		src[1:],
 		&(dest.Items[0].Literal),
 		&(dest.Items[1].Literal),
@@ -64,20 +65,20 @@ func UnmarshalTriple(dest *IndexTriple, src []byte) error {
 // Triple represents a triple found inside a graph
 type Triple struct {
 	// the literal SPO for this triple, as found in the original data.
-	Subject   imap.Label
-	Predicate imap.Label
-	Object    imap.Label
+	Subject   impl.Label
+	Predicate impl.Label
+	Object    impl.Label
 
 	// the canonical (normalized for sameAs) for this triple.
 	// FIXME: change this to say canonical in the name
-	SSubject   imap.Label
-	SPredicate imap.Label
-	SObject    imap.Label
-	Datum      imap.Datum
+	SSubject   impl.Label
+	SPredicate impl.Label
+	SObject    impl.Label
+	Datum      impl.Datum
 
 	// ID uniquely identifies this triple.
 	// Two triples are identical iff their IDs are identical.
-	ID imap.ID
+	ID impl.ID
 
 	// Why was this triple inserted?
 	Role Role

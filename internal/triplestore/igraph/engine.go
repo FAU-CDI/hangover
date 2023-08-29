@@ -3,16 +3,17 @@ package igraph
 import (
 	"io"
 
-	"github.com/FAU-CDI/hangover/internal/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
 // Engine represents an object that creates storages for an IGraph
 type Engine interface {
 	imap.Map
 
-	Data() (imap.HashMap[imap.ID, imap.Datum], error)
-	Triples() (imap.HashMap[imap.ID, IndexTriple], error)
-	Inverses() (imap.HashMap[imap.ID, imap.ID], error)
+	Data() (imap.HashMap[impl.ID, impl.Datum], error)
+	Triples() (imap.HashMap[impl.ID, IndexTriple], error)
+	Inverses() (imap.HashMap[impl.ID, impl.ID], error)
 	PSOIndex() (ThreeStorage, error)
 	POSIndex() (ThreeStorage, error)
 }
@@ -24,7 +25,7 @@ type ThreeStorage interface {
 	//
 	// l acts as a label for the insert.
 	// when the given edge already exists, the conflict function should be called to resolve the conflict
-	Add(a, b, c imap.ID, l imap.ID, conflict func(old, new imap.ID) (imap.ID, error)) (conflicted bool, err error)
+	Add(a, b, c impl.ID, l impl.ID, conflict func(old, new impl.ID) (impl.ID, error)) (conflicted bool, err error)
 
 	// Count counts the overall number of entries in the index
 	Count() (int64, error)
@@ -39,8 +40,8 @@ type ThreeStorage interface {
 	// Fetch iterates over all triples (a, b, c) in c-order.
 	// l is the last label that was created for the triple.
 	// If an error occurs, iteration stops and is returned to the caller
-	Fetch(a, b imap.ID, f func(c imap.ID, l imap.ID) error) error
+	Fetch(a, b impl.ID, f func(c impl.ID, l impl.ID) error) error
 
 	// Has checks if the given mapping exists and returns the label (if any)
-	Has(a, b, c imap.ID) (imap.ID, bool, error)
+	Has(a, b, c impl.ID) (impl.ID, bool, error)
 }
