@@ -24,6 +24,9 @@ var contextTemplateFuncs = template.FuncMap{
 	"renderhtml": func(html string, globals contextGlobal) template.HTML {
 		return template.HTML(htmlx.ReplaceLinks(html, globals.ReplaceURL))
 	},
+	"datum2string": func(datum impl.Datum) string {
+		return string(datum)
+	},
 	"combine": func(pairs ...any) (map[string]any, error) {
 		if len(pairs)%2 != 0 {
 			return nil, errors.New("pairs must be of even length")

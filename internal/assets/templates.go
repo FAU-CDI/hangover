@@ -11,8 +11,9 @@ var templates embed.FS
 var (
 	shared *template.Template = template.Must(
 		template.New("").Funcs(template.FuncMap{
-			"renderhtml": func(args ...any) any { panic("not implemented") },
-			"combine":    func(args ...any) any { panic("not implemented") },
+			"renderhtml":   func(args ...any) any { panic("not implemented") },
+			"combine":      func(args ...any) any { panic("not implemented") },
+			"datum2string": func(args ...any) any { panic("not implemented") },
 		}).ParseFS(templates, "templates/*.html"),
 	)
 )
