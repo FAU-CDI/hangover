@@ -45,10 +45,9 @@ test:
 
 deps: godeps internal/assets/node_modules
 godeps:
-	go get ./...
-	go mod tidy
+	go mod download
 	go install github.com/tkw1536/lipo@latest
 	go install github.com/tkw1536/gogenlicense/cmd/gogenlicense@latest
 
 internal/assets/node_modules:
-	cd internal/assets/ && yarn install
+	cd internal/assets/ && yarn install --frozen-lockfile
