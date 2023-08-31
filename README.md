@@ -1,6 +1,6 @@
-# Hangover
+# Hangover - A WissKI Data Viewer
 
-A __WissKI Viewer__ and __WissKI Exporter__ to display or export data found in a WissKI based on a pathbuilder and a triplestore export.
+A __WissKI Data Viewer__ and __WissKI Exporter__ to display or export data found in a WissKI based on a pathbuilder and a triplestore export.
 
 *Work in progress*
 
@@ -10,8 +10,8 @@ A __WissKI Viewer__ and __WissKI Exporter__ to display or export data found in a
 
 ### from source
 
-1. Install [Go](https://go.dev/), Version 1.18 or newer
-2. Install [Yarn](https://yarnpkg.com/) (to build some frontends)
+1. Install [Go](https://go.dev/), Version 1.21 or newer
+2. Install [Yarn](https://yarnpkg.com/) (to build some frontend stuff)
 3. Clone this repository somewhere.
 4. Fetch dependencies:
 
