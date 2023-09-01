@@ -18,7 +18,7 @@ RUN apt-get update -qq && apt-get install -y make nodejs yarn
 
 ADD . /app/
 WORKDIR /app/
-RUN make deps generate
+RUN make -B deps generate
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o hangover ./cmd/hangover
 
 # add it into a scratch image

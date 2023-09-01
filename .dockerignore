@@ -1,1 +1,7 @@
-node_modules
+# ignore all the assets that have already been built.
+# we always need to build locally!
+!internal/assets/package.json
+internal/assets/.parcel-cache
+internal/assets/.entry-cache
+internal/assets/node_modules
+internal/assets/yarn-error.log
