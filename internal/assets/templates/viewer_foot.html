@@ -2,8 +2,11 @@
     <input name="uri">
     <button type="submit">Resolve URI</button>
 </form>
+
 <hr />
+
 {{ .Globals.Footer }}
+
 <p>
     <small>
         HTML Render: {{ .Globals.HTMLRender }}<br />
@@ -11,5 +14,6 @@
         Public URL: {{ .Globals.PublicURL}}<br />
         SameAs Predicates: {{ .Globals.Predicates.SameAs }}<br />
         InverseOf Predicates: {{ .Globals.Predicates.InverseOf }}<br />
+        <a href="/legal">Viewer License Notices</a><br />
     </small>
 </p>

@@ -3,6 +3,8 @@ package assets
 import (
 	"html/template"
 	"net/http"
+
+	_ "embed"
 )
 
 // Assets represents a group of assets to be included inside a template.
@@ -21,6 +23,11 @@ type Assets struct {
 	Scripts string // <script> tags inserted by the asset
 	Styles  string // <link> tags inserted by the asset
 }
+
+// Disclaimer contains a legal disclaimer about all frontend components.
+//
+//go:embed assets_disclaimer.txt
+var Disclaimer string
 
 //go:generate node build.mjs hangover
 

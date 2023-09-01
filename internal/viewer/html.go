@@ -11,6 +11,7 @@ import (
 	_ "embed"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
+	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/assets"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
@@ -62,9 +63,18 @@ var entityTemplate = assets.Assetshangover.MustParseShared(
 //go:embed templates/index.html
 var indexHTML string
 
+//go:embed templates/legal.html
+var legalHTML string
+
 var indexTemplate *template.Template = assets.Assetshangover.MustParseShared(
 	"index.html",
 	indexHTML,
+	contextTemplateFuncs,
+)
+
+var legalTemplate *template.Template = assets.Assetshangover.MustParseShared(
+	"legal.html",
+	legalHTML,
 	contextTemplateFuncs,
 )
 
@@ -123,6 +133,13 @@ type htmlIndexContext struct {
 	Globals contextGlobal
 }
 
+type htmlLegalContext struct {
+	Globals  contextGlobal
+	License  string
+	Backend  string
+	Frontend string
+}
+
 func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
 	bundles, ok := viewer.getBundles()
 	if !ok {
@@ -135,6 +152,20 @@ func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
 	err := indexTemplate.Execute(w, htmlIndexContext{
 		Globals: viewer.contextGlobal(),
 		Bundles: bundles,
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (viewer *Viewer) htmlLegal(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	err := legalTemplate.Execute(w, htmlLegalContext{
+		Globals:  viewer.contextGlobal(),
+		License:  hangover.License,
+		Backend:  hangover.Notices,
+		Frontend: assets.Disclaimer,
 	})
 	if err != nil {
 		panic(err)

@@ -1,7 +1,8 @@
 import { Parcel } from "@parcel/core"
-import { mkdir, rm, writeFile, readFile, unlink, rmdir, } from "fs/promises"
+import { mkdir, rm, writeFile, readFile, unlink, } from "fs/promises"
 import { join } from "path"
 import { parse as parseHTML } from 'node-html-parser';
+import { spawnSync } from 'child_process'
 
 // cspell:words GOPACKAGE GOFILE
 
@@ -15,6 +16,11 @@ const DIST_DIR = join('.', 'dist')
 const PUBLIC_DIR = '/assets/'
 
 const DEST_PACKAGE = process.env.GOPACKAGE ?? 'static'
+const DEST_DISCLAIMER = (() => {
+    const source = (process.env.GOFILE ?? 'assets.go')
+    const base = source.substring(0, source.length - '.go'.length)
+    return base + '_disclaimer.txt'
+})()
 const DEST_FILE = (() => {
     const source = (process.env.GOFILE ?? 'assets.go')
     const base = source.substring(0, source.length - '.go'.length)
@@ -30,6 +36,29 @@ await Promise.all([
     mkdir(ENTRY_DIR, { recursive: true }),
     rm(DIST_DIR, { recursive: true, force: true })
 ])
+console.log(' Done.')
+
+
+//
+// Write the disclaimer
+//
+
+process.stdout.write('Generating legal disclaimer ...')
+
+const disclaimer = await new Promise((resolve, reject) => {
+  const child = spawnSync('yarn', ['licenses', 'generate-disclaimer'], { encoding: 'utf8' })
+  if (child.error) {
+    reject(child.stderr)
+    return
+  }
+
+  resolve(child.stdout)
+})
+
+console.log(' Done.')
+
+process.stdout.write(`Writing ${DEST_DISCLAIMER} ...`)
+await writeFile(DEST_DISCLAIMER, disclaimer)
 console.log(' Done.')
 
 

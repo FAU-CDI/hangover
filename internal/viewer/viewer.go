@@ -62,6 +62,7 @@ func (rf RenderFlags) PublicURIS() (public []string) {
 func (viewer *Viewer) Prepare() {
 	viewer.init.Do(func() {
 		viewer.mux.HandleFunc("/", viewer.htmlIndex)
+		viewer.mux.HandleFunc("/legal", viewer.htmlLegal)
 		viewer.mux.HandleFunc("/pathbuilder", viewer.htmlPathbuilder)
 		viewer.mux.HandleFunc("/bundle/{bundle}", viewer.htmlBundle)
 		viewer.mux.HandleFunc("/entity/{bundle}", viewer.htmlEntity).Queries("uri", "{uri:.+}")
