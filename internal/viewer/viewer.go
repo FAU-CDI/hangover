@@ -18,7 +18,9 @@ import (
 
 // Viewer implements an [http.Handler] that displays WissKI Entities.
 type Viewer struct {
-	mux         mux.Router
+	mux       mux.Router
+	cspHeader string
+
 	Cache       *sparkl.Cache
 	Pathbuilder *pathbuilder.Pathbuilder
 	RenderFlags RenderFlags
@@ -37,6 +39,7 @@ func (viewer *Viewer) Close() error {
 type RenderFlags struct {
 	PublicURL   string
 	Predicates  sparkl.Predicates
+	StrictCSP   bool // use strict content-security-policy for images and media by only allowing content from public uris
 	HTMLRender  bool
 	ImageRender bool
 }
@@ -59,6 +62,36 @@ func (rf RenderFlags) PublicURIS() (public []string) {
 	return public
 }
 
+// CSPHeader returns the CSPHeader to be included in viewer responses
+func (rf RenderFlags) CSPHeader() string {
+	// don't allow anything by default
+	header := "default-src 'none'; script-src 'self'; font-src 'self'; "
+
+	if rf.HTMLRender {
+		// when rendering html, we explicitly want to allow inline styles.
+		header += "style-src 'self' 'unsafe-inline'; "
+	} else {
+		// by default only allow self styles
+		header += "style-src 'self'; "
+	}
+
+	// determine the source for media and images
+	// by default it is everything, but in the strict case we use only public uris
+	source := "*"
+
+	if rf.StrictCSP {
+		source = strings.Join(rf.PublicURIS(), " ")
+	}
+
+	if rf.ImageRender || rf.HTMLRender {
+		header += "img-src " + source + ";"
+	}
+	if rf.HTMLRender {
+		header += "media-src " + source + ";"
+	}
+	return header
+}
+
 func (viewer *Viewer) Prepare() {
 	viewer.init.Do(func() {
 		viewer.mux.HandleFunc("/", viewer.htmlIndex)
@@ -75,11 +108,16 @@ func (viewer *Viewer) Prepare() {
 		viewer.mux.HandleFunc("/api/v1/entity/{bundle}", viewer.jsonEntity).Queries("uri", "{uri:.+}")
 
 		viewer.mux.PathPrefix("/assets/").Handler(assets.AssetHandler)
+
+		viewer.cspHeader = viewer.RenderFlags.CSPHeader()
 	})
 
 }
 
 func (viewer *Viewer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	viewer.Prepare()
+
+	w.Header().Set("Content-Security-Policy", viewer.cspHeader)
+
 	viewer.mux.ServeHTTP(w, r)
 }

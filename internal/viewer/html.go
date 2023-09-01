@@ -148,6 +148,7 @@ func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
+
 	w.WriteHeader(http.StatusOK)
 	err := indexTemplate.Execute(w, htmlIndexContext{
 		Globals: viewer.contextGlobal(),
@@ -188,6 +189,7 @@ func (viewer *Viewer) htmlBundle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
+
 	w.WriteHeader(http.StatusOK)
 	err := bundleTemplate.Execute(w, htmlBundleContext{
 		Globals: viewer.contextGlobal(),
@@ -206,6 +208,7 @@ type htmlPathbuilderContext struct {
 
 func (viewer *Viewer) htmlPathbuilder(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
+
 	w.WriteHeader(http.StatusOK)
 	err := pbTemplate.Execute(w, htmlPathbuilderContext{
 		Globals:     viewer.contextGlobal(),

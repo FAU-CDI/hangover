@@ -141,6 +141,7 @@ func init() {
 	flag.StringVar(&debugServer, "debug-listen", debugServer, "start a profiling server on the given address")
 	flag.StringVar(&export, "export", export, "export completed index to path and exit")
 	flag.StringVar(&footerHTML, "footer", footerHTML, "html to include in footer of every page")
+	flag.BoolVar(&flags.StrictCSP, "strict-csp", flags.StrictCSP, "include a strict csp header in every page")
 	flag.BoolVar(&benchMode, "bench", benchMode, "benchmarking mode: only load for statistics and exit")
 
 	flag.Parse()
