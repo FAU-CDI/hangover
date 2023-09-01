@@ -6,6 +6,14 @@ a:visited {
     color: blue;
 }
 
+footer a {
+    color: grey !important;
+}
+
+footer a:hover {
+    color: black !important;
+}
+
 nav a::before,
 nav a::after,
 nav b::before,

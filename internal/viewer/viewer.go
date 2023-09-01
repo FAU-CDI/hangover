@@ -1,6 +1,7 @@
 package viewer
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"net/url"
@@ -21,7 +22,9 @@ type Viewer struct {
 	Cache       *sparkl.Cache
 	Pathbuilder *pathbuilder.Pathbuilder
 	RenderFlags RenderFlags
-	init        sync.Once
+
+	Footer template.HTML // html to include in footer of every page
+	init   sync.Once
 }
 
 func (viewer *Viewer) Close() error {

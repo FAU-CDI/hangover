@@ -79,6 +79,7 @@ var pbTemplate *template.Template = assets.Assetshangover.MustParseShared(
 
 type contextGlobal struct {
 	InterceptedPrefixes []string // urls that are redirected to this server
+	Footer              template.HTML
 	RenderFlags
 }
 
@@ -99,6 +100,7 @@ func (cg contextGlobal) ReplaceURL(u string) string {
 }
 
 func (viewer *Viewer) contextGlobal() (global contextGlobal) {
+	global.Footer = viewer.Footer
 	global.RenderFlags = viewer.RenderFlags
 
 	if viewer.RenderFlags.PublicURL == "" {

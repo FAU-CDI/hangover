@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -86,6 +87,7 @@ func main() {
 			Cache:       drincw.Cache,
 			Pathbuilder: &drincw.Pathbuilder,
 			RenderFlags: flags,
+			Footer:      template.HTML(footerHTML),
 		}
 		handler.Prepare()
 		handlerPerf = perf.Since(start)
@@ -112,6 +114,8 @@ var flags viewer.RenderFlags
 var sameAs string = string(wisski.SameAs)
 var inverseOf string = string(wisski.InverseOf)
 
+var footerHTML string = "powered by <a href='https://github.com/FAU-CDI/hangover' target='_blank' rel='noopener noreferer'>hangover</a>. "
+
 var cache string
 var export string
 var debugServer string
@@ -136,6 +140,7 @@ func init() {
 	flag.StringVar(&cache, "cache", cache, "During indexing, cache data in the given directory as opposed to memory")
 	flag.StringVar(&debugServer, "debug-listen", debugServer, "start a profiling server on the given address")
 	flag.StringVar(&export, "export", export, "export completed index to path and exit")
+	flag.StringVar(&footerHTML, "footer", footerHTML, "html to include in footer of every page")
 	flag.BoolVar(&benchMode, "bench", benchMode, "benchmarking mode: only load for statistics and exit")
 
 	flag.Parse()
