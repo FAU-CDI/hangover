@@ -5,8 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/gob"
 	"errors"
-	"io"
-	"log"
 	"os"
 	"runtime/debug"
 
@@ -14,19 +12,18 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder/pbxml"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
-	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/viewer"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/perf"
 	"github.com/FAU-CDI/hangover/pkg/progress"
 	"github.com/FAU-CDI/hangover/pkg/sgob"
 )
 
 // cspell:words WissKI pathbuilder nquads
 
-const GlassVersion = 1
+const GlassVersion = 2
 
 // Glass represents a stand-alone representation of a WissKI
 type Glass struct {
@@ -92,81 +89,55 @@ func (glass *Glass) DecodeFrom(decoder *gob.Decoder) (err error) {
 
 // Create creates a new glass from the given pathbuilder and nquads.
 // output is written to output.
-func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, output io.Writer) (drincw Glass, err error) {
-	log := log.New(output, "", log.LstdFlags)
-
+func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, stats *status.Status) (drincw Glass, err error) {
 	// read the pathbuilder
-	var pbPerf perf.Diff
-	{
-		start := perf.Now()
+	if err := stats.DoStage(status.StageReadPathbuilder, func() (err error) {
 		drincw.Pathbuilder, err = pbxml.Load(pathbuilderPath)
-		pbPerf = perf.Since(start)
-
-		if err != nil {
-			log.Fatalf("Unable to load Pathbuilder: %s", err)
-			return drincw, err
-		}
-		log.Printf("loaded pathbuilder, took %s", pbPerf)
+		return err
+	}); err != nil {
+		return drincw, err
 	}
 
 	// make an engine
 	engine := sparkl.NewEngine(cacheDir)
 	bEngine := storages.NewBundleEngine(cacheDir)
 	if cacheDir != "" {
-		log.Printf("caching data on-disk at %s", cacheDir)
+		stats.Log("caching data on-disk", "path", cacheDir)
 	}
 
 	// build an index
-	var index *igraph.Index
-	var indexPerf perf.Diff
-	{
-		start := perf.Now()
-		index, err = sparkl.LoadIndex(nquadsPath, flags.Predicates, engine, sparkl.DefaultIndexOptions(&drincw.Pathbuilder), &progress.Progress{
-			Rewritable: progress.Rewritable{
-				FlushInterval: progress.DefaultFlushInterval,
-				Writer:        output,
-			},
-		})
-		indexPerf = perf.Since(start)
-
-		if err != nil {
-			log.Fatalf("Unable to build index: %s", err)
-			return drincw, err
-		}
-		defer index.Close()
-
-		log.Printf("built index, stats %s, took %s", index.Stats(), indexPerf)
+	index, err := sparkl.LoadIndex(nquadsPath, flags.Predicates, engine, sparkl.DefaultIndexOptions(&drincw.Pathbuilder), stats)
+	if err != nil {
+		return drincw, err
 	}
 
-	// generate bundles
+	stats.Log("finished indexing", "stats", index.Stats())
+	defer index.Close()
+
+	// extract the bundles
 	var bundles map[string][]wisski.Entity
-	var bundlesPerf perf.Diff
-	{
-		start := perf.Now()
-		bundles, err = sparkl.LoadPathbuilder(&drincw.Pathbuilder, index, bEngine)
-		if err != nil {
-			log.Fatalf("Unable to load pathbuilder: %s", err)
-		}
-		bundlesPerf = perf.Since(start)
-		log.Printf("extracted bundles, took %s", bundlesPerf)
+	stats.DoStage(status.StageExtractBundles, func() (err error) {
+		bundles, err = sparkl.LoadPathbuilder(&drincw.Pathbuilder, index, bEngine, stats)
+		return err
+	})
+	if err != nil {
+		return drincw, err
 	}
 
-	// generate cache
-	var cachePerf perf.Diff
-	{
-		start := perf.Now()
-
+	// extract the cache
+	stats.DoStage(status.StageExtractCache, func() error {
 		identities := imap.MakeMemory[impl.Label, impl.Label](0)
 		index.IdentityMap(&identities)
 
 		cache, err := sparkl.NewCache(bundles, &identities)
 		if err != nil {
-			log.Fatalf("unable to build cache: %s", err)
+			return err
 		}
 		drincw.Cache = &cache
-
-		cachePerf = perf.Since(start)
-		log.Printf("built cache, took %s", cachePerf)
+		return nil
+	})
+	if err != nil {
+		return drincw, err
 	}
 
 	index.Close()        // We close the index early, because it's no longer needed
@@ -177,86 +148,70 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 }
 
 // Export writes a glass to the given path
-func Export(path string, drincw Glass, output io.Writer) (err error) {
-	log := log.New(output, "", log.LstdFlags)
-
+func Export(path string, drincw Glass, stats *status.Status) (err error) {
 	f, err := os.Create(path)
 	if err != nil {
-		log.Fatalf("Unable to create export: %s", err)
+		stats.LogError("create export", err)
 		return err
 	}
 	defer f.Close()
 
 	writer, err := gzip.NewWriterLevel(f, gzip.BestCompression)
 	if err != nil {
-		log.Fatalf("Unable to create export: %s", err)
+		stats.LogError("create gzip writer", err)
 		return err
 	}
 	defer writer.Flush()
 
-	{
-		start := perf.Now()
-
+	return stats.DoStage(status.StageExportIndex, func() error {
 		counter := &progress.Writer{
-			Writer: writer,
-
-			Rewritable: progress.Rewritable{
-				FlushInterval: progress.DefaultFlushInterval,
-				Writer:        output,
-			},
+			Writer:     writer,
+			Rewritable: *stats.Rewritable,
 		}
+
 		err = drincw.EncodeTo(gob.NewEncoder(counter))
 		counter.Flush(true)
-		os.Stderr.WriteString("\r")
-		if err != nil {
-			log.Fatalf("Unable to encode export: %s", err)
-		}
-		log.Printf("wrote export, took %s", perf.Since(start).SetBytes(counter.Bytes))
-	}
+		stats.Rewritable.Close()
 
-	return err
+		if err != nil {
+			stats.LogError("encode export", err)
+		}
+		return err
+	})
 }
 
 var errInvalidVersion = errors.New("Glass Export: Invalid version")
 
 // Import loads a glass from disk
-func Import(path string, output io.Writer) (drincw Glass, err error) {
-	log := log.New(output, "", log.LstdFlags)
-
+func Import(path string, stats *status.Status) (drincw Glass, err error) {
 	defer debug.FreeOSMemory() // force clearing free memory
 
 	f, err := os.Open(path)
 	if err != nil {
-		log.Fatalf("Unable to open export: %s", err)
-		return
+		stats.LogError("open export", err)
+		return drincw, err
 	}
 	defer f.Close()
 
 	reader, err := gzip.NewReader(f)
 	if err != nil {
-		log.Fatalf("Unable to open export: %s", err)
-		return
+		stats.LogError("open export", err)
+		return drincw, err
 	}
 
-	{
-		start := perf.Now()
-
+	err = stats.DoStage(status.StageImportIndex, func() error {
 		counter := &progress.Reader{
-			Reader: reader,
-
-			Rewritable: progress.Rewritable{
-				FlushInterval: progress.DefaultFlushInterval,
-				Writer:        os.Stderr,
-			},
+			Reader:     reader,
+			Rewritable: *stats.Rewritable,
 		}
 		err = drincw.DecodeFrom(gob.NewDecoder(counter))
 		counter.Flush(true)
-		os.Stderr.WriteString("\r")
+		stats.Rewritable.Close()
 		if err != nil {
-			log.Fatalf("Unable to decode export: %s", err)
+			stats.LogError("decode export", err)
+			return err
 		}
-		log.Printf("read export, took %s", perf.Since(start).SetBytes(counter.Bytes))
-	}
-
-	return
+		return nil
+	})
+	return drincw, err
 }

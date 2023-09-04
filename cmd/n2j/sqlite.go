@@ -2,14 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/exporter"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
-	"github.com/FAU-CDI/hangover/pkg/perf"
 	_ "github.com/glebarez/go-sqlite"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -19,19 +18,18 @@ const (
 	sqlLiteBatchSize  = 1000
 )
 
-func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, proto, addr string) {
+func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, proto, addr string, stats *status.Status) {
 	var err error
 
 	// setup the sqlite
 	db, err := sql.Open(proto, addr)
 	if err != nil {
-		log.Fatal(err)
+		stats.LogFatal("open sql", err)
 	}
 
 	// and do the export
-	{
-		start := perf.Now()
-		err = sparkl.Export(pb, index, bEngine, &exporter.SQL{
+	err = stats.DoStage(status.StageExportSQL, func() error {
+		return sparkl.Export(pb, index, bEngine, &exporter.SQL{
 			DB: db,
 
 			BatchSize:   sqlLiteBatchSize,
@@ -40,11 +38,9 @@ func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.Bu
 			MakeFieldTables: sqlFieldTables,
 
 			Separator: sqlSeperator,
-		})
-		if err != nil {
-			log.Fatalf("Unable to export sql: %s", err)
-		}
-		bundleT := perf.Since(start)
-		log.Printf("wrote bundles, took %s", bundleT)
+		}, stats)
+	})
+	if err != nil {
+		stats.LogFatal("export sql", err)
 	}
 }

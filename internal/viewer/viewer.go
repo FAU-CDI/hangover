@@ -2,7 +2,6 @@ package viewer
 
 import (
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/assets"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/gorilla/mux"
 )
 
@@ -42,6 +42,9 @@ type RenderFlags struct {
 	StrictCSP   bool // use strict content-security-policy for images and media by only allowing content from public uris
 	HTMLRender  bool
 	ImageRender bool
+
+	// Stats holds the status to use for logging
+	Stats *status.Status
 }
 
 func (rf RenderFlags) PublicURIS() (public []string) {
@@ -49,7 +52,7 @@ func (rf RenderFlags) PublicURIS() (public []string) {
 	for _, raw := range strings.Split(rf.PublicURL, ",") {
 		url, err := url.Parse(raw)
 		if err != nil {
-			log.Printf("Unable to parse url %q: %s", raw, err)
+			rf.Stats.LogError("parse url", err)
 			continue
 		}
 

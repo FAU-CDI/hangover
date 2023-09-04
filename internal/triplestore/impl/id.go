@@ -16,6 +16,14 @@ type ID struct {
 	data [IDLen]byte
 }
 
+func (id ID) GobEncode() ([]byte, error) {
+	return MarshalID(id)
+}
+
+func (id *ID) GobDecode(src []byte) error {
+	return UnmarshalID(id, src)
+}
+
 // IDLen is the size of an encoded ID struct in bytes
 const IDLen = 4
 

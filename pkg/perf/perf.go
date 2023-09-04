@@ -1,4 +1,4 @@
-// Package perf captures performance metrics
+// Package perf provides a means of capturing metrics
 package perf
 
 import (
@@ -12,54 +12,73 @@ import (
 
 // cspell:words twiesing
 
-// Snapshot represents metrics at a specific point in time
+// Snapshot holds metrics at a specific instance
 type Snapshot struct {
-	Time    time.Time
-	Bytes   int64
+	// Time the snapshot was captured
+	Time time.Time
+
+	// memory in use
+	Bytes int64
+
+	// number of objects on the heap
 	Objects int64
 }
 
-func (snapshot Snapshot) String() string {
-	var plural string
-	if snapshot.Objects != 1 {
-		plural = "s"
-	}
-	return fmt.Sprintf("%s (%d object%s) used at %s", humanize.Bytes(uint64(snapshot.Bytes)), snapshot.Objects, plural, snapshot.Time.Format(time.Stamp))
+// BytesString returns a human-readable string representing the bytes
+func (snapshot Snapshot) BytesString() string {
+	return human(snapshot.Bytes)
 }
 
-// Sub subtracts the metrics for a difference snapshots
+// ObjectsString returns a human-readable string representing the number of objects
+func (snapshot Snapshot) ObjectsString() string {
+	if snapshot.Objects == 1 {
+		return "1 object"
+	}
+	return fmt.Sprintf("%d objects", snapshot.Objects)
+}
+
+func (snapshot Snapshot) String() string {
+	return fmt.Sprintf("%s (%s) used at %s", snapshot.BytesString(), snapshot.ObjectsString(), snapshot.Time.Format(time.Stamp))
+}
+
+// Sub subtracts the other snapshot from this snapshot.
 func (s Snapshot) Sub(other Snapshot) Diff {
 	return Diff{
-		Time: s.Time.Sub(other.Time),
+		Time:    s.Time.Sub(other.Time),
+		Bytes:   s.Bytes - other.Bytes,
+		Objects: s.Objects - other.Objects,
 	}
 }
 
-// Now returns a snapshot for the current moment
+// Now returns a snapshot for the current time
 func Now() (s Snapshot) {
 	s.Time = time.Now()
 	s.Bytes, s.Objects = measureHeapCount()
 	return
 }
 
-// Diff represents the difference between two points in time
+// Diff represents the difference between two snapshots
 type Diff struct {
 	Time    time.Duration
 	Bytes   int64
 	Objects int64
 }
 
-func (diff Diff) SetBytes(bytes int64) Diff {
-	diff.Bytes = bytes
-	return diff
+// BytesString returns a human-readable string representing the bytes
+func (diff Diff) BytesString() string {
+	return human(diff.Bytes)
+}
+
+// ObjectsString returns a human-readable string representing the number of objects
+func (diff Diff) ObjectsString() string {
+	if diff.Objects == 1 {
+		return "1 object"
+	}
+	return fmt.Sprintf("%d objects", diff.Objects)
 }
 
 func (diff Diff) String() string {
-	var plural string
-	if diff.Objects != 1 {
-		plural = "s"
-	}
-
-	return fmt.Sprintf("%s, %s, %d object%s", diff.Time, human(diff.Bytes), diff.Objects, plural)
+	return fmt.Sprintf("%s, %s, %s", diff.Time, diff.BytesString(), diff.ObjectsString())
 }
 
 func human(bytes int64) string {

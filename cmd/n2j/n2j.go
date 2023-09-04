@@ -3,9 +3,9 @@ package main
 
 import (
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
@@ -13,43 +13,44 @@ import (
 	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/perf"
-	"github.com/FAU-CDI/hangover/pkg/progress"
 	"github.com/pkg/profile"
 )
 
 // cspell:words nquads pathbuilder
 
+var errBothSqliteAndMysql = errors.New("both -sqlite and -mysql were given")
+
 func main() {
+	// create a new status
+	stats := status.NewStatus(os.Stderr)
+
 	if debugProfile != "" {
 		defer profile.Start(profile.ProfilePath(debugProfile)).Stop()
 	}
 
 	if mysql != "" && sqlite != "" {
-		log.Print("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
-		log.Fatal("both -sqlite and -mysql were given")
+		stats.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
+		stats.LogError("parse arguments", errBothSqliteAndMysql)
 	}
 
 	// find the paths
 	nqp, pbp, _, err := hangover.FindSource(false, nArgs...)
 	if err != nil {
-		log.Print("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
-		log.Fatal(err)
+		stats.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
+		stats.LogFatal("find source", err)
 	}
 
 	// read the pathbuilder
 	var pb pathbuilder.Pathbuilder
-	{
-		start := perf.Now()
+	err = stats.DoStage(status.StageReadPathbuilder, func() (err error) {
 		pb, err = pbxml.Load(pbp)
-		pbT := perf.Since(start)
-
-		if err != nil {
-			log.Fatalf("Unable to load Pathbuilder: %s", err)
-		}
-		log.Printf("loaded pathbuilder, took %s", pbT)
+		return
+	})
+	if err != nil {
+		stats.LogFatal("pathbuilder load", err)
 	}
 
 	var predicates sparkl.Predicates
@@ -61,36 +62,24 @@ func main() {
 	bEngine := storages.NewBundleEngine(cache)
 
 	if cache != "" {
-		log.Printf("caching data on-disk at %s", cache)
+		stats.Log("caching data on-disk", "path", cache)
 	}
 
 	// build an index
 	var index *igraph.Index
-	{
-		start := perf.Now()
-		index, err = sparkl.LoadIndex(nqp, predicates, engine, sparkl.DefaultIndexOptions(&pb), &progress.Progress{
-			Rewritable: progress.Rewritable{
-				FlushInterval: progress.DefaultFlushInterval,
-				Writer:        os.Stderr,
-			},
-		})
-		indexT := perf.Since(start)
-
-		if err != nil {
-			log.Fatalf("Unable to build index: %s", err)
-		}
-		defer index.Close()
-
-		log.Printf("built index, stats %s, took %s", index.Stats(), indexT)
+	index, err = sparkl.LoadIndex(nqp, predicates, engine, sparkl.DefaultIndexOptions(&pb), stats)
+	if err != nil {
+		stats.LogFatal("unable to load index", err)
 	}
+	stats.Log("finished indexing", "stats", index.Stats())
 
 	switch {
 	case mysql != "":
-		doSQL(&pb, index, bEngine, "mysql", mysql)
+		doSQL(&pb, index, bEngine, "mysql", mysql, stats)
 	case sqlite != "":
-		doSQL(&pb, index, bEngine, "sqlite", sqlite)
+		doSQL(&pb, index, bEngine, "sqlite", sqlite, stats)
 	default:
-		doJSON(&pb, index, bEngine)
+		doJSON(&pb, index, bEngine, stats)
 	}
 }
 

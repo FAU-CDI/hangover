@@ -3,7 +3,6 @@ package viewer
 import (
 	"errors"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -283,6 +282,6 @@ func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
 		Aliases: viewer.Cache.Aliases(entity.URI),
 	})
 	if err != nil {
-		log.Println(err)
+		viewer.RenderFlags.Stats.LogError("render entity", err)
 	}
 }

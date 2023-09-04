@@ -2,12 +2,12 @@ package sparkl
 
 import (
 	"io"
-	"log"
 	"sync"
 	"sync/atomic"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
@@ -18,8 +18,8 @@ import (
 //
 // Storages for any child bundles, and the bundle itself, are created using the makeStorage function.
 // The storage for this bundle is returned.
-func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine) (storages.BundleStorage, func() error, error) {
-	storages, closer, err := StoreBundles([]*pathbuilder.Bundle{bundle}, index, engine)
+func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Status) (storages.BundleStorage, func() error, error) {
+	storages, closer, err := StoreBundles([]*pathbuilder.Bundle{bundle}, index, engine, stats)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -27,10 +27,11 @@ func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storage
 }
 
 // StoreBundles is like StoreBundle, but takes multiple bundles
-func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine) ([]storages.BundleStorage, func() error, error) {
+func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Status) ([]storages.BundleStorage, func() error, error) {
 	context := &Context{
 		Index:  index,
 		Engine: engine,
+		Stats:  stats,
 	}
 	context.Open()
 
@@ -55,6 +56,8 @@ type Context struct {
 	extractWait  sync.WaitGroup // waiting on extracting entities in all bundles
 	childAddWait sync.WaitGroup // loading child entities wait
 	errOnce      sync.Once      // to set the error
+
+	Stats *status.Status
 }
 
 // Open opens this context, and signals that multiple calls to Store() may follow.
@@ -129,7 +132,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage
 
 		// stage 1: load the entities themselves
 		err := (func() error {
-			paths := extractPath(bundle.Path, context.Index)
+			paths := extractPath(bundle.Path, context.Index, context.Stats)
 			defer paths.Close()
 
 			for paths.Next() {
@@ -151,7 +154,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage
 			go func(field pathbuilder.Field) {
 				defer context.extractWait.Done()
 
-				paths := extractPath(field.Path, context.Index)
+				paths := extractPath(field.Path, context.Index, context.Stats)
 				defer paths.Close()
 
 				for paths.Next() {
@@ -228,7 +231,7 @@ var debugLogID int64 // id of the current log id
 //
 // Any values found along the path are written to the returned channel which is then closed.
 // If an error occurs, it is written to errDst before the channel is closed.
-func extractPath(path pathbuilder.Path, index *igraph.Index) iterator.Iterator[igraph.Path] {
+func extractPath(path pathbuilder.Path, index *igraph.Index, stats *status.Status) iterator.Iterator[igraph.Path] {
 	// start with the path array
 	uris := append([]string{}, path.PathArray...)
 	if len(uris) == 0 {
@@ -256,7 +259,7 @@ func extractPath(path pathbuilder.Path, index *igraph.Index) iterator.Iterator[i
 		if err != nil {
 			return iterator.Empty[igraph.Path](err)
 		}
-		log.Println(debugID, uris[0], size)
+		stats.LogDebug("path", "id", debugID, "uri", uris[0], "size", size)
 	}
 
 	for i := 1; i < len(uris); i++ {
@@ -275,7 +278,7 @@ func extractPath(path pathbuilder.Path, index *igraph.Index) iterator.Iterator[i
 			if err != nil {
 				return iterator.Empty[igraph.Path](err)
 			}
-			log.Println(debugID, uris[i], size)
+			stats.LogDebug("uri", "id", debugID, "uris", uris[i], "size", size)
 		}
 	}
 

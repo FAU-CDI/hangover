@@ -6,6 +6,7 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/sparkl/exporter"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
@@ -14,10 +15,10 @@ import (
 
 // Export loads all top-level paths from the given path-builder from the index into the given engine.
 // Afterwards it is exported into the given exporter.
-func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, exporter exporter.Exporter) error {
+func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, exporter exporter.Exporter, stats *status.Status) error {
 	bundles := pb.Bundles()
 
-	storages, closer, err := StoreBundles(bundles, index, engine)
+	storages, closer, err := StoreBundles(bundles, index, engine, stats)
 	if closer != nil {
 		defer closer()
 	}
@@ -98,11 +99,11 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 }
 
 // LoadPathbuilder loads all paths in the given pathbuilder
-func LoadPathbuilder(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine) (map[string][]wisski.Entity, error) {
+func LoadPathbuilder(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, stats *status.Status) (map[string][]wisski.Entity, error) {
 	mp := exporter.Map{
 		Data: make(map[string][]wisski.Entity, len(pb.Bundles())),
 	}
-	err := Export(pb, index, engine, &mp)
+	err := Export(pb, index, engine, &mp, stats)
 	if err != nil {
 		return nil, err
 	}
