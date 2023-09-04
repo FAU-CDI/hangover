@@ -1,5 +1,9 @@
 # Hangover - A WissKI Data Viewer
 
+<!-- spellchecker:words nquad CORDI nquads kirmes drincw -->
+
+[![CI](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml/badge.svg)](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml)
+
 [WissKI](https://wiss-ki.eu/) is a software which allows researchers to record data about objects of the cultural heritage in a graph database backed by a formal ontology specified using a[Pathbuilder](https://wiss-ki.eu/documentation/data-modeling/pathbuilder).
 WissKI acts as a database for researchers to store their results via a web interface, and nearly automatically makes data FAIR, linked and open.
 
@@ -13,6 +17,14 @@ This repository contains `hangover` - the WissKI Data Viewer.
 It directly provides the researcher with an interface to view any database entries created in the originating system.
 The viewer runs directly on the researchers' computer and requires only a triplestore export (in nquad `.nq` format) and a pathbuilder export (in `.xml` format).
 
+[WissKI Viewer Demo](https://wisskiviewer.kwarc.info/)
+[CORDI 2023 Extended Abstract](./docs/cordi-2023-ea.pdf)
+[CORDI 2023 Poster](./docs/cordi-2023-poster.pdf)
+
+## Repository Overview
+
+This repository contains two executables, [hangover](#hangover---a-wisski-data-viewer) and [n2j](#n2j---a-wisski-exporter).
+They are described in detail below.
 
 ## Installation
 
@@ -33,7 +45,7 @@ make deps
 make all
 ```
 
-5. Run the exectuables, either by placing them in your `$PATH` or telling your interpreter where they are directly.
+5. Run the executables, either by placing them in your `$PATH` or telling your interpreter where they are directly.
 
 As an alternative to steps 4 and 5, you may also run executables directly:
 
@@ -48,18 +60,41 @@ Replace `hangover` with the name of the executable you want to run.
 We publish binaries for Mac, Linux and Windows for every release.
 These can be found on the releases page on GitHub. 
 
+### from docker
+
+[![Publish 'latest' Docker Image](https://github.com/FAU-CDI/hangover/actions/workflows/docker.yml/badge.svg)](https://github.com/FAU-CDI/hangover/actions/workflows/docker.yml)
+
+The `hangover` executable is available as the [https://github.com/FAU-CDI/hangover/pkgs/container/hangover] docker image.
+It is automatically built after every commit.
+
+It automatically starts hangover on port 3000.
+
+To start it, use a command like:
+
+```
+docker run -ti --read-only -p 3000:3000 -v /path/to/wisski/export:/data:ro ghcr.io/fau-cdi/hangover:latest /data/
+```
+
+You can add any further hangover parameters as arguments.
+
 ## Usage
 
-### hangover - A WissKI Viewer
+### hangover - A WissKI Data Viewer
 
-The `hangover` executable implements a WissKI Viewer.
+The `hangover` executable implements the WissKI Data Viewer.
 It is invoked with two parameters, the pathbuilder to a pathbuilder xml `xml` and triplestore `nquads` export.
 It then starts up a server at `localhost:3000` by default.
 
 For example:
 
 ```bash
-hangover schreibkalender.xml schreibkalender.nq
+hangover kirmes/kirmes.xml kirmes/kirmes.nq
+```
+
+If you have both the pathbuilder and triplestore exports in the same directory, and only one '.nq' and one '.xml' file exists in that directory, you can also just give the path to that directory:
+
+```
+hangover /kirmes/
 ```
 
 It supports a various set of other options, which can be found using  `hangover -help`.
@@ -70,7 +105,11 @@ The most important ones are:
 - `-cache`: By default all indexes of the dataset required by the viewer are constructed in main memory. This can take several gigabytes. Instead, you can specify a temporary directory to read and write temporary indexes from.
 - `-export`: Index the entire dataset, then dump the export in binary into a file. Afterwards `hangover` can be invoked using only such a file (as opposed to a pathbuilder and triplestore export), skipping the indexing step. The file format may change between different builds of drincw and should be treated as a blackbox.
 
-#### n2j - A WissKI Viewer
+Futhermore, the viewer also provides some convenience options for deployment:
+- `-footer`: Allows customizing the html to appear in the footer. 
+- `-strict-csp`: Adds a stricter [`Content-Security-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) header that only allows external images and audio from the `public` uris to load, but nothing else.
+
+#### n2j - A WissKI Exporter
 
 n2j stands for `NQuads 2 JSON` and can convert a WissKI export into json (or more general, relational) format.
 Like `hangover`, it takes both a pathbuilder and export as an argument.
