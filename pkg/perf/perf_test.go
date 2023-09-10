@@ -12,15 +12,31 @@ import (
 func ExampleNow() {
 	metrics := perf.Now()
 
+	const ARRAY_SIZE = 10_0000
+	const SLEEP = 1 * time.Second
+
 	// some fancy and slow task
 	{
-		var stuff [10000]int
+		var stuff [ARRAY_SIZE]int32
 		defer runtime.KeepAlive(stuff)
-		time.Sleep(1 * time.Second)
+		time.Sleep(SLEEP)
 	}
 
-	// print out performance metrics
-	fmt.Println(perf.Since(metrics))
+	// capture the new metrics
+	diff := perf.Since(metrics)
+
+	// check that we slept long enough
+	if diff.Time >= SLEEP {
+		fmt.Println("a lot of time has passed")
+	}
+
+	// check that enough memory was allocated
+	if diff.Bytes >= 4*ARRAY_SIZE {
+		fmt.Println("a lot of memory was allocated")
+	}
+
+	// Output: a lot of time has passed
+	// a lot of memory was allocated
 }
 
 func ExampleDiff() {

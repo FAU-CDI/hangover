@@ -53,7 +53,7 @@ func (s Snapshot) Sub(other Snapshot) Diff {
 // Now returns a snapshot for the current time
 func Now() (s Snapshot) {
 	s.Time = time.Now()
-	s.Bytes, s.Objects = measureHeapCount()
+	s.Bytes, s.Objects = perf()
 	return
 }
 
@@ -88,14 +88,16 @@ func human(bytes int64) string {
 	return humanize.Bytes(uint64(bytes))
 }
 
-// Since computes the diff between now, and the previous point in time
-func Since(start Snapshot) Diff {
-	bytes, objects := measureHeapCount()
-	return Diff{
-		Time:    time.Since(start.Time),
-		Bytes:   bytes - start.Bytes,
-		Objects: objects - start.Objects,
-	}
+// Since returns changes in metrics since start.
+// It is a shortcut for start.Sub(perf.Now())
+func Since(start Snapshot) (diff Diff) {
+	diff.Bytes, diff.Objects = perf()
+	diff.Time = time.Since(start.Time)
+
+	diff.Bytes -= start.Bytes
+	diff.Objects -= start.Objects
+
+	return
 }
 
 const (
@@ -104,8 +106,14 @@ const (
 	measureMaxCycles     = int(time.Second / measureHeapSleep) // maximal cycles to run
 )
 
-// measureHeapCount measures the current use of the heap
-func measureHeapCount() (heapcount int64, objects int64) {
+// perf computes the current performance statistics.
+//
+// bytes hold the amount of memory used by stack and heap together in bytes.
+// objects holds the number of objects on the heap.
+//
+// perf performs multiple measurement cycles, until the used heap memory is stable.
+// the limits and maximum used values are defined by appropriate constants in this package.
+func perf() (bytes int64, objects int64) {
 	// NOTE(twiesing): This has been vaguely adapted from https://dev.to/vearutop/estimating-memory-footprint-of-dynamic-structures-in-go-2apf
 
 	var stats runtime.MemStats
@@ -114,20 +122,27 @@ func measureHeapCount() (heapcount int64, objects int64) {
 	var prevGCCount, currentGCCount uint32
 
 	for i := 0; i < measureMaxCycles; i++ {
+		// read heap statistics
 		runtime.ReadMemStats(&stats)
 		currentGCCount = stats.NumGC
 		currentHeapUse = stats.HeapInuse
 
-		if prevGCCount != 0 && currentGCCount > prevGCCount && math.Abs(float64(currentHeapUse-prevHeapUse)) < measureHeapThreshold {
+		// check that there has been a garbage collection cycle
+		// and the heap has been sufficiently stable
+		if i != 0 && currentGCCount > prevGCCount && math.Abs(float64(currentHeapUse-prevHeapUse)) < measureHeapThreshold {
 			break
 		}
 
+		// store the previous values
 		prevHeapUse = currentHeapUse
 		prevGCCount = currentGCCount
 
+		// wait some time, and run the garbage collector
+		// for the next iteration
 		time.Sleep(measureHeapSleep)
 		runtime.GC()
 	}
 
-	return int64(currentHeapUse + stats.StackInuse), int64(stats.HeapObjects)
+	// compute the overall memory used, and the given number of objects on the heap
+	return int64(stats.HeapInuse + stats.StackInuse), int64(stats.HeapObjects)
 }
