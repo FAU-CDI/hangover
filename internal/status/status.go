@@ -9,62 +9,171 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"sync/atomic"
 
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/pkg/perf"
 	"github.com/FAU-CDI/hangover/pkg/progress"
+	"github.com/tkw1536/pkglib/lazy"
 )
 
 type Rewritable = *progress.Rewritable
 
-// Status holds statistical information about the current stage of the previous.
+// Stats holds statistical information about the current stage of the previous.
 // Updating the status writes out detailed information to an underlying io.Writer.
 //
-// Status is safe to access concurrently, however the caller is responsible for only logging to one stage at a time.
+// Stats is safe to access concurrently, however the caller is responsible for only logging to one stage at a time.
 //
-// A nil Status is valid, and discards any information written to it.
-type Status struct {
-	m sync.RWMutex // m protects changes to current and all
+// A nil Stats is valid, and discards any information written to it.
+type Stats struct {
+	// done indicates if this value is finished.
+	// if this status is done, no further edits may be made.
+	// if it is not done, edits may be made.
+	//
+	// if it is, no further changes to any changes may be made.
+	done atomic.Bool
+	m    sync.RWMutex // m protects changes to current and all
 
 	logger     *slog.Logger
 	Rewritable Rewritable
+
+	istats lazy.Lazy[igraph.Stats]
 
 	current StageStats   // current holds information about the current stage
 	all     []StageStats // all hold information about the old stages
 }
 
-// NewStatus creates a new status which writes output to the given io.Writer.
+// NewStats creates a new status which writes output to the given io.Writer.
 // If w is nil, returns a nil Status.
-func NewStatus(w io.Writer) *Status {
+func NewStats(w io.Writer) *Stats {
 	if w == nil {
 		return nil
 	}
-	return &Status{
+	return &Stats{
 		logger:     slog.New(slog.NewTextHandler(w, nil)),
 		Rewritable: &progress.Rewritable{Writer: w, FlushInterval: progress.DefaultFlushInterval},
 	}
 }
 
-// Log logs an informational message with the provided key, value field pairs.
-// When status or the associated logger are nil, no logging occurs.
-func (status *Status) Log(message string, fields ...any) {
-	if status == nil || status.logger == nil {
+// Current returns a copy of the current StageStats
+func (st *Stats) Current() StageStats {
+	if st == nil {
+		var zero StageStats
+		return zero
+	}
+	st.m.RLock()
+	defer st.m.RUnlock()
+	return st.current
+}
+
+// StoreIndexStats optionally stores index statistics.
+// If st is nil or done, this call has no effect
+func (st *Stats) StoreIndexStats(stats igraph.Stats) {
+	if st == nil || st.done.Load() {
 		return
 	}
-	status.logger.Info(message, fields...)
+
+	st.istats.Set(stats)
+}
+
+// IndexStats returns the current stats for the index
+func (st *Stats) IndexStats() igraph.Stats {
+	if st == nil {
+		var zero igraph.Stats
+		return zero
+	}
+	return st.istats.Get(nil)
+}
+
+// Current returns a copy of the current StageStats
+func (st *Stats) All() []StageStats {
+	if st == nil {
+		return []StageStats{}
+	}
+
+	st.m.RLock()
+	defer st.m.RUnlock()
+
+	all := append([]StageStats{}, st.all...)
+	if st.current.Stage != StageInitial {
+		all = append(all, st.current)
+	}
+	return all
+}
+
+type Progress struct {
+	Done bool // Done indicates if the viewer is currently done
+
+	Stage          Stage
+	Current, Total int
+}
+
+// Progress returns information about the current stage
+func (st *Stats) Progress() (progress Progress) {
+	// fast path: we're already done
+	if st.Done() {
+		return Progress{Done: true}
+	}
+
+	// load the current stage
+	st.m.RLock()
+	{
+		progress.Stage = st.current.Stage
+		progress.Current = st.current.Current
+		progress.Total = st.current.Total
+	}
+	st.m.RUnlock()
+
+	// check again if we're done now
+	if st.Done() {
+		return Progress{Done: true}
+	}
+
+	return progress
+}
+
+// Log logs an informational message with the provided key, value field pairs.
+//
+// When status is done, all logs are automatically discarded.
+// When status or the associated logger are nil, no logging occurs.
+func (st *Stats) Log(message string, fields ...any) {
+	if st == nil || st.done.Load() || st.logger == nil {
+		return
+	}
+	st.logger.Info(message, fields...)
+}
+
+// Close marks this status as done.
+// Future edits will have no effect.
+func (status *Stats) Close() {
+	if status == nil {
+		return
+	}
+	status.done.Store(true)
+}
+
+// Done checks if further edits made to this status have any effect.
+func (status *Stats) Done() bool {
+	return status == nil || status.done.Load()
 }
 
 // Log logs a debug message with the provided key, value field pairs.
+//
+// When status is done, all logs are automatically discarded.
 // When status or the associated logger are nil, no logging occurs.
-func (status *Status) LogDebug(message string, fields ...any) {
-	if status == nil || status.logger == nil {
+func (status *Stats) LogDebug(message string, fields ...any) {
+	if status == nil || status.done.Load() || status.logger == nil {
 		return
 	}
 	status.logger.Info(message, fields...)
 }
 
 // LogError logs an error message containing the provided error and the provided key, value field pairs.
-func (status *Status) LogError(message string, err error, fields ...any) {
-	if status == nil || status.logger == nil {
+//
+// When status is done, all logs are automatically discarded.
+// When status or the associated logger are nil, no logging occurs.
+func (status *Stats) LogError(message string, err error, fields ...any) {
+	if status == nil || status.done.Load() || status.logger == nil {
 		return
 	}
 
@@ -72,17 +181,17 @@ func (status *Status) LogError(message string, err error, fields ...any) {
 }
 
 // LogFatal is like LogError followed by os.Exit(1).
-// When status or the associated logger are nil, os.Exit(1) is called immediately.
-func (status *Status) LogFatal(message string, err error) {
+// When status is done or status or the associated logger are nil, os.Exit(1) is called immediately.
+func (status *Stats) LogFatal(message string, err error) {
 	status.LogError(message, err)
 	os.Exit(1)
 }
 
 // Diff returns a performance diff starting at the first, and ending at the last stage.
 // If status is nil, a nil diff is returned.
-func (status *Status) Diff() perf.Diff {
+func (status *Stats) Diff() perf.Diff {
 	// if there is no status, don't do a diff
-	if status == nil {
+	if status == nil || status.done.Load() {
 		var zero perf.Diff
 		return zero
 	}
@@ -108,25 +217,25 @@ func (status *Status) Diff() perf.Diff {
 // Start starts a new stage, updating the current property.
 // Any changes are written to the underlying writer.
 //
-// If st is nil, this function has no effect.
-func (st *Status) Start(stage Stage) {
-	if st == nil {
+// If st is done or nil, this function has no effect.
+func (status *Stats) Start(stage Stage) {
+	if status == nil || status.done.Load() {
 		return
 	}
 
-	st.m.Lock()
-	defer st.m.Unlock()
+	status.m.Lock()
+	defer status.m.Unlock()
 
 	// end the previous stage (if any)
-	st.end()
+	status.end()
 
 	// start a new stage
-	st.current.Stage = stage
-	st.current.Start = perf.Now()
+	status.current.Stage = stage
+	status.current.Start = perf.Now()
 
 	// log out the changes
-	if st.logger != nil {
-		st.logger.Info("start", "stage", stage)
+	if status.logger != nil {
+		status.logger.Info("start", "stage", stage)
 	}
 }
 
@@ -134,8 +243,8 @@ func (st *Status) Start(stage Stage) {
 // Any changes are flushed to the underlying writer.
 //
 // If st is nil, this function has no effect.
-func (st *Status) End() (prev StageStats) {
-	if st == nil {
+func (st *Stats) End() (prev StageStats) {
+	if st == nil || st.done.Load() {
 		return
 	}
 
@@ -147,7 +256,7 @@ func (st *Status) End() (prev StageStats) {
 
 // end implements End.
 // st.m must be held for writing.
-func (st *Status) end() (prev StageStats) {
+func (st *Stats) end() (prev StageStats) {
 	// store the current stage (if any)
 	if st.current.Stage != StageInitial {
 		st.current.End = perf.Now()
@@ -181,8 +290,8 @@ func (st *Status) end() (prev StageStats) {
 // DoStage is a convenience wrapper to start a new stage, call f, and log the resulting error if any.
 //
 // If st is nil, immediately invokes f.
-func (st *Status) DoStage(stage Stage, f func() error) error {
-	if st == nil {
+func (st *Stats) DoStage(stage Stage, f func() error) error {
+	if st == nil || st.done.Load() {
 		return f()
 	}
 
@@ -220,22 +329,39 @@ type StageStats struct {
 	Total   int
 }
 
-// SetCT sets the current and total for the given stage
-func (status *Status) SetCT(current, total int) {
-	status.current.Current = current
-	status.current.Total = total
-	status.current.Rewrite(status.Rewritable)
-}
-
-// Rewrite writes the current stage to the given rewritable
-func (ss StageStats) Rewrite(r Rewritable) {
-	if r == nil {
+// SetCT sets the current and total for the given stage.
+// It the status is nil, or the status is done, has no effect.
+func (status *Stats) SetCT(current, total int) {
+	if status == nil || status.done.Load() {
 		return
 	}
+
+	// update the process and make a copy
+	var progress string
+
+	status.m.Lock()
+	{
+		status.current.Current = current
+		status.current.Total = total
+		progress = status.current.Progress()
+	}
+	status.m.Unlock()
+
+	// and write out the rewritable
+	if status.Rewritable != nil {
+		status.Rewritable.Write(progress)
+	}
+}
+
+// Progress returns a string holding progress information on the current stage
+func (ss StageStats) Progress() string {
+	if ss.Total == 0 {
+		return ""
+	}
 	if ss.Current < ss.Total {
-		r.Write(fmt.Sprintf("%s: %d/%d", string(ss.Stage), ss.Current, ss.Total))
+		return fmt.Sprintf("%s: %d/%d", string(ss.Stage), ss.Current, ss.Total)
 	} else {
-		r.Write(fmt.Sprintf("%s: %d", string(ss.Stage), ss.Current))
+		return fmt.Sprintf("%s: %d", string(ss.Stage), ss.Current)
 	}
 }
 

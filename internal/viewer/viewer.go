@@ -2,6 +2,7 @@ package viewer
 
 import (
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,6 +19,8 @@ import (
 
 // Viewer implements an [http.Handler] that displays WissKI Entities.
 type Viewer struct {
+	Status *status.Stats // Status holds the current status of the viewer
+
 	mux       mux.Router
 	cspHeader string
 
@@ -27,6 +30,13 @@ type Viewer struct {
 
 	Footer template.HTML // html to include in footer of every page
 	init   sync.Once
+}
+
+// NewViewer creates a new viewer that logs to the given output
+func NewViewer(writer io.Writer) *Viewer {
+	return &Viewer{
+		Status: status.NewStats(writer),
+	}
 }
 
 func (viewer *Viewer) Close() error {
@@ -44,7 +54,7 @@ type RenderFlags struct {
 	ImageRender bool
 
 	// Stats holds the status to use for logging
-	Stats *status.Status
+	Stats *status.Stats
 }
 
 func (rf RenderFlags) PublicURIS() (public []string) {
@@ -68,7 +78,7 @@ func (rf RenderFlags) PublicURIS() (public []string) {
 // CSPHeader returns the CSPHeader to be included in viewer responses
 func (rf RenderFlags) CSPHeader() string {
 	// don't allow anything by default
-	header := "default-src 'none'; script-src 'self'; font-src 'self'; "
+	header := "default-src 'none'; connect-src 'self'; script-src 'self'; font-src 'self'; "
 
 	if rf.HTMLRender {
 		// when rendering html, we explicitly want to allow inline styles.
@@ -95,11 +105,12 @@ func (rf RenderFlags) CSPHeader() string {
 	return header
 }
 
-func (viewer *Viewer) Prepare() {
+func (viewer *Viewer) setupMux() {
 	viewer.init.Do(func() {
 		viewer.mux.HandleFunc("/", viewer.htmlIndex)
 		viewer.mux.HandleFunc("/legal", viewer.htmlLegal)
 		viewer.mux.HandleFunc("/pathbuilder", viewer.htmlPathbuilder)
+		viewer.mux.HandleFunc("/perf", viewer.htmlPerf)
 		viewer.mux.HandleFunc("/bundle/{bundle}", viewer.htmlBundle)
 		viewer.mux.HandleFunc("/entity/{bundle}", viewer.htmlEntity).Queries("uri", "{uri:.+}")
 
@@ -107,6 +118,8 @@ func (viewer *Viewer) Prepare() {
 		viewer.mux.HandleFunc("/wisski/navigate/{id}/view", viewer.sendToResolver)
 
 		viewer.mux.HandleFunc("/api/v1", viewer.jsonIndex)
+		viewer.mux.HandleFunc("/api/v1/progress", viewer.jsonProgress)
+		viewer.mux.HandleFunc("/api/v1/perf", viewer.jsonPerf)
 		viewer.mux.HandleFunc("/api/v1/bundle/{bundle}", viewer.jsonBundle)
 		viewer.mux.HandleFunc("/api/v1/entity/{bundle}", viewer.jsonEntity).Queries("uri", "{uri:.+}")
 
@@ -114,13 +127,20 @@ func (viewer *Viewer) Prepare() {
 
 		viewer.cspHeader = viewer.RenderFlags.CSPHeader()
 	})
+}
+func (viewer *Viewer) Prepare(cache *sparkl.Cache, pb *pathbuilder.Pathbuilder) {
+	if !viewer.Status.Done() {
+		viewer.Cache = cache
+		viewer.Pathbuilder = pb
+		viewer.Status.Close()
+	}
 
+	viewer.setupMux()
 }
 
 func (viewer *Viewer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	viewer.Prepare()
+	viewer.setupMux()
 
 	w.Header().Set("Content-Security-Policy", viewer.cspHeader)
-
 	viewer.mux.ServeHTTP(w, r)
 }

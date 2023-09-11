@@ -15,7 +15,7 @@ import (
 
 // Export loads all top-level paths from the given path-builder from the index into the given engine.
 // Afterwards it is exported into the given exporter.
-func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, exporter exporter.Exporter, stats *status.Status) error {
+func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, exporter exporter.Exporter, stats *status.Stats) error {
 	bundles := pb.Bundles()
 
 	storages, closer, err := StoreBundles(bundles, index, engine, stats)
@@ -99,7 +99,7 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 }
 
 // LoadPathbuilder loads all paths in the given pathbuilder
-func LoadPathbuilder(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, stats *status.Status) (map[string][]wisski.Entity, error) {
+func LoadPathbuilder(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, stats *status.Stats) (map[string][]wisski.Entity, error) {
 	mp := exporter.Map{
 		Data: make(map[string][]wisski.Entity, len(pb.Bundles())),
 	}

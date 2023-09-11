@@ -1,0 +1,145 @@
+{{ template "base.html" . }}
+
+{{ define "title" }}Hangover - Performance{{ end }}
+
+{{ define "header" }}
+    <h1>Performance</h1>
+{{ end }}
+
+{{ define "nav" }} 
+    <b>Performance</b>
+{{ end }}
+
+{{ define "main" }}
+<p>
+    This page contains (mostly internal) statistics of the WissKI data viewer.
+</p>
+
+<h2>Stages</h2>
+<table class="stats_table">
+    <thead>
+        <tr>
+            <td>
+                Stage
+            </td>
+            <td>
+                Time
+            </td>
+            <td>
+                Memory
+            </td>
+            <td>
+                Object(s)
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range .Perf.Stages }}
+            <tr>
+                <td class="text-align-right">
+                    {{ .Stage }}
+                </td>
+                
+                
+                {{ if .End.Time.IsZero }}
+                    <td colspan="3" class="text-align-right">
+                        (in progress)
+                    </td>
+                {{ else }}
+                    {{ $diff := .Diff }}
+                    <td class="text-align-right">
+                        <code>{{ $diff.Time }}</code>
+                    </td>
+                    <td class="text-align-right">
+                        <code>{{ $diff.BytesString }}</code>
+                    </td>
+                    <td class="text-align-right">
+                        <code>{{ $diff.Objects }}</code>
+                    </td>
+                {{ end }}
+            </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+<h2>Index</h2>
+
+<table class="stats_table">
+    <thead>
+        <tr>
+            <td>
+                Kind
+            </td>
+            <td>
+                Count
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        <td>
+            
+        </td>
+        <tr>
+            <td>
+                Direct
+            </td>
+            <td class="text-align-right">
+                <code>
+                    {{ .Perf.Index.DirectTriples }}
+                </code>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Datum
+            </td>
+            <td class="text-align-right">
+                <code>
+                    {{ .Perf.Index.DatumTriples }}
+                </code>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Predicate (Masked)
+            </td>
+            <td class="text-align-right">
+                <code>
+                    {{ .Perf.Index.MaskedPredTriples }}
+                </code>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Datum (Masked)
+            </td>
+            <td class="text-align-right">
+                <code>
+                    {{ .Perf.Index.MaskedDataTriples }}
+                </code>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Inverse
+            </td>
+            <td class="text-align-right">
+                <code>
+                    {{ .Perf.Index.InverseTriples }}
+                </code>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Conflict
+            </td>
+            <td class="text-align-right">
+                <code>
+                    {{ .Perf.Index.ConflictTriples }}
+                </code>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+{{ end }}

@@ -2,8 +2,11 @@ package viewer
 
 import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
+	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
+	"github.com/FAU-CDI/hangover/pkg/perf"
 )
 
 // cspell:words pathbuilder
@@ -70,4 +73,18 @@ func (viewer *Viewer) getEntityURIs(id string) (bundle *pathbuilder.Bundle, uris
 func (viewer *Viewer) getEntity(id string, uri impl.Label) (entity *wisski.Entity, ok bool) {
 	_, entity, ok = viewer.findEntity(id, uri)
 	return
+}
+
+// Perf represents viewer performance
+type Perf struct {
+	Stages []status.StageStats
+	Index  igraph.Stats
+	Now    perf.Snapshot
+}
+
+func (viewer *Viewer) Perf() Perf {
+	return Perf{
+		Stages: viewer.Status.All(),
+		Index:  viewer.Status.IndexStats(),
+	}
 }

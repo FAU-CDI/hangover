@@ -1,0 +1,21 @@
+{{ template "base.html" . }}
+
+{{ define "title" }}Hangover - Loading{{ end }}
+
+
+{{ define "header" }}
+    <h1>Hangover is loading</h1>
+{{ end }}
+
+{{ define "nav" }}
+    <b>Loading</b>
+{{ end }}
+    
+{{ define "main" }}
+    <p>
+        Hangover - the WissKI Data Viewer - is currently loading the dataset. 
+    </p>
+    <p>
+        Current Stage: <span id="progress">unknown</span>
+    </p>
+{{ end }}

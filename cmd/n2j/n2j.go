@@ -25,7 +25,7 @@ var errBothSqliteAndMysql = errors.New("both -sqlite and -mysql were given")
 
 func main() {
 	// create a new status
-	stats := status.NewStatus(os.Stderr)
+	stats := status.NewStats(os.Stderr)
 
 	if debugProfile != "" {
 		defer profile.Start(profile.ProfilePath(debugProfile)).Stop()

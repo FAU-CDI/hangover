@@ -16,7 +16,9 @@
         {{ block "main" .}}main{{ end }}
     </main>
     <footer>
-        {{ block "footer" .}}footer{{ end }}
+        {{ block "footer" .}}
+            {{ template "viewer_foot.html" . }}
+        {{ end }}
     </footer>
     {{ end }}
 

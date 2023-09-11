@@ -18,7 +18,7 @@ import (
 
 // LoadIndex is like MakeIndex, but reads nquads from the given path.
 // When err != nil, the caller must eventually close the index.
-func LoadIndex(path string, predicates Predicates, engine igraph.Engine, opts IndexOptions, stats *status.Status) (*igraph.Index, error) {
+func LoadIndex(path string, predicates Predicates, engine igraph.Engine, opts IndexOptions, stats *status.Stats) (*igraph.Index, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (io IndexOptions) shouldCompact(index int) bool {
 
 // MakeIndex creates a new Index from the given source.
 // When err != nil, the caller must eventually close the index.
-func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts IndexOptions, stats *status.Status) (*igraph.Index, error) {
+func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts IndexOptions, stats *status.Stats) (*igraph.Index, error) {
 	// create a new index
 	var index igraph.Index
 	if err := index.Reset(engine); err != nil {
@@ -67,6 +67,9 @@ func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts 
 		return nil, err
 	}
 
+	// update stats
+	stats.StoreIndexStats(index.Stats())
+
 	// compact the index, or close on failure!
 	if err := index.Compact(); err != nil {
 		index.Close()
@@ -81,6 +84,9 @@ func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts 
 		index.Close()
 		return nil, err
 	}
+
+	// update stats
+	stats.StoreIndexStats(index.Stats())
 
 	// compact the index, or close on failure!
 	if err := index.Compact(); err != nil {
@@ -101,6 +107,9 @@ func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts 
 		index.Close()
 		return nil, err
 	}
+
+	// update stats
+	stats.StoreIndexStats(index.Stats())
 
 	// and finalize the index
 	if err := index.Finalize(); err != nil {
@@ -152,7 +161,7 @@ func addPathArrayToMasks(pmask map[impl.Label]struct{}, ary []string) {
 }
 
 // indexSameAs inserts SameAs pairs into the index
-func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Label, opts IndexOptions, stats *status.Status) (count int, err error) {
+func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Label, opts IndexOptions, stats *status.Stats) (count int, err error) {
 	err = source.Open()
 	if err != nil {
 		return 0, err
@@ -191,7 +200,7 @@ func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Lab
 }
 
 // indexInverseOf inserts InverseOf pairs into the index
-func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl.Label, total int, opts IndexOptions, stats *status.Status) error {
+func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl.Label, total int, opts IndexOptions, stats *status.Stats) error {
 	if len(inversePredicates) == 0 {
 		return nil
 	}
@@ -235,7 +244,7 @@ func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl
 }
 
 // indexData inserts data into the index
-func indexData(source Source, index *igraph.Index, total int, opts IndexOptions, stats *status.Status) error {
+func indexData(source Source, index *igraph.Index, total int, opts IndexOptions, stats *status.Stats) error {
 	err := source.Open()
 	if err != nil {
 		return err

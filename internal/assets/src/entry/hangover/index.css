@@ -67,7 +67,9 @@ hr {
 .entity_table,
 .entity_table td,
 .field_table,
-.field_table td
+.field_table td,
+.stats_table,
+.stats_table td
 {
     border-collapse: collapse;
     border: 1px solid black;
@@ -80,6 +82,11 @@ hr {
 }
 
 .entity_table td.collapse {
+    white-space: nowrap;
+    width: 1px;
+}
+
+.stats_table td.collapse {
     white-space: nowrap;
     width: 1px;
 }
@@ -121,4 +128,8 @@ img {
 
 code.highlight {
     text-decoration: underline;
+}
+
+td.text-align-right {
+    text-align: right;
 }

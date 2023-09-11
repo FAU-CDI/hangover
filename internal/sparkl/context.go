@@ -18,7 +18,7 @@ import (
 //
 // Storages for any child bundles, and the bundle itself, are created using the makeStorage function.
 // The storage for this bundle is returned.
-func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Status) (storages.BundleStorage, func() error, error) {
+func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Stats) (storages.BundleStorage, func() error, error) {
 	storages, closer, err := StoreBundles([]*pathbuilder.Bundle{bundle}, index, engine, stats)
 	if err != nil {
 		return nil, nil, err
@@ -27,7 +27,7 @@ func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storage
 }
 
 // StoreBundles is like StoreBundle, but takes multiple bundles
-func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Status) ([]storages.BundleStorage, func() error, error) {
+func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Stats) ([]storages.BundleStorage, func() error, error) {
 	context := &Context{
 		Index:  index,
 		Engine: engine,
@@ -57,7 +57,7 @@ type Context struct {
 	childAddWait sync.WaitGroup // loading child entities wait
 	errOnce      sync.Once      // to set the error
 
-	Stats *status.Status
+	Stats *status.Stats
 }
 
 // Open opens this context, and signals that multiple calls to Store() may follow.
@@ -231,7 +231,7 @@ var debugLogID int64 // id of the current log id
 //
 // Any values found along the path are written to the returned channel which is then closed.
 // If an error occurs, it is written to errDst before the channel is closed.
-func extractPath(path pathbuilder.Path, index *igraph.Index, stats *status.Status) iterator.Iterator[igraph.Path] {
+func extractPath(path pathbuilder.Path, index *igraph.Index, stats *status.Stats) iterator.Iterator[igraph.Path] {
 	// start with the path array
 	uris := append([]string{}, path.PathArray...)
 	if len(uris) == 0 {

@@ -12,7 +12,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-func doJSON(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, stats *status.Status) {
+func doJSON(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, stats *status.Stats) {
 	var err error
 
 	// generate bundles

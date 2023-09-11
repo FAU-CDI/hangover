@@ -12,6 +12,7 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/assets"
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/htmlx"
@@ -77,6 +78,15 @@ var legalTemplate *template.Template = assets.Assetshangover.MustParseShared(
 	contextTemplateFuncs,
 )
 
+//go:embed templates/perf.html
+var perfHTML string
+
+var perfTemplate *template.Template = assets.Assetshangover.MustParseShared(
+	"perf.html",
+	perfHTML,
+	contextTemplateFuncs,
+)
+
 //go:embed templates/pathbuilder.html
 var pathbuilderHTML string
 
@@ -89,6 +99,7 @@ var pbTemplate *template.Template = assets.Assetshangover.MustParseShared(
 type contextGlobal struct {
 	InterceptedPrefixes []string // urls that are redirected to this server
 	Footer              template.HTML
+	DisableForm         bool
 	RenderFlags
 }
 
@@ -111,6 +122,7 @@ func (cg contextGlobal) ReplaceURL(u string) string {
 func (viewer *Viewer) contextGlobal() (global contextGlobal) {
 	global.Footer = viewer.Footer
 	global.RenderFlags = viewer.RenderFlags
+	global.DisableForm = !viewer.Status.Done()
 
 	if viewer.RenderFlags.PublicURL == "" {
 		return
@@ -140,6 +152,10 @@ type htmlLegalContext struct {
 }
 
 func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
+	if viewer.htmlFallback(w, r) {
+		return
+	}
+
 	bundles, ok := viewer.getBundles()
 	if !ok {
 		http.NotFound(w, r)
@@ -152,6 +168,25 @@ func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
 	err := indexTemplate.Execute(w, htmlIndexContext{
 		Globals: viewer.contextGlobal(),
 		Bundles: bundles,
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+type htmlPerfContext struct {
+	Globals contextGlobal
+	Perf    Perf
+	Stages  []status.StageStats
+}
+
+func (viewer *Viewer) htmlPerf(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+
+	err := perfTemplate.Execute(w, htmlPerfContext{
+		Globals: viewer.contextGlobal(),
+		Perf:    viewer.Perf(),
 	})
 	if err != nil {
 		panic(err)
@@ -179,6 +214,10 @@ type htmlBundleContext struct {
 }
 
 func (viewer *Viewer) htmlBundle(w http.ResponseWriter, r *http.Request) {
+	if viewer.htmlFallback(w, r) {
+		return
+	}
+
 	vars := mux.Vars(r)
 
 	bundle, entities, ok := viewer.getEntityURIs(vars["bundle"])
@@ -206,6 +245,10 @@ type htmlPathbuilderContext struct {
 }
 
 func (viewer *Viewer) htmlPathbuilder(w http.ResponseWriter, r *http.Request) {
+	if viewer.htmlFallback(w, r) {
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html")
 
 	w.WriteHeader(http.StatusOK)
@@ -219,6 +262,10 @@ func (viewer *Viewer) htmlPathbuilder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (viewer *Viewer) htmlEntityResolve(w http.ResponseWriter, r *http.Request) {
+	if viewer.htmlFallback(w, r) {
+		return
+	}
+
 	vars := mux.Vars(r)
 	uri := impl.Label(strings.TrimSpace(vars["uri"]))
 
@@ -236,6 +283,9 @@ func (viewer *Viewer) htmlEntityResolve(w http.ResponseWriter, r *http.Request) 
 }
 
 func (viewer *Viewer) sendToResolver(w http.ResponseWriter, r *http.Request) {
+	if viewer.htmlFallback(w, r) {
+		return
+	}
 	publics := viewer.RenderFlags.PublicURIS()
 	uris := make([]impl.Label, 0, len(publics))
 	for _, public := range publics {
@@ -264,6 +314,10 @@ type htmlEntityContext struct {
 }
 
 func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
+	if viewer.htmlFallback(w, r) {
+		return
+	}
+
 	vars := mux.Vars(r)
 
 	bundle, entity, ok := viewer.findEntity(vars["bundle"], impl.Label(vars["uri"]))

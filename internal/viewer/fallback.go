@@ -1,0 +1,74 @@
+package viewer
+
+// fallback implements an api that implements the current status
+
+import (
+	"encoding/json"
+	"html/template"
+	"net/http"
+
+	_ "embed"
+
+	"github.com/FAU-CDI/hangover/internal/assets"
+	"github.com/FAU-CDI/hangover/internal/status"
+)
+
+//go:embed templates/loading.html
+var loadingHTML string
+
+var loadTemplate *template.Template = assets.Assetshangover_fallback.MustParseShared(
+	"loading.html",
+	loadingHTML,
+	contextTemplateFuncs,
+)
+
+type htmlLoadingContext struct {
+	Globals  contextGlobal
+	Progress status.Progress
+}
+
+func (viewer *Viewer) htmlFallback(w http.ResponseWriter, r *http.Request) (sent bool) {
+	progress := viewer.Status.Progress()
+	if progress.Done {
+		return false
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set("Retry-After", viewerRetrySeconds)
+	err := loadTemplate.Execute(w, htmlLoadingContext{
+		Globals:  viewer.contextGlobal(),
+		Progress: progress,
+	})
+	if err != nil {
+		viewer.RenderFlags.Stats.LogError("render fallback", err)
+	}
+
+	return true
+}
+
+const (
+	viewerNotReady     = "data is still being loaded and the server is not ready"
+	viewerRetrySeconds = "60"
+)
+
+type ProgressMessage struct {
+	Message  string
+	Progress status.Progress
+}
+
+func (viewer *Viewer) jsonFallback(w http.ResponseWriter, r *http.Request) (sent bool) {
+	progress := viewer.Status.Progress()
+	if progress.Done {
+		return false
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Retry-After", viewerRetrySeconds)
+	w.WriteHeader(http.StatusServiceUnavailable)
+	json.NewEncoder(w).Encode(ProgressMessage{
+		Message:  viewerNotReady,
+		Progress: progress,
+	})
+
+	return
+}

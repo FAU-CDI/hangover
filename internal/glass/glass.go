@@ -89,7 +89,7 @@ func (glass *Glass) DecodeFrom(decoder *gob.Decoder) (err error) {
 
 // Create creates a new glass from the given pathbuilder and nquads.
 // output is written to output.
-func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, stats *status.Status) (drincw Glass, err error) {
+func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, stats *status.Stats) (drincw Glass, err error) {
 	// read the pathbuilder
 	if err := stats.DoStage(status.StageReadPathbuilder, func() (err error) {
 		drincw.Pathbuilder, err = pbxml.Load(pathbuilderPath)
@@ -111,7 +111,7 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 		return drincw, err
 	}
 
-	stats.Log("finished indexing", "stats", index.Stats())
+	stats.Log("finished indexing", "stats", stats.IndexStats())
 	defer index.Close()
 
 	// extract the bundles
@@ -148,7 +148,7 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 }
 
 // Export writes a glass to the given path
-func Export(path string, drincw Glass, stats *status.Status) (err error) {
+func Export(path string, drincw Glass, stats *status.Stats) (err error) {
 	f, err := os.Create(path)
 	if err != nil {
 		stats.LogError("create export", err)
@@ -183,7 +183,7 @@ func Export(path string, drincw Glass, stats *status.Status) (err error) {
 var errInvalidVersion = errors.New("Glass Export: Invalid version")
 
 // Import loads a glass from disk
-func Import(path string, stats *status.Status) (drincw Glass, err error) {
+func Import(path string, stats *status.Stats) (drincw Glass, err error) {
 	defer debug.FreeOSMemory() // force clearing free memory
 
 	f, err := os.Open(path)

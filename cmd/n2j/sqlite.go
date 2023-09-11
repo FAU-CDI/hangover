@@ -18,7 +18,7 @@ const (
 	sqlLiteBatchSize  = 1000
 )
 
-func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, proto, addr string, stats *status.Status) {
+func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, proto, addr string, stats *status.Stats) {
 	var err error
 
 	// setup the sqlite

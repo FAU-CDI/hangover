@@ -16,7 +16,7 @@ func listenDebug() {
 	router.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 	router.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index)) // special handling for Gorilla mux
 
-	stats.Log("debug server listening", "addr", debugServer)
+	handler.Status.Log("debug server listening", "addr", debugServer)
 	err := http.ListenAndServe(debugServer, router)
-	stats.LogFatal("pprof server listen", err)
+	handler.Status.LogFatal("pprof server listen", err)
 }

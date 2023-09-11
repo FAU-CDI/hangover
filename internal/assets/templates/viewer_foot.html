@@ -1,6 +1,6 @@
 <form action="/wisski/get" method="GET">
-    <input name="uri">
-    <button type="submit">Resolve URI</button>
+    <input name="uri" {{if .Globals.DisableForm }}readonly{{end}}>
+    <button type="submit" {{if .Globals.DisableForm }}disabled{{end}}>Resolve URI</button>
 </form>
 
 <hr />
@@ -14,6 +14,8 @@
         Public URL: {{ .Globals.PublicURL}}<br />
         SameAs Predicates: {{ .Globals.Predicates.SameAs }}<br />
         InverseOf Predicates: {{ .Globals.Predicates.InverseOf }}<br />
+        <a href="/pathbuilder">Pathbuilder</a><br />
+        <a href="/perf">Viewer Performance</a><br />
         <a href="/legal">Viewer License Notices</a><br />
     </small>
 </p>
