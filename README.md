@@ -4,22 +4,37 @@
 
 [![CI](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml/badge.svg)](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml)
 
-[WissKI](https://wiss-ki.eu/) is a software that  allows researchers to record data about objects of the cultural heritage in a graph database backed by a formal ontology specified using a [Pathbuilder](https://wiss-ki.eu/documentation/data-modeling/pathbuilder).
+[WissKI](https://wiss-ki.eu/) is a software that allows researchers to record data about (objects of) cultural heritage in a graph database backed by a formal ontology.
 WissKI acts as a database for researchers to store their results via a web interface, and nearly automatically makes data FAIR, linked and open.
 
-Unfortunately there is a cognative impedance mismatch between the data stored in the graph database and the data entered in the wisski interface. 
-The triples may contain the information displayed in WissKI, but in order to properly understand them the pathbuilder, typically available only in WissKI, is required. 
+WissKI data typically consists of two parts.
+The data itself is stored as triples inside a graph database, and is typically exported in `.nq` format.
+The metadata and description are stored inside a so-called [Pathbuilder](https://wiss-ki.eu/documentation/data-modeling/pathbuilder).
+These parts are typically exported on a regular basis for both backup and archival purposes. 
 
-This becomes a problem when you take into account that installing, maintaining, and running a WissKI-based system itself is a complex progress, and requires a system administrator with significant technical expertise. 
-Once a research project has ended and funding has run out it quickly ends up in an unusable state or is shutdown entirely.
+Unfortunately there is a cognative impedance mismatch between the data stored in the graph database and the data entered in the WissKI interface. 
+The triples may contain the information displayed in WissKI, but in order to properly understand them the pathbuilder, typically available only in WissKI, is required. 
+This becomes a problem when you take into account that installing, maintaining, and running a WissKI-based system itself is a complex progress, and requires a system administrator with significant technical expertise.
+
+After a research project using a WissKI ends, and funding has run out, the WissKI installation quickly ends up in an unusable state or is shutdown entirely.
+Only the archival exports of the system data still exist. 
 
 This repository contains `hangover` - the WissKI Data Viewer.
 It directly provides the researcher with an interface to view any database entries created in the originating system.
-The viewer runs directly on the researchers' computer and requires only a triplestore export (in nquad `.nq` format) and a pathbuilder export (in `.xml` format).
+The viewer runs directly on the researchers' computer and requires only the triplestore export (in nquad `.nq` format) and the pathbuilder export (in `.xml` format).
 
-[WissKI Viewer Demo](https://wisskiviewer.kwarc.info/)
-[CORDI 2023 Extended Abstract](./docs/cordi-2023-ea.pdf)
-[CORDI 2023 Poster](./docs/cordi-2023-poster.pdf)
+### Demo and Bibliography
+
+![An Object seen inside WissKI](./docs/screenshot-viewer.png "An object seen inside WissKI")
+
+A [Demo](https://wisskiviewer.kwarc.info/) is available.
+You can also
+[see this object in the demo](https://wisskiviewer.kwarc.info/entity/objekt?uri=http%3a%2f%2fkirmes.wisski.agfd.fau.de%2f%235f15b12cd5fb1).
+
+
+A further high-level overview can be found in:
+- [CORDI 2023 Extended Abstract](./docs/cordi-2023-ea.pdf)
+- [CORDI 2023 Poster](./docs/cordi-2023-poster.pdf)
 
 ## Repository Overview
 
