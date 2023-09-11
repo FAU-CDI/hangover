@@ -4,13 +4,13 @@
 
 [![CI](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml/badge.svg)](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml)
 
-[WissKI](https://wiss-ki.eu/) is a software which allows researchers to record data about objects of the cultural heritage in a graph database backed by a formal ontology specified using a[Pathbuilder](https://wiss-ki.eu/documentation/data-modeling/pathbuilder).
+[WissKI](https://wiss-ki.eu/) is a software that  allows researchers to record data about objects of the cultural heritage in a graph database backed by a formal ontology specified using a [Pathbuilder](https://wiss-ki.eu/documentation/data-modeling/pathbuilder).
 WissKI acts as a database for researchers to store their results via a web interface, and nearly automatically makes data FAIR, linked and open.
 
 Unfortunately there is a cognative impedance mismatch between the data stored in the graph database and the data entered in the wisski interface. 
 The triples may contain the information displayed in WissKI, but in order to properly understand them the pathbuilder, typically available only in WissKI, is required. 
 
-This becomes a problem when you take into account that installing and running a WissKI-based system itself is a complex progress, and requires a system administrator with significant technical expertise. 
+This becomes a problem when you take into account that installing, maintaining, and running a WissKI-based system itself is a complex progress, and requires a system administrator with significant technical expertise. 
 Once a research project has ended and funding has run out it quickly ends up in an unusable state or is shutdown entirely.
 
 This repository contains `hangover` - the WissKI Data Viewer.
