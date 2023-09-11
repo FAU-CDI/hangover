@@ -12,7 +12,7 @@ import (
 func ExampleNow() {
 	metrics := perf.Now()
 
-	const ARRAY_SIZE = 10_0000
+	const ARRAY_SIZE = 1000
 	const SLEEP = 1 * time.Second
 
 	// some fancy and slow task
