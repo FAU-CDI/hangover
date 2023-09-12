@@ -5,6 +5,7 @@ import (
 	"errors"
 	"runtime"
 
+	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
@@ -101,7 +102,13 @@ func (cache Cache) BundleNames() []string {
 // TODO: Do we want to use an IMap here?
 
 // NewCache creates a new cache from a bundle-entity-map
-func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, impl.Label]) (c Cache, err error) {
+func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, impl.Label], stats *status.Stats) (c Cache, err error) {
+	var counter int
+	progress := func() {
+		counter++
+		stats.SetCT(counter, counter)
+	}
+
 	// reset the uris
 	c.uris = &imap.IMap{}
 	c.uris.Reset(&c.engine)
@@ -119,6 +126,8 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, i
 			}
 			c.biIndex[bundle][id.Canonical] = i
 			c.ebIndex[id.Canonical] = bundle
+
+			progress()
 		}
 	}
 
@@ -135,6 +144,8 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, i
 	c.aliasOf = make(map[impl.ID][]impl.ID, sameAsCount)
 
 	err = SameAs.Iterate(func(alias, canon impl.Label) error {
+		defer progress()
+
 		aliass, err := c.uris.Add(alias)
 		if err != nil {
 			return err

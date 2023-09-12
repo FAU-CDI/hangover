@@ -72,10 +72,14 @@ func (rw *Rewritable) Flush(force bool) {
 	rw.lastFlush = time.Now()
 }
 
+// Close resets any output written to the terminal.
+// After a call to Close(), further calls to Set may re-use it.
 func (rw *Rewritable) Close() {
 	rw.content = ""
 	rw.Flush(true)
 	rw.Writer.Write([]byte("\r"))
+
+	rw.longestContent = 0
 }
 
 type Progress struct {

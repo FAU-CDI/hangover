@@ -282,7 +282,11 @@ func (st *Stats) end() (prev StageStats) {
 	// log that we finished the stage
 	// and write out the perf
 	if st.logger != nil {
-		st.logger.Info("end", "stage", prev.Stage, "took", prev.Diff())
+		if prev.Total != 0 || prev.Current != 0 {
+			st.logger.Info("end", "stage", prev.Stage, "took", prev.Diff(), "current", prev.Current, "total", prev.Total)
+		} else {
+			st.logger.Info("end", "stage", prev.Stage, "took", prev.Diff())
+		}
 	}
 	return
 }
@@ -383,6 +387,7 @@ const (
 	StageScanSameAs      Stage = "index/sameas"
 	StageScanInverse     Stage = "index/inverse"
 	StageScanTriples     Stage = "index/triples"
+	StageExtractSameAs   Stage = "sameas"
 	StageExtractBundles  Stage = "bundles"
 	StageExtractCache    Stage = "cache"
 	StageHandler         Stage = "handler"

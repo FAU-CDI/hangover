@@ -35,13 +35,37 @@ func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine sto
 	}
 	context.Open()
 
+	// compute the total number of bundles
+	var total int
+	for _, b := range bundles {
+		total += totalBundleCount(b)
+	}
+	stats.SetCT(0, total)
+
+	// update the counter every time we finish a bundle
+	var counter atomic.Int64
 	storages := make([]storages.BundleStorage, len(bundles))
 	for i := range storages {
-		storages[i] = context.Store(bundles[i])
+		storages[i] = context.Store(bundles[i], func() {
+			current := int(counter.Add(1))
+			stats.SetCT(current, total)
+		})
 	}
 	err := context.Wait()
 
 	return storages, context.Close, err
+}
+
+// totalBundleCount recursively counts the number of bundles on the tree under bundle.
+func totalBundleCount(bundle *pathbuilder.Bundle) (counter int) {
+	if bundle == nil {
+		return 0
+	}
+	counter++
+	for _, b := range bundle.ChildBundles {
+		counter += totalBundleCount(b)
+	}
+	return
 }
 
 // Context represents a context to extract bundle data from index into storages.
@@ -107,20 +131,23 @@ func (context *Context) reportError(err error) bool {
 }
 
 // Store creates a new Storage for the given bundle and schedules entities to be loaded.
+// Once onFinish is finished
 // May only be called between calls [Open] and [Wait].
 //
 // Any error that occurs is returned only by Wait.
-func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage {
+func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) storages.BundleStorage {
 	context.extractWait.Add(1)
 
 	// create a new context
 	storage, err := context.Engine.NewStorage(bundle)
 	if context.reportError(err) {
 		context.extractWait.Done()
+		onFinish()
 		return nil
 	}
 
 	go func() {
+		defer onFinish()
 		defer context.extractWait.Done()
 
 		// determine the index of the URI within the paths describing this bundle
@@ -172,7 +199,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage
 		// stage 3: read child paths
 		cstorages := make([]storages.BundleStorage, len(bundle.ChildBundles))
 		for i, bundle := range bundle.ChildBundles {
-			cstorages[i] = context.Store(bundle)
+			cstorages[i] = context.Store(bundle, onFinish)
 			if cstorages[i] == nil {
 				// creating the storage has failed, so we don't need to continue
 				// and we can return immediately.

@@ -125,17 +125,26 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	}
 
 	// extract the cache
-	stats.DoStage(status.StageExtractCache, func() error {
-		identities := imap.MakeMemory[impl.Label, impl.Label](0)
-		index.IdentityMap(&identities)
 
-		cache, err := sparkl.NewCache(bundles, &identities)
+	identities := imap.MakeMemory[impl.Label, impl.Label](0)
+
+	if err := stats.DoStage(status.StageExtractSameAs, func() error {
+		return index.IdentityMap(&identities)
+	}); err != nil {
+		return Glass{}, err
+	}
+
+	if err := stats.DoStage(status.StageExtractCache, func() error {
+		cache, err := sparkl.NewCache(bundles, &identities, stats)
 		if err != nil {
 			return err
 		}
 		drincw.Cache = &cache
 		return nil
-	})
+	}); err != nil {
+		return Glass{}, err
+	}
+
 	if err != nil {
 		return drincw, err
 	}
