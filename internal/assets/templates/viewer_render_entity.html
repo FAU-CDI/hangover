@@ -13,8 +13,14 @@
     <tbody>
         <tr>
             <td colspan="4">
+                <div>
+                    Download as: <a href="/api/">NTriples</a> <a href="/api/">Turtle</a>
+                </div>
+                <br />
+
                 <div class="showable" data-placeholder="Show Entity Triples">
                     <div class="toggle">Hide Entity Triples</div>
+
                     {{ template "viewer_render_triples.html" combine "Globals" $globals "Entity" $entity }}
                 </div>
             </td>
