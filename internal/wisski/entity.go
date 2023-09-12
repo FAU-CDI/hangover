@@ -1,8 +1,11 @@
 package wisski
 
 import (
+	"io"
+
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
+	"github.com/anglo-korean/rdf"
 	"golang.org/x/exp/slices"
 )
 
@@ -15,6 +18,25 @@ type Entity struct {
 	URI      impl.Label
 	Path     []impl.Label
 	Triples  []igraph.Triple
+}
+
+// WriteTo writes triples representing this entity into w.
+func (entity Entity) WriteTriples(w io.Writer, canonical bool, f rdf.Format) error {
+	writer := rdf.NewTripleEncoder(w, f)
+	defer writer.Close()
+
+	for _, triple := range entity.Triples {
+		triple, err := triple.Triple(canonical)
+		if err != nil {
+			return err
+		}
+
+		if err := writer.Encode(triple); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // AllTriples returns all triples that are related to this entity.

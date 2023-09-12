@@ -1,5 +1,7 @@
 github.com/FAU-CDI/drincw v0.1.3 h1:5yly7aGct/xabjMRT1+x2qLwfmaKKQ0OlTYKIqSslIo=
 github.com/FAU-CDI/drincw v0.1.3/go.mod h1:Q7TUTmJAf0eR/iWnmRhZme7FnXoLpIS4X5rDrpDldzA=
+github.com/anglo-korean/rdf v0.0.0-20210327070916-93fe8828a7cb h1:EMgKKl++WwefWyqAwhmojppuDjzPK61pRyKuwx2eqkc=
+github.com/anglo-korean/rdf v0.0.0-20210327070916-93fe8828a7cb/go.mod h1:AzbsZ7qlds+UW4UuSr6P9of5i0jB+HaEgTCd97JqlpQ=
 github.com/cayleygraph/quad v1.2.5 h1:su0zl5KJGrLGGyMwbuzO6bK6miJPJnXHETS1DdXKjLY=
 github.com/cayleygraph/quad v1.2.5/go.mod h1:cyhGxjj93c2fcs3/vjVQmWmChzcJTz3cu1/GkesNLnY=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
@@ -42,6 +44,8 @@ github.com/huandu/xstrings v1.3.2/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq
 github.com/huandu/xstrings v1.4.0 h1:D17IlohoQq4UcpqD7fDk80P7l+lwAmlFaBHgOipl2FU=
 github.com/huandu/xstrings v1.4.0/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/ianlancetaylor/demangle v0.0.0-20210905161508-09a460cdf81d/go.mod h1:aYm2/VgdVmcIU8iMfdMvDMsRAQjcfZSKFby6HOFvi/w=
+github.com/knakk/rdf v0.0.0-20190304171630-8521bf4c5042 h1:Vzdm5hdlLdpJOKK+hKtkV5u7xGZmNW6aUBjGcTfwx84=
+github.com/knakk/rdf v0.0.0-20190304171630-8521bf4c5042/go.mod h1:fYE0718xXI13XMYLc6iHtvXudfyCGMsZ9hxSM1Ommpg=
 github.com/mattn/go-isatty v0.0.19 h1:JITubQf0MOLdlGRuRq+jtsDlekdYPia9ZFsB8h/APPA=
 github.com/mattn/go-isatty v0.0.19/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=

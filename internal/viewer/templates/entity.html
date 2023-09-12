@@ -17,7 +17,7 @@
     {{ $globals := .Globals }}
     <h2>Fields</h2>
     {{ $bundle := .Bundle }}
-    {{ template "viewer_render_entity.html" combine "Globals" $globals "Entity" .Entity "Bundle" $bundle }}
+    {{ template "viewer_render_entity.html" combine "Globals" $globals "DownloadLinks" .DownloadLinks "Entity" .Entity "Bundle" $bundle }}
     
     <h2>Sub Bundles</h2>
     {{ range $name, $values := .Entity.Children }}

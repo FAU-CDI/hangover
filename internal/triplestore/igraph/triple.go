@@ -6,6 +6,7 @@ import (
 
 	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
+	"github.com/anglo-korean/rdf"
 )
 
 // Stats holds statistics about triples in the index
@@ -82,6 +83,50 @@ type Triple struct {
 
 	// Why was this triple inserted?
 	Role Role
+}
+
+// Triple returns this Triple as an rdf triple
+func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
+	var subject, predicate string
+	if !canonical {
+		subject = string(triple.Subject)
+		predicate = string(triple.Predicate)
+	} else {
+		subject = string(triple.SSubject)
+		predicate = string(triple.SPredicate)
+	}
+
+	spo.Subj, err = rdf.NewIRI(subject)
+	if err != nil {
+		return rdf.Triple{}, err
+	}
+
+	spo.Pred, err = rdf.NewIRI(predicate)
+	if err != nil {
+		return rdf.Triple{}, err
+	}
+
+	if triple.Datum == "" {
+		var object string
+		if !canonical {
+			object = string(triple.Object)
+		} else {
+			object = string(triple.SObject)
+		}
+
+		spo.Obj, err = rdf.NewIRI(object)
+		if err != nil {
+			return rdf.Triple{}, err
+		}
+
+	} else {
+		spo.Obj, err = rdf.NewLiteral(string(triple.Datum))
+		if err != nil {
+			return rdf.Triple{}, err
+		}
+	}
+
+	return
 }
 
 // Compare compares this triple to another triple based on it's id

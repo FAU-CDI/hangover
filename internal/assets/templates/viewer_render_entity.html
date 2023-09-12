@@ -1,5 +1,6 @@
 {{ $globals := .Globals }}
 {{ $entity := .Entity }}
+{{ $links := .DownloadLinks }}
 
 <table class="entity_table">
     <thead>
@@ -13,11 +14,6 @@
     <tbody>
         <tr>
             <td colspan="4">
-                <div>
-                    Download as: <a href="/api/">NTriples</a> <a href="/api/">Turtle</a>
-                </div>
-                <br />
-
                 <div class="showable" data-placeholder="Show Entity Triples">
                     <div class="toggle">Hide Entity Triples</div>
 
@@ -25,6 +21,13 @@
                 </div>
             </td>
         </tr>
+        {{ if $links }}
+            <tr>
+                <td colspan="4">
+                    Download as: <a href="{{ $links.Triples }}">NTriples</a> <a href="{{ $links.Turtle }}">Turtle</a>
+                </td>
+            </tr>
+        {{ end }}
     </tbody>
     <tbody>
 

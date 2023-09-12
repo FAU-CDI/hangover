@@ -307,8 +307,12 @@ func (viewer *Viewer) sendToResolver(w http.ResponseWriter, r *http.Request) {
 }
 
 type htmlEntityContext struct {
-	Bundle  *pathbuilder.Bundle
-	Entity  *wisski.Entity
+	Bundle        *pathbuilder.Bundle
+	Entity        *wisski.Entity
+	DownloadLinks struct {
+		Triples template.URL
+		Turtle  template.URL
+	}
 	Aliases []impl.Label
 	Globals contextGlobal
 }
@@ -326,15 +330,21 @@ func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var context htmlEntityContext
+
+	context.Globals = viewer.contextGlobal()
+	context.Bundle = bundle
+	context.Entity = entity
+	context.Aliases = viewer.Cache.Aliases(entity.URI)
+
+	suffix := url.PathEscape(vars["bundle"]) + "?uri=" + url.QueryEscape(vars["uri"])
+
+	context.DownloadLinks.Triples = template.URL("/api/v1/ntriples/" + suffix)
+	context.DownloadLinks.Turtle = template.URL("/api/v1/turtle/" + suffix)
+
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
-	err := entityTemplate.Execute(w, htmlEntityContext{
-		Globals: viewer.contextGlobal(),
-
-		Bundle:  bundle,
-		Entity:  entity,
-		Aliases: viewer.Cache.Aliases(entity.URI),
-	})
+	err := entityTemplate.Execute(w, context)
 	if err != nil {
 		viewer.RenderFlags.Stats.LogError("render entity", err)
 	}

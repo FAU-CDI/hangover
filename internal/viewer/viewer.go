@@ -123,6 +123,9 @@ func (viewer *Viewer) setupMux() {
 		viewer.mux.HandleFunc("/api/v1/bundle/{bundle}", viewer.jsonBundle)
 		viewer.mux.HandleFunc("/api/v1/entity/{bundle}", viewer.jsonEntity).Queries("uri", "{uri:.+}")
 
+		viewer.mux.HandleFunc("/api/v1/ntriples/{bundle}", viewer.jsonNTriples).Queries("uri", "{uri:.+}")
+		viewer.mux.HandleFunc("/api/v1/turtle/{bundle}", viewer.jsonTurtle).Queries("uri", "{uri:.+}")
+
 		viewer.mux.PathPrefix("/assets/").Handler(assets.AssetHandler)
 
 		viewer.cspHeader = viewer.RenderFlags.CSPHeader()

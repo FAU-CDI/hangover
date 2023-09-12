@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
+	"github.com/anglo-korean/rdf"
 	"github.com/gorilla/mux"
 )
 
@@ -69,4 +70,46 @@ func (viewer *Viewer) jsonEntity(w http.ResponseWriter, r *http.Request) {
 
 	// render the entity
 	json.NewEncoder(w).Encode(entity)
+}
+
+func (viewer *Viewer) jsonNTriples(w http.ResponseWriter, r *http.Request) {
+	if viewer.jsonFallback(w, r) {
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	entity, ok := viewer.getEntity(vars["bundle"], impl.Label(vars["uri"]))
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	// Setup the json response
+	w.Header().Set("Content-Type", "application/n-triples")
+	w.Header().Set("Content-Disposition", `attachment; filename="entity.nt"`)
+	w.WriteHeader(http.StatusOK)
+
+	// render the entity
+	entity.WriteTriples(w, true, rdf.NTriples)
+}
+
+func (viewer *Viewer) jsonTurtle(w http.ResponseWriter, r *http.Request) {
+	if viewer.jsonFallback(w, r) {
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	entity, ok := viewer.getEntity(vars["bundle"], impl.Label(vars["uri"]))
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	// Setup the json response
+	w.Header().Set("Content-Type", "text/turtle")
+	w.Header().Set("Content-Disposition", `attachment; filename="entity.ttl"`)
+	w.WriteHeader(http.StatusOK)
+
+	// render the entity
+	entity.WriteTriples(w, true, rdf.Turtle)
 }
