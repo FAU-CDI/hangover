@@ -18,7 +18,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/status"
 	"github.com/FAU-CDI/hangover/internal/viewer"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/perf"
+	"github.com/tkw1536/pkglib/perf"
 )
 
 var handler = viewer.NewViewer(os.Stderr)

@@ -6,7 +6,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/perf"
+	"github.com/tkw1536/pkglib/perf"
 )
 
 // cspell:words pathbuilder

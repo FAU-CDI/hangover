@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
-	"github.com/FAU-CDI/hangover/pkg/perf"
 	"github.com/FAU-CDI/hangover/pkg/progress"
 	"github.com/tkw1536/pkglib/lazy"
+	"github.com/tkw1536/pkglib/perf"
 )
 
 type Rewritable = *progress.Rewritable
