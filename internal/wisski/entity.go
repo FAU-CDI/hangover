@@ -21,11 +21,11 @@ type Entity struct {
 }
 
 // WriteTo writes triples representing this entity into w.
-func (entity Entity) WriteTriples(w io.Writer, canonical bool, f rdf.Format) error {
+func (entity Entity) WriteAllTriples(w io.Writer, canonical bool, f rdf.Format) error {
 	writer := rdf.NewTripleEncoder(w, f)
 	defer writer.Close()
 
-	for _, triple := range entity.Triples {
+	for _, triple := range entity.AllTriples() {
 		triple, err := triple.Triple(canonical)
 		if err != nil {
 			return err
@@ -78,7 +78,8 @@ func (entity Entity) appendTriples(triples []igraph.Triple) []igraph.Triple {
 
 // FieldValue represents the value of a field inside an entity
 type FieldValue struct {
-	Value   any
-	Path    []impl.Label
-	Triples []igraph.Triple
+	Value    impl.Datum
+	Language impl.Language
+	Path     []impl.Label
+	Triples  []igraph.Triple
 }

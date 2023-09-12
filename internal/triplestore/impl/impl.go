@@ -32,3 +32,16 @@ func DatumAsByte(datum Datum) []byte {
 func ByteAsDatum(datum []byte) Datum {
 	return Datum(datum)
 }
+
+// Language represents a language for a triple.
+type Language string
+
+// LanguageAsByte encodes a language as a set of bytes.
+func LanguageAsByte(language Language) []byte {
+	return []byte(language)
+}
+
+// ByteAsLanguage decodes a language from a set of bytes.
+func ByteAsLanguage(language []byte) Language {
+	return Language(language)
+}

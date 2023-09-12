@@ -7,11 +7,11 @@ package assets
 // Assetshangover contains assets for the 'hangover' entrypoint.
 var Assetshangover = Assets{
 	Scripts: `<script type="module" src="/assets/hangover.be84e256.js"></script><script src="/assets/hangover.68997630.js" nomodule defer></script><script type="module" src="/assets/hangover.d0084ab5.js"></script><script src="/assets/hangover.9cfb5de2.js" nomodule defer></script>`,
-	Styles:  `<link rel="stylesheet" href="/assets/hangover.ed7a47cd.css">`,	
+	Styles:  `<link rel="stylesheet" href="/assets/hangover.86ff7cce.css">`,	
 }
 
 // Assetshangover_fallback contains assets for the 'hangover_fallback' entrypoint.
 var Assetshangover_fallback = Assets{
 	Scripts: `<script nomodule defer src="/assets/hangover.9cfb5de2.js"></script><script type="module" src="/assets/hangover.d0084ab5.js"></script><script type="module" src="/assets/hangover.be84e256.js"></script><script src="/assets/hangover.68997630.js" nomodule defer></script><script type="module" src="/assets/hangover_fallback.1f176c5f.js"></script><script src="/assets/hangover_fallback.e46ec627.js" nomodule defer></script>`,
-	Styles:  `<link rel="stylesheet" href="/assets/hangover.ed7a47cd.css"><link rel="stylesheet" href="/assets/hangover_fallback.38d394c2.css">`,	
+	Styles:  `<link rel="stylesheet" href="/assets/hangover.86ff7cce.css"><link rel="stylesheet" href="/assets/hangover_fallback.38d394c2.css">`,	
 }

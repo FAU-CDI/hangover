@@ -12,6 +12,7 @@ type Engine interface {
 	imap.Map
 
 	Data() (imap.HashMap[impl.ID, impl.Datum], error)
+	Language() (imap.HashMap[impl.ID, impl.Language], error)
 	Triples() (imap.HashMap[impl.ID, IndexTriple], error)
 	Inverses() (imap.HashMap[impl.ID, impl.ID], error)
 	PSOIndex() (ThreeStorage, error)

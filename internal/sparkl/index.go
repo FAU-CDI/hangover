@@ -3,7 +3,6 @@ package sparkl
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 
@@ -270,7 +269,7 @@ func indexData(source Source, index *igraph.Index, total int, opts IndexOptions,
 		case tok.Err != nil:
 			return tok.Err
 		case tok.HasDatum:
-			index.AddData(tok.Subject, tok.Predicate, impl.Datum(fmt.Sprint(tok.Datum)))
+			index.AddLangData(tok.Subject, tok.Predicate, tok.Datum, tok.Language)
 		case !tok.HasDatum:
 			index.AddTriple(tok.Subject, tok.Predicate, tok.Object)
 		}

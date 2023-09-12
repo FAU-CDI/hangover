@@ -90,7 +90,10 @@ func (viewer *Viewer) jsonNTriples(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	// render the entity
-	entity.WriteTriples(w, true, rdf.NTriples)
+	err := entity.WriteAllTriples(w, true, rdf.NTriples)
+	if err != nil {
+		viewer.Status.LogError("entity.nt", err, "uri", vars["uri"])
+	}
 }
 
 func (viewer *Viewer) jsonTurtle(w http.ResponseWriter, r *http.Request) {
@@ -111,5 +114,8 @@ func (viewer *Viewer) jsonTurtle(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	// render the entity
-	entity.WriteTriples(w, true, rdf.Turtle)
+	err := entity.WriteAllTriples(w, true, rdf.Turtle)
+	if err != nil {
+		viewer.Status.LogError("entity.ttl", err, "uri", vars["uri"])
+	}
 }

@@ -1,6 +1,7 @@
 package sparkl
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
@@ -38,11 +39,12 @@ type Source interface {
 // In the case of 2, Error == nil && HasDatum = False
 // In the case of 3, Error == nil && HasDatum = True
 type Token struct {
-	Datum     any
+	Datum     impl.Datum
 	Err       error
 	Subject   impl.Label
 	Predicate impl.Label
 	Object    impl.Label
+	Language  impl.Language
 	HasDatum  bool
 }
 
@@ -91,11 +93,24 @@ func (qs *QuadSource) Next() Token {
 				Object:    oI,
 			}
 		} else {
+			var language impl.Language
+			var datum impl.Datum
+
+			// if this is a language string
+			ldatum, ok := value.Object.(quad.LangString)
+			if ok {
+				language = impl.Language(ldatum.Lang)
+				datum = impl.Datum(ldatum.Native().(string))
+			} else {
+				datum = impl.Datum(fmt.Sprint(value.Object.Native()))
+			}
+
 			return Token{
 				Subject:   sI,
 				Predicate: pI,
 				HasDatum:  true,
-				Datum:     value.Object.Native(),
+				Datum:     datum,
+				Language:  language,
 			}
 		}
 	}

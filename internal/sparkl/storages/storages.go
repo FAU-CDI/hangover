@@ -39,11 +39,12 @@ type BundleStorage interface {
 	Add(uri impl.Label, path []impl.Label, triples []igraph.Triple) error
 
 	// AddFieldValue adds a value to the given field for the entity with the given uri.
+	// lang corresponds to the language of the field being added.
 	//
 	// Concurrent calls to distinct fields may take place, however within each field calls are always synchronized.
 	//
 	// A non-existing parent should return ErrNoEntity.
-	AddFieldValue(uri impl.Label, field string, value impl.Datum, path []impl.Label, triples []igraph.Triple) error
+	AddFieldValue(uri impl.Label, field string, value impl.Datum, lang impl.Language, path []impl.Label, triples []igraph.Triple) error
 
 	// RegisterChildStorage register the given storage as a BundleStorage for the child bundle.
 	// The Storage should delete the reference to the child storage when it is closed.

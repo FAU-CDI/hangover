@@ -16,6 +16,10 @@ func (MemoryEngine) Data() (imap.HashMap[impl.ID, impl.Datum], error) {
 	ms := imap.MakeMemory[impl.ID, impl.Datum](0)
 	return &ms, nil
 }
+func (MemoryEngine) Language() (imap.HashMap[impl.ID, impl.Language], error) {
+	ms := imap.MakeMemory[impl.ID, impl.Language](0)
+	return &ms, nil
+}
 func (MemoryEngine) Triples() (imap.HashMap[impl.ID, IndexTriple], error) {
 	ms := imap.MakeMemory[impl.ID, IndexTriple](0)
 	return &ms, nil

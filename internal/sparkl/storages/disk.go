@@ -156,15 +156,16 @@ func (ds *Disk) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple) 
 	})
 }
 
-func (ds *Disk) AddFieldValue(uri impl.Label, field string, value impl.Datum, path []impl.Label, triples []igraph.Triple) error {
+func (ds *Disk) AddFieldValue(uri impl.Label, field string, value impl.Datum, language impl.Language, path []impl.Label, triples []igraph.Triple) error {
 	return ds.update(uri, func(se *sEntity) error {
 		if se.Fields == nil {
 			se.Fields = make(map[string][]wisski.FieldValue)
 		}
 		se.Fields[field] = append(se.Fields[field], wisski.FieldValue{
-			Value:   value,
-			Path:    path,
-			Triples: triples,
+			Value:    value,
+			Language: language,
+			Path:     path,
+			Triples:  triples,
 		})
 		return nil
 	})

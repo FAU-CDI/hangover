@@ -71,6 +71,9 @@
                 Inverted
                 {{ else }}
                 Data
+                {{ if .Language }}
+                    <code class="lang">{{ .Language }}</code>
+                {{ end }}
                 {{ end }}
             </td>
         </tr>

@@ -160,7 +160,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle) storages.BundleStorage
 				for paths.Next() {
 					path := paths.Datum()
 
-					err = storage.AddFieldValue(path.Nodes[entityURIIndex], field.MachineName(), path.Value(), path.Nodes, path.Triples)
+					err = storage.AddFieldValue(path.Nodes[entityURIIndex], field.MachineName(), path.Value(), path.Language, path.Nodes, path.Triples)
 					if err != storages.ErrNoEntity {
 						context.reportError(err)
 					}

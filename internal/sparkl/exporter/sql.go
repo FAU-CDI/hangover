@@ -100,6 +100,7 @@ const (
 	uriColumn    = "uri"
 	parentColumn = "parent"
 	valueColumn  = "value"
+	langColumn   = "lang"
 
 	fieldColumnPrefix = "field__"
 
@@ -160,6 +161,7 @@ func (sql *SQL) CreateFieldTable(bundle *pathbuilder.Bundle, field pathbuilder.F
 	table := sqlbuilder.CreateTable(sql.FieldTable(bundle, field)).IfNotExists()
 	table.Define(uriColumn, "TEXT")
 	table.Define(valueColumn, "TEXT")
+	table.Define(langColumn, "TEXT")
 	return sql.exec(table.Build())
 }
 
@@ -271,13 +273,14 @@ func (sql *SQL) insertFieldTables(bundle *pathbuilder.Bundle, field pathbuilder.
 	}
 
 	// insert into the uri and value columns for each field
-	columns := []string{uriColumn, valueColumn}
+	columns := []string{uriColumn, valueColumn, langColumn}
 	values := make([][]any, 0)
 	for _, entity := range entities {
 		for _, value := range entity.Fields[field.MachineName()] {
 			values = append(values, []any{
 				entity.URI,
-				fmt.Sprintf("%v", value.Value),
+				value.Value,
+				value.Language,
 			})
 		}
 	}

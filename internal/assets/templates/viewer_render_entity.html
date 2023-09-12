@@ -8,12 +8,12 @@
             <th>Name</th>
             <th>Type</th>
             <th>Count</th>
-            <th>Value(s)</th>
+            <th colspan="2">Value(s)</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td colspan="4">
+            <td colspan="5">
                 <div class="showable" data-placeholder="Show Entity Triples">
                     <div class="toggle">Hide Entity Triples</div>
 
@@ -23,7 +23,7 @@
         </tr>
         {{ if $links }}
             <tr>
-                <td colspan="4">
+                <td colspan="5">
                     Download as: <a href="{{ $links.Triples }}">NTriples</a> <a href="{{ $links.Turtle }}">Turtle</a>
                 </td>
             </tr>
@@ -59,9 +59,18 @@
         {{ if ne $i 0 }}
         <tr>
             {{ end }}
-            <td>
+            {{ if $value.Language }}
+            <td lang="{{$value.Language}}">
+            {{ else }}
+                <td colspan="2">
+            {{ end }}
                 {{ template "viewer_render_value.html" combine "Globals" $globals "Field" $field "Value" $value }}
             </td>
+            {{ if $value.Language }}
+            <td class="collapse">
+                <code class="lang">{{ $value.Language }}</code>
+            </td>
+            {{ end }}
         </tr>
         {{ end }}
         {{ end }}

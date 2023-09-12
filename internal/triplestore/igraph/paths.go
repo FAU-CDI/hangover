@@ -208,6 +208,7 @@ type element struct {
 // Path represents a path inside a GraphIndex
 type Path struct {
 	Datum    impl.Datum
+	Language impl.Language
 	Nodes    []impl.Label
 	Edges    []impl.Label
 	Triples  []Triple
@@ -224,7 +225,13 @@ func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []i
 		if err != nil {
 			return Path{}, err
 		}
+
+		// if we have a datum, get the language and the node id!
 		if path.HasDatum {
+			path.Language, err = index.language.GetZero(rNodeIDs[0])
+			if err != nil {
+				return Path{}, err
+			}
 			rNodeIDs = rNodeIDs[1:]
 		}
 

@@ -17,6 +17,27 @@ type DiskEngine struct {
 	imap.DiskMap
 }
 
+func (de DiskEngine) Language() (imap.HashMap[impl.ID, impl.Language], error) {
+	data := filepath.Join(de.Path, "language.leveldb")
+
+	ds, err := imap.NewDiskStorage[impl.ID, impl.Language](data)
+	if err != nil {
+		return nil, err
+	}
+
+	ds.MarshalKey = impl.MarshalID
+	ds.UnmarshalKey = impl.UnmarshalID
+
+	ds.MarshalValue = func(value impl.Language) ([]byte, error) {
+		return impl.LanguageAsByte(value), nil
+	}
+	ds.UnmarshalValue = func(dest *impl.Language, src []byte) error {
+		*dest = impl.ByteAsLanguage(src)
+		return nil
+	}
+	return ds, nil
+}
+
 func (de DiskEngine) Data() (imap.HashMap[impl.ID, impl.Datum], error) {
 	data := filepath.Join(de.Path, "data.leveldb")
 
