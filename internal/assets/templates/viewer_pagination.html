@@ -1,0 +1,37 @@
+<div>
+    <p>
+        Showing
+        {{ if (eq .PageStart .PageEnd )}}
+            Item <code>{{ .PageStart }}</code>
+        {{ else }}
+            Items <code>{{ .PageStart }}</code> - <code>{{ .PageEnd }}</code>
+        {{ end }}
+        of
+        <code>{{ .Total }}</code>
+    </p>
+
+    <p>
+        {{ if .FirstLink }}
+            <a href="{{.FirstLink}}">First</a>
+        {{ else }}
+            <span>First</span>
+        {{ end }}
+    
+        {{ if .PrevLink }}
+            <a href="{{.PrevLink}}">Prev</a>
+        {{ else }}
+            <span>Prev</span>
+        {{ end }}
+    
+        {{ if .NextLink }}
+            <a href="{{.NextLink}}">Next</a>
+        {{ else }}
+            <span>Next</span>
+        {{ end }}
+        {{ if .LastLink }}
+            <a href="{{.LastLink}}">Last</a>
+        {{ else }}
+            <span>Last</span>
+        {{ end }}
+    </p>
+</div>

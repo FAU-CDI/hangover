@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	_ "embed"
@@ -208,10 +209,28 @@ func (viewer *Viewer) htmlLegal(w http.ResponseWriter, r *http.Request) {
 }
 
 type htmlBundleContext struct {
-	Bundle  *pathbuilder.Bundle
+	Bundle *pathbuilder.Bundle
+
+	Total int
+
+	FirstLink template.URL
+	PrevLink  template.URL
+
+	PageStart int
+	PageEnd   int
+
+	NextLink template.URL
+	LastLink template.URL
+
 	URIS    []impl.Label
 	Globals contextGlobal
 }
+
+const (
+	defaultBundleLimit = 100
+	maxBundleLimit     = 1000
+	defaultBundleSkip  = 0
+)
 
 func (viewer *Viewer) htmlBundle(w http.ResponseWriter, r *http.Request) {
 	if viewer.htmlFallback(w, r) {
@@ -219,21 +238,78 @@ func (viewer *Viewer) htmlBundle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
+	limit, skip := vars["limit"], vars["skip"]
 
-	bundle, entities, ok := viewer.getEntityURIs(vars["bundle"])
+	limiti, err := strconv.Atoi(limit)
+	if err != nil || limiti <= 0 || limiti > maxBundleLimit {
+		limiti = defaultBundleLimit
+	}
+
+	skipi, err := strconv.Atoi(skip)
+	if err != nil || skipi < 0 {
+		skipi = defaultBundleSkip
+	}
+
+	viewer.htmlBundleWithLimit(w, r, vars["bundle"], limiti, skipi)
+}
+
+func (viewer *Viewer) htmlBundleWithLimit(w http.ResponseWriter, r *http.Request, bundleName string, limit, skip int) {
+	bundle, entities, ok := viewer.getEntityURIs(bundleName)
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	total := len(entities)
+	// slice the entities received
+	if skip < total {
+		entities = entities[skip:]
+	} else {
+		http.NotFound(w, r)
+		return
+	}
+	if limit < len(entities) {
+		entities = entities[:limit]
+	}
 
-	w.WriteHeader(http.StatusOK)
-	err := bundleTemplate.Execute(w, htmlBundleContext{
+	// prepare the context
+	context := htmlBundleContext{
 		Globals: viewer.contextGlobal(),
-		Bundle:  bundle,
-		URIS:    entities,
-	})
+
+		Total: total,
+
+		Bundle: bundle,
+		URIS:   entities,
+	}
+
+	context.PageStart = skip + 1
+	context.PageEnd = context.PageStart + len(entities) - 1
+
+	// generate all the page links
+	pageLink := func(skip int) template.URL {
+		if skip < 0 {
+			skip = 0
+		}
+		return template.URL("/bundle/" + url.PathEscape(bundleName) + "?limit=" + strconv.Itoa(limit) + "&" + "skip=" + strconv.Itoa(skip))
+	}
+
+	// add the previous link if there are previous pages
+	prev := skip - limit
+	if prev > 0 {
+		context.PrevLink = pageLink(prev)
+		context.FirstLink = pageLink(0)
+	}
+	// add the next link if there are more
+	next := skip + limit
+	last := total - (total % limit) - 1
+	if next < total {
+		context.NextLink = pageLink(next)
+		context.LastLink = pageLink(last)
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	err := bundleTemplate.Execute(w, context)
 	if err != nil {
 		panic(err)
 	}

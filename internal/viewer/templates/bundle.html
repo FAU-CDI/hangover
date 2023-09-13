@@ -13,8 +13,8 @@
 {{ end }}
     
 {{ define "main" }}
-    {{ $l := len .URIS }}
-    <p>{{ $l }} {{ if eq $l 1 }}Entity{{ else }}Entities{{ end }}</p>
+    {{ template "viewer_pagination.html" . }}
+    <hr>
     <ul>
         {{ $bundle := .Bundle.MachineName }}
         {{ range .URIS }}
@@ -25,4 +25,6 @@
             </li>
         {{ end }}
     </ul>
+    <hr>
+    {{ template "viewer_pagination.html" . }}
 {{ end }}

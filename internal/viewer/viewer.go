@@ -111,7 +111,10 @@ func (viewer *Viewer) setupMux() {
 		viewer.mux.HandleFunc("/legal", viewer.htmlLegal)
 		viewer.mux.HandleFunc("/pathbuilder", viewer.htmlPathbuilder)
 		viewer.mux.HandleFunc("/perf", viewer.htmlPerf)
+
+		viewer.mux.HandleFunc("/bundle/{bundle}", viewer.htmlBundle).Queries("limit", "{limit:\\d+}", "skip", "{skip:\\d+}")
 		viewer.mux.HandleFunc("/bundle/{bundle}", viewer.htmlBundle)
+
 		viewer.mux.HandleFunc("/entity/{bundle}", viewer.htmlEntity).Queries("uri", "{uri:.+}")
 
 		viewer.mux.HandleFunc("/wisski/get", viewer.htmlEntityResolve).Queries("uri", "{uri:.+}")
