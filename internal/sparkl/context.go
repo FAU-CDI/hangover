@@ -7,7 +7,7 @@ import (
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
@@ -18,8 +18,8 @@ import (
 //
 // Storages for any child bundles, and the bundle itself, are created using the makeStorage function.
 // The storage for this bundle is returned.
-func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Stats) (storages.BundleStorage, func() error, error) {
-	storages, closer, err := StoreBundles([]*pathbuilder.Bundle{bundle}, index, engine, stats)
+func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, st *stats.Stats) (storages.BundleStorage, func() error, error) {
+	storages, closer, err := StoreBundles([]*pathbuilder.Bundle{bundle}, index, engine, st)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -27,11 +27,11 @@ func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storage
 }
 
 // StoreBundles is like StoreBundle, but takes multiple bundles
-func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, stats *status.Stats) ([]storages.BundleStorage, func() error, error) {
+func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, st *stats.Stats) ([]storages.BundleStorage, func() error, error) {
 	context := &Context{
 		Index:  index,
 		Engine: engine,
-		Stats:  stats,
+		st:     st,
 	}
 	context.Open()
 
@@ -40,7 +40,7 @@ func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine sto
 	for _, b := range bundles {
 		total += totalBundleCount(b)
 	}
-	stats.SetCT(0, total)
+	st.SetCT(0, total)
 
 	// update the counter every time we finish a bundle
 	var counter atomic.Int64
@@ -48,7 +48,7 @@ func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine sto
 	for i := range storages {
 		storages[i] = context.Store(bundles[i], func() {
 			current := int(counter.Add(1))
-			stats.SetCT(current, total)
+			st.SetCT(current, total)
 		})
 	}
 	err := context.Wait()
@@ -81,7 +81,7 @@ type Context struct {
 	childAddWait sync.WaitGroup // loading child entities wait
 	errOnce      sync.Once      // to set the error
 
-	Stats *status.Stats
+	st *stats.Stats // st holds statistics of the current viewer
 }
 
 // Open opens this context, and signals that multiple calls to Store() may follow.
@@ -159,7 +159,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 
 		// stage 1: load the entities themselves
 		err := (func() error {
-			paths := extractPath(bundle.Path, context.Index, context.Stats)
+			paths := extractPath(bundle.Path, context.Index, context.st)
 			defer paths.Close()
 
 			for paths.Next() {
@@ -181,7 +181,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 			go func(field pathbuilder.Field) {
 				defer context.extractWait.Done()
 
-				paths := extractPath(field.Path, context.Index, context.Stats)
+				paths := extractPath(field.Path, context.Index, context.st)
 				defer paths.Close()
 
 				for paths.Next() {
@@ -258,7 +258,7 @@ var debugLogID int64 // id of the current log id
 //
 // Any values found along the path are written to the returned channel which is then closed.
 // If an error occurs, it is written to errDst before the channel is closed.
-func extractPath(path pathbuilder.Path, index *igraph.Index, stats *status.Stats) iterator.Iterator[igraph.Path] {
+func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) iterator.Iterator[igraph.Path] {
 	// start with the path array
 	uris := append([]string{}, path.PathArray...)
 	if len(uris) == 0 {
@@ -286,7 +286,7 @@ func extractPath(path pathbuilder.Path, index *igraph.Index, stats *status.Stats
 		if err != nil {
 			return iterator.Empty[igraph.Path](err)
 		}
-		stats.LogDebug("path", "id", debugID, "uri", uris[0], "size", size)
+		st.LogDebug("path", "id", debugID, "uri", uris[0], "size", size)
 	}
 
 	for i := 1; i < len(uris); i++ {
@@ -305,7 +305,7 @@ func extractPath(path pathbuilder.Path, index *igraph.Index, stats *status.Stats
 			if err != nil {
 				return iterator.Empty[igraph.Path](err)
 			}
-			stats.LogDebug("uri", "id", debugID, "uris", uris[i], "size", size)
+			st.LogDebug("uri", "id", debugID, "uris", uris[i], "size", size)
 		}
 	}
 

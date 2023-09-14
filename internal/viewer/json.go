@@ -10,7 +10,7 @@ import (
 )
 
 func (viewer *Viewer) jsonProgress(w http.ResponseWriter, r *http.Request) {
-	progress := viewer.Status.Progress()
+	progress := viewer.Stats.Progress()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -92,7 +92,7 @@ func (viewer *Viewer) jsonNTriples(w http.ResponseWriter, r *http.Request) {
 	// render the entity
 	err := entity.WriteAllTriples(w, true, rdf.NTriples)
 	if err != nil {
-		viewer.Status.LogError("entity.nt", err, "uri", vars["uri"])
+		viewer.Stats.LogError("entity.nt", err, "uri", vars["uri"])
 	}
 }
 
@@ -116,6 +116,6 @@ func (viewer *Viewer) jsonTurtle(w http.ResponseWriter, r *http.Request) {
 	// render the entity
 	err := entity.WriteAllTriples(w, true, rdf.Turtle)
 	if err != nil {
-		viewer.Status.LogError("entity.ttl", err, "uri", vars["uri"])
+		viewer.Stats.LogError("entity.ttl", err, "uri", vars["uri"])
 	}
 }

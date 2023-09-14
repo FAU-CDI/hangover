@@ -13,7 +13,7 @@ import (
 	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/pkg/profile"
@@ -25,32 +25,32 @@ var errBothSqliteAndMysql = errors.New("both -sqlite and -mysql were given")
 
 func main() {
 	// create a new status
-	stats := status.NewStats(os.Stderr)
+	st := stats.NewStats(os.Stderr)
 
 	if debugProfile != "" {
 		defer profile.Start(profile.ProfilePath(debugProfile)).Stop()
 	}
 
 	if mysql != "" && sqlite != "" {
-		stats.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
-		stats.LogError("parse arguments", errBothSqliteAndMysql)
+		st.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
+		st.LogError("parse arguments", errBothSqliteAndMysql)
 	}
 
 	// find the paths
 	nqp, pbp, _, err := hangover.FindSource(false, nArgs...)
 	if err != nil {
-		stats.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
-		stats.LogFatal("find source", err)
+		st.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
+		st.LogFatal("find source", err)
 	}
 
 	// read the pathbuilder
 	var pb pathbuilder.Pathbuilder
-	err = stats.DoStage(status.StageReadPathbuilder, func() (err error) {
+	err = st.DoStage(stats.StageReadPathbuilder, func() (err error) {
 		pb, err = pbxml.Load(pbp)
 		return
 	})
 	if err != nil {
-		stats.LogFatal("pathbuilder load", err)
+		st.LogFatal("pathbuilder load", err)
 	}
 
 	var predicates sparkl.Predicates
@@ -62,24 +62,24 @@ func main() {
 	bEngine := storages.NewBundleEngine(cache)
 
 	if cache != "" {
-		stats.Log("caching data on-disk", "path", cache)
+		st.Log("caching data on-disk", "path", cache)
 	}
 
 	// build an index
 	var index *igraph.Index
-	index, err = sparkl.LoadIndex(nqp, predicates, engine, sparkl.DefaultIndexOptions(&pb), stats)
+	index, err = sparkl.LoadIndex(nqp, predicates, engine, sparkl.DefaultIndexOptions(&pb), st)
 	if err != nil {
-		stats.LogFatal("unable to load index", err)
+		st.LogFatal("unable to load index", err)
 	}
-	stats.Log("finished indexing", "stats", index.Stats())
+	st.Log("finished indexing", "stats", index.Stats())
 
 	switch {
 	case mysql != "":
-		doSQL(&pb, index, bEngine, "mysql", mysql, stats)
+		doSQL(&pb, index, bEngine, "mysql", mysql, st)
 	case sqlite != "":
-		doSQL(&pb, index, bEngine, "sqlite", sqlite, stats)
+		doSQL(&pb, index, bEngine, "sqlite", sqlite, st)
 	default:
-		doJSON(&pb, index, bEngine, stats)
+		doJSON(&pb, index, bEngine, st)
 	}
 }
 

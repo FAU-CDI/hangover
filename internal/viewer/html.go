@@ -13,7 +13,7 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/assets"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/htmlx"
@@ -123,7 +123,7 @@ func (cg contextGlobal) ReplaceURL(u string) string {
 func (viewer *Viewer) contextGlobal() (global contextGlobal) {
 	global.Footer = viewer.Footer
 	global.RenderFlags = viewer.RenderFlags
-	global.DisableForm = !viewer.Status.Done()
+	global.DisableForm = !viewer.Stats.Done()
 
 	if viewer.RenderFlags.PublicURL == "" {
 		return
@@ -178,7 +178,7 @@ func (viewer *Viewer) htmlIndex(w http.ResponseWriter, r *http.Request) {
 type htmlPerfContext struct {
 	Globals contextGlobal
 	Perf    Perf
-	Stages  []status.StageStats
+	Stages  []stats.StageStats
 }
 
 func (viewer *Viewer) htmlPerf(w http.ResponseWriter, r *http.Request) {

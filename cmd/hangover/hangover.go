@@ -15,7 +15,7 @@ import (
 	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/glass"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/FAU-CDI/hangover/internal/viewer"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/tkw1536/pkglib/perf"
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	if len(nArgs) == 0 || len(nArgs) > 2 {
-		handler.Status.Log("Usage: hangover [-help] [...flags] [/path/to/pathbuilder /path/to/nquads | /path/to/export]")
+		handler.Stats.Log("Usage: hangover [-help] [...flags] [/path/to/pathbuilder /path/to/nquads | /path/to/export]")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -48,10 +48,10 @@ func main() {
 	if export == "" && !benchMode {
 		listener, err = net.Listen("tcp", addr)
 		if err != nil {
-			handler.Status.LogError("listen", err)
+			handler.Stats.LogError("listen", err)
 			os.Exit(1)
 		}
-		handler.Status.Log("listen", "addr", addr)
+		handler.Stats.Log("listen", "addr", addr)
 	}
 
 	if !benchMode {
@@ -66,29 +66,29 @@ func main() {
 	// find the paths
 	nq, pb, idx, err := hangover.FindSource(true, nArgs...)
 	if err != nil {
-		handler.Status.LogFatal("find source", err)
+		handler.Stats.LogFatal("find source", err)
 	}
 
 	// create a new glass
 	var drincw glass.Glass
 	if idx == "" {
-		handler.Status.Log("loading files", "pathbuilder", pb, "nquads", nq)
+		handler.Stats.Log("loading files", "pathbuilder", pb, "nquads", nq)
 		sparkl.ParsePredicateString(&flags.Predicates.SameAs, sameAs)
 		sparkl.ParsePredicateString(&flags.Predicates.InverseOf, inverseOf)
 
-		drincw, err = glass.Create(pb, nq, cache, flags, handler.Status)
+		drincw, err = glass.Create(pb, nq, cache, flags, handler.Stats)
 	} else {
-		handler.Status.Log("loading index", "index", idx)
-		drincw, err = glass.Import(idx, handler.Status)
+		handler.Stats.Log("loading index", "index", idx)
+		drincw, err = glass.Import(idx, handler.Stats)
 	}
 	if err != nil {
-		handler.Status.LogFatal("unable to load or make index", err)
+		handler.Stats.LogFatal("unable to load or make index", err)
 	}
 
 	// create an export if requested
 	if export != "" {
-		handler.Status.Log("exporting", "file", export)
-		if err := glass.Export(export, drincw, handler.Status); err != nil {
+		handler.Stats.Log("exporting", "file", export)
+		if err := glass.Export(export, drincw, handler.Stats); err != nil {
 			os.Exit(1)
 		}
 		return
@@ -97,12 +97,12 @@ func main() {
 	// otherwise create a viewer
 	defer handler.Close()
 
-	handler.Status.DoStage(status.StageHandler, func() error {
+	handler.Stats.DoStage(stats.StageHandler, func() error {
 		handler.Prepare(drincw.Cache, &drincw.Pathbuilder)
 		return nil
 	})
 
-	handler.Status.Log("finished", "took", handler.Status.Diff(), "now", perf.Now())
+	handler.Stats.Log("finished", "took", handler.Stats.Diff(), "now", perf.Now())
 
 	<-done
 }

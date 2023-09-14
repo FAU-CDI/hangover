@@ -2,7 +2,7 @@ package viewer
 
 import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
@@ -77,14 +77,14 @@ func (viewer *Viewer) getEntity(id string, uri impl.Label) (entity *wisski.Entit
 
 // Perf represents viewer performance
 type Perf struct {
-	Stages []status.StageStats
+	Stages []stats.StageStats
 	Index  igraph.Stats
 	Now    perf.Snapshot
 }
 
 func (viewer *Viewer) Perf() Perf {
 	return Perf{
-		Stages: viewer.Status.All(),
-		Index:  viewer.Status.IndexStats(),
+		Stages: viewer.Stats.All(),
+		Index:  viewer.Stats.IndexStats(),
 	}
 }

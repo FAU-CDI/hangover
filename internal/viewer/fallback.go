@@ -10,7 +10,7 @@ import (
 	_ "embed"
 
 	"github.com/FAU-CDI/hangover/internal/assets"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 )
 
 //go:embed templates/loading.html
@@ -24,11 +24,11 @@ var loadTemplate *template.Template = assets.Assetshangover_fallback.MustParseSh
 
 type htmlLoadingContext struct {
 	Globals  contextGlobal
-	Progress status.Progress
+	Progress stats.Progress
 }
 
 func (viewer *Viewer) htmlFallback(w http.ResponseWriter, r *http.Request) (sent bool) {
-	progress := viewer.Status.Progress()
+	progress := viewer.Stats.Progress()
 	if progress.Done {
 		return false
 	}
@@ -54,11 +54,11 @@ const (
 // ProgressMessage is returned by the viewer when the progress is not available
 type ProgressMessage struct {
 	Message  string
-	Progress status.Progress
+	Progress stats.Progress
 }
 
 func (viewer *Viewer) jsonFallback(w http.ResponseWriter, r *http.Request) (sent bool) {
-	progress := viewer.Status.Progress()
+	progress := viewer.Stats.Progress()
 	if progress.Done {
 		return false
 	}

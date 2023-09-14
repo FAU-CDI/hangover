@@ -12,7 +12,7 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder/pbxml"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/sparkl/storages"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/viewer"
@@ -89,9 +89,9 @@ func (glass *Glass) DecodeFrom(decoder *gob.Decoder) (err error) {
 
 // Create creates a new glass from the given pathbuilder and nquads.
 // output is written to output.
-func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, stats *status.Stats) (drincw Glass, err error) {
+func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, st *stats.Stats) (drincw Glass, err error) {
 	// read the pathbuilder
-	if err := stats.DoStage(status.StageReadPathbuilder, func() (err error) {
+	if err := st.DoStage(stats.StageReadPathbuilder, func() (err error) {
 		drincw.Pathbuilder, err = pbxml.Load(pathbuilderPath)
 		return err
 	}); err != nil {
@@ -102,22 +102,22 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	engine := sparkl.NewEngine(cacheDir)
 	bEngine := storages.NewBundleEngine(cacheDir)
 	if cacheDir != "" {
-		stats.Log("caching data on-disk", "path", cacheDir)
+		st.Log("caching data on-disk", "path", cacheDir)
 	}
 
 	// build an index
-	index, err := sparkl.LoadIndex(nquadsPath, flags.Predicates, engine, sparkl.DefaultIndexOptions(&drincw.Pathbuilder), stats)
+	index, err := sparkl.LoadIndex(nquadsPath, flags.Predicates, engine, sparkl.DefaultIndexOptions(&drincw.Pathbuilder), st)
 	if err != nil {
 		return drincw, err
 	}
 
-	stats.Log("finished indexing", "stats", stats.IndexStats())
+	st.Log("finished indexing", "stats", st.IndexStats())
 	defer index.Close()
 
 	// extract the bundles
 	var bundles map[string][]wisski.Entity
-	stats.DoStage(status.StageExtractBundles, func() (err error) {
-		bundles, err = sparkl.LoadPathbuilder(&drincw.Pathbuilder, index, bEngine, stats)
+	st.DoStage(stats.StageExtractBundles, func() (err error) {
+		bundles, err = sparkl.LoadPathbuilder(&drincw.Pathbuilder, index, bEngine, st)
 		return err
 	})
 	if err != nil {
@@ -128,14 +128,14 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 
 	identities := imap.MakeMemory[impl.Label, impl.Label](0)
 
-	if err := stats.DoStage(status.StageExtractSameAs, func() error {
+	if err := st.DoStage(stats.StageExtractSameAs, func() error {
 		return index.IdentityMap(&identities)
 	}); err != nil {
 		return Glass{}, err
 	}
 
-	if err := stats.DoStage(status.StageExtractCache, func() error {
-		cache, err := sparkl.NewCache(bundles, &identities, stats)
+	if err := st.DoStage(stats.StageExtractCache, func() error {
+		cache, err := sparkl.NewCache(bundles, &identities, st)
 		if err != nil {
 			return err
 		}
@@ -157,33 +157,32 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 }
 
 // Export writes a glass to the given path
-func Export(path string, drincw Glass, stats *status.Stats) (err error) {
+func Export(path string, drincw Glass, st *stats.Stats) (err error) {
 	f, err := os.Create(path)
 	if err != nil {
-		stats.LogError("create export", err)
+		st.LogError("create export", err)
 		return err
 	}
 	defer f.Close()
 
 	writer, err := gzip.NewWriterLevel(f, gzip.BestCompression)
 	if err != nil {
-		stats.LogError("create gzip writer", err)
+		st.LogError("create gzip writer", err)
 		return err
 	}
 	defer writer.Flush()
 
-	return stats.DoStage(status.StageExportIndex, func() error {
+	return st.DoStage(stats.StageExportIndex, func() error {
 		counter := &progress.Writer{
 			Writer:     writer,
-			Rewritable: *stats.Rewritable,
+			Rewritable: *st.Rewritable(),
 		}
 
 		err = drincw.EncodeTo(gob.NewEncoder(counter))
 		counter.Flush(true)
-		stats.Rewritable.Close()
 
 		if err != nil {
-			stats.LogError("encode export", err)
+			st.LogError("encode export", err)
 		}
 		return err
 	})
@@ -192,32 +191,31 @@ func Export(path string, drincw Glass, stats *status.Stats) (err error) {
 var errInvalidVersion = errors.New("Glass Export: Invalid version")
 
 // Import loads a glass from disk
-func Import(path string, stats *status.Stats) (drincw Glass, err error) {
+func Import(path string, st *stats.Stats) (drincw Glass, err error) {
 	defer debug.FreeOSMemory() // force clearing free memory
 
 	f, err := os.Open(path)
 	if err != nil {
-		stats.LogError("open export", err)
+		st.LogError("open export", err)
 		return drincw, err
 	}
 	defer f.Close()
 
 	reader, err := gzip.NewReader(f)
 	if err != nil {
-		stats.LogError("open export", err)
+		st.LogError("open export", err)
 		return drincw, err
 	}
 
-	err = stats.DoStage(status.StageImportIndex, func() error {
+	err = st.DoStage(stats.StageImportIndex, func() error {
 		counter := &progress.Reader{
 			Reader:     reader,
-			Rewritable: *stats.Rewritable,
+			Rewritable: *st.Rewritable(),
 		}
 		err = drincw.DecodeFrom(gob.NewDecoder(counter))
 		counter.Flush(true)
-		stats.Rewritable.Close()
 		if err != nil {
-			stats.LogError("decode export", err)
+			st.LogError("decode export", err)
 			return err
 		}
 		return nil

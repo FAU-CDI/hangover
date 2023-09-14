@@ -11,7 +11,7 @@ import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/assets"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
-	"github.com/FAU-CDI/hangover/internal/status"
+	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/gorilla/mux"
 )
 
@@ -19,7 +19,7 @@ import (
 
 // Viewer implements an [http.Handler] that displays WissKI Entities.
 type Viewer struct {
-	Status *status.Stats // Status holds the current status of the viewer
+	Stats *stats.Stats // Stats holds the current stats of the viewer
 
 	mux       mux.Router
 	cspHeader string
@@ -35,7 +35,7 @@ type Viewer struct {
 // NewViewer creates a new viewer that logs to the given output
 func NewViewer(writer io.Writer) *Viewer {
 	return &Viewer{
-		Status: status.NewStats(writer),
+		Stats: stats.NewStats(writer),
 	}
 }
 
@@ -54,7 +54,7 @@ type RenderFlags struct {
 	ImageRender bool
 
 	// Stats holds the status to use for logging
-	Stats *status.Stats
+	Stats *stats.Stats
 }
 
 func (rf RenderFlags) PublicURIS() (public []string) {
@@ -135,10 +135,10 @@ func (viewer *Viewer) setupMux() {
 	})
 }
 func (viewer *Viewer) Prepare(cache *sparkl.Cache, pb *pathbuilder.Pathbuilder) {
-	if !viewer.Status.Done() {
+	if !viewer.Stats.Done() {
 		viewer.Cache = cache
 		viewer.Pathbuilder = pb
-		viewer.Status.Close()
+		viewer.Stats.Close()
 	}
 
 	viewer.setupMux()
