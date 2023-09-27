@@ -16,17 +16,27 @@ type Predicates struct {
 	InverseOf []impl.Label
 }
 
-// ParsePredicateString parses a value of comma-separate value into a list of impl.Labels
+// ParsePredicateString parses a value of comma-or-newline-separated value into a list of impl.Labels
+// Empty values are ignored.
 func ParsePredicateString(target *[]impl.Label, value string) {
 	if value == "" {
 		*target = nil
 		return
 	}
 
-	values := strings.Split(value, ",")
-	*target = make([]impl.Label, len(values))
-	for i, value := range values {
-		(*target)[i] = impl.Label(value)
+	var values []string
+
+	csplit := strings.Split(value, ",")
+	for _, c := range csplit {
+		values = append(values, strings.Split(c, "\n")...)
+	}
+
+	*target = make([]impl.Label, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			*target = append(*target, impl.Label(value))
+		}
 	}
 }
 
