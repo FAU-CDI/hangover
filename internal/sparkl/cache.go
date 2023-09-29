@@ -30,6 +30,10 @@ type Cache struct {
 }
 
 func (cache *Cache) Close() error {
+	if cache == nil {
+		return nil
+	}
+
 	defer runtime.GC()
 
 	cache.beIndex = nil

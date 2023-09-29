@@ -39,6 +39,10 @@ type Stats struct {
 
 	current StageStats   // current holds information about the current stage
 	all     []StageStats // all hold information about the old stages
+
+	// OnUpdate is called every time this stats updates.
+	// OnUpdate may be nil.
+	OnUpdate func(*Stats)
 }
 
 // NewStats creates a new stats object that writes statistics to the given output.
@@ -72,9 +76,19 @@ func (st *Stats) Current() StageStats {
 	return st.current
 }
 
+// onUpdate calls the onUpdate handler.
+func (st *Stats) onUpdate() {
+	if st == nil || st.OnUpdate == nil {
+		return
+	}
+	st.OnUpdate(st)
+}
+
 // StoreIndexStats optionally stores index statistics.
 // If st is nil or done, this call has no effect
 func (st *Stats) StoreIndexStats(stats igraph.Stats) {
+	defer st.onUpdate()
+
 	if st == nil || st.done.Load() {
 		return
 	}
@@ -140,10 +154,9 @@ func (st *Stats) Progress() (progress Progress) {
 
 // Log logs an informational message with the provided key, value field pairs.
 //
-// When status is done, all logs are automatically discarded.
 // When status or the associated logger are nil, no logging occurs.
 func (st *Stats) Log(message string, fields ...any) {
-	if st == nil || st.done.Load() || st.logger == nil {
+	if st == nil || st.logger == nil {
 		return
 	}
 	st.logger.Info(message, fields...)
@@ -165,21 +178,19 @@ func (st *Stats) Done() bool {
 
 // Log logs a debug message with the provided key, value field pairs.
 //
-// When status is done, all logs are automatically discarded.
 // When status or the associated logger are nil, no logging occurs.
 func (st *Stats) LogDebug(message string, fields ...any) {
-	if st == nil || st.done.Load() || st.logger == nil {
+	if st == nil || st.logger == nil {
 		return
 	}
-	st.logger.Info(message, fields...)
+	st.logger.Debug(message, fields...)
 }
 
 // LogError logs an error message containing the provided error and the provided key, value field pairs.
 //
-// When status is done, all logs are automatically discarded.
 // When status or the associated logger are nil, no logging occurs.
 func (st *Stats) LogError(message string, err error, fields ...any) {
-	if st == nil || st.done.Load() || st.logger == nil {
+	if st == nil || st.logger == nil {
 		return
 	}
 
@@ -187,7 +198,7 @@ func (st *Stats) LogError(message string, err error, fields ...any) {
 }
 
 // LogFatal is like LogError followed by os.Exit(1).
-// When status is done or status or the associated logger are nil, os.Exit(1) is called immediately.
+// When the associated logger are nil, os.Exit(1) is called immediately.
 func (st *Stats) LogFatal(message string, err error) {
 	st.LogError(message, err)
 	os.Exit(1)
@@ -229,6 +240,8 @@ func (st *Stats) Start(stage Stage) {
 		return
 	}
 
+	defer st.onUpdate()
+
 	st.m.Lock()
 	defer st.m.Unlock()
 
@@ -253,6 +266,8 @@ func (st *Stats) End() (prev StageStats) {
 	if st == nil || st.done.Load() {
 		return
 	}
+
+	defer st.onUpdate()
 
 	st.m.Lock()
 	defer st.m.Unlock()
@@ -348,6 +363,8 @@ func (st *Stats) SetCT(current, total int) {
 
 	// update the process and make a copy
 	var progress string
+
+	defer st.onUpdate()
 
 	st.m.Lock()
 	{
