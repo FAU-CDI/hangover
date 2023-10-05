@@ -1,14 +1,17 @@
 package viewer
 
 import (
+	"bytes"
 	"html/template"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
+	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/assets"
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/stats"
@@ -130,6 +133,11 @@ func (viewer *Viewer) setupMux() {
 		viewer.mux.HandleFunc("/api/v1/turtle/{bundle}", viewer.jsonTurtle).Queries("uri", "{uri:.+}")
 
 		viewer.mux.PathPrefix("/assets/").Handler(assets.AssetHandler)
+
+		viewer.mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+			r.Header.Set("Content-Type", "image/png")
+			http.ServeContent(w, r, "favicon.ico", time.Time{}, bytes.NewReader(hangover.IconPNG))
+		})
 
 		viewer.cspHeader = viewer.RenderFlags.CSPHeader()
 	})
