@@ -1,6 +1,6 @@
 COMMANDS = hangover n2j
 DIST = $(COMMANDS:%=dist/%)
-.PHONY = $(DIST) all dist deps godeps clean test
+.PHONY = $(DIST) all dist deps godeps clean test cross
 
 # read the gobin variable
 GOBIN = $(shell go env GOBIN)
@@ -33,6 +33,11 @@ $(DARWIN_AMD64):dist/%_darwin_amd64:
 $(WINDOWS_AMD64):dist/%_windows_amd64.exe:
 	mkdir -p dist
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $@ ./cmd/$*/
+
+cross:
+	fyne-cross darwin -arch=amd64,arm64 -app-id de.fau.data.wisski.headache ./cmd/headache
+	fyne-cross linux -app-id de.fau.data.wisski.headache ./cmd/headache
+	fyne-cross windows -arch=amd64 -app-id de.fau.data.wisski.headache ./cmd/headache
 
 clean:
 	rm -rf dist

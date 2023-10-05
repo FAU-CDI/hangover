@@ -13,3 +13,5 @@ internal/assets/yarn-error.log
 go.work
 go.work.sum
 /dist/
+
+fyne-cross
