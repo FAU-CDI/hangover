@@ -1,0 +1,1 @@
+const e=void 0;if(e){let t=document.createElement("footer"),d=void 0;d&&t.append(document.createTextNode(d+" "));let o=document.createElement("script");o.setAttribute("src",e),t.append(o),d&&t.append(document.createTextNode(".")),document.body.append(t)}

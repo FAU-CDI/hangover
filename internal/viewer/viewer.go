@@ -111,7 +111,7 @@ func (rf RenderFlags) CSPHeader() string {
 func (viewer *Viewer) setupMux() {
 	viewer.init.Do(func() {
 		viewer.mux.HandleFunc("/", viewer.htmlIndex)
-		viewer.mux.HandleFunc("/legal", viewer.htmlLegal)
+		viewer.mux.HandleFunc("/about", viewer.htmlLegal)
 		viewer.mux.HandleFunc("/pathbuilder", viewer.htmlPathbuilder)
 		viewer.mux.HandleFunc("/perf", viewer.htmlPerf)
 
@@ -135,8 +135,8 @@ func (viewer *Viewer) setupMux() {
 		viewer.mux.PathPrefix("/assets/").Handler(assets.AssetHandler)
 
 		viewer.mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-			r.Header.Set("Content-Type", "image/png")
-			http.ServeContent(w, r, "favicon.ico", time.Time{}, bytes.NewReader(hangover.IconPNG))
+			w.Header().Set("Content-Type", "image/svg+xml")
+			http.ServeContent(w, r, "favicon.ico", time.Time{}, bytes.NewReader(hangover.IconSVG))
 		})
 
 		viewer.cspHeader = viewer.RenderFlags.CSPHeader()

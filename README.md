@@ -1,5 +1,7 @@
 # Hangover - A WissKI Data Viewer
 
+![Hangover Logo](./internal/assets/logo/Icon.svg "Hangover Logo")
+
 <!-- spellchecker:words nquad CORDI nquads kirmes drincw -->
 
 [![CI](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml/badge.svg)](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml)

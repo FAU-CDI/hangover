@@ -14,6 +14,12 @@ footer a:hover {
     color: black !important;
 }
 
+img.logo {
+    width: 80%;
+    margin: auto;
+    display: block;
+}
+
 nav a::before,
 nav a::after,
 nav b::before,
@@ -69,8 +75,7 @@ hr {
 .field_table,
 .field_table td,
 .stats_table,
-.stats_table td
-{
+.stats_table td {
     border-collapse: collapse;
     border: 1px solid black;
 }
@@ -99,14 +104,16 @@ img {
     max-width: 100%;
 }
 
-.uri, .link, .image, .text {
+.uri,
+.link,
+.image,
+.text {
     font-family: monospace;
 }
 
 .uri::before,
 .uri::after,
-.lang::before
-{
+.lang::before {
     color: black;
     text-decoration: none;
     display: inline-block;
@@ -115,6 +122,7 @@ img {
 .uri::before {
     content: "<";
 }
+
 .uri::after {
     content: ">";
 }

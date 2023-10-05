@@ -1,0 +1,95 @@
+{{ template "base.html" . }}
+
+{{ define "title" }}Hangover - About & Notices{{ end }}
+
+{{ define "header" }}
+    <h1>About &amp; License Notices</h1>
+{{ end }}
+
+{{ define "nav" }}
+    <b>About &amp; License Notices</b>
+{{ end }}
+
+{{ define "main" }}
+    <div>
+        <img class="logo" src="/favicon.ico" alt="Hangover Logo" />
+    </div>
+   
+    <div>
+        <p>
+            This page is powered by <a href="https://github.com/FAU-CDI/hangover" target="_blank" rel="noopener noreferer">Hangover, the WissKI Data Viewer</a> and contains a WissKI dataset.
+        </p>
+
+        <p>
+            <a href="https://wiss-ki.eu/" target="_blank" rel="noopener noreferer">WissKI</a> is a software that allows researchers to record data about (objects of) cultural heritage in a graph database backed by a formal ontology.
+            WissKI acts as a database for researchers to store their results via a web interface, and nearly automatically makes data FAIR, linked and open.
+        </p>
+
+        <p>
+            WissKI data typically consists of two parts.
+            The data itself is stored as triples inside a graph database, and is typically exported in `.nq` format.
+            The metadata and description are stored inside a so-called <a href="https://wiss-ki.eu/documentation/data-modeling/pathbuilder" target="_blank" rel="noopener noreferer">Pathbuilder</a>.
+            These parts are typically exported on a regular basis for both backup and archival purposes. 
+        </p>
+
+        <p>
+            Unfortunately there is a cognative impedance mismatch between the data stored in the graph database and the data entered in the WissKI interface. 
+            The triples may contain the information displayed in WissKI, but in order to properly understand them the pathbuilder, typically available only in WissKI, is required. 
+            This becomes a problem when you take into account that installing, maintaining, and running a WissKI-based system itself is a complex progress, and requires a system administrator with significant technical expertise.
+        </p>
+
+        <p>
+            After a research project using a WissKI ends, and funding has run out, the WissKI installation quickly ends up in an unusable state or is shutdown entirely.
+            Only the archival exports of the system data still exist. 
+        </p>
+    </div>
+
+    <p>
+        This site is powered by <a href="https://github.com/FAU-CDI/hangover" target="_blank" rel="noopener noreferer">Hangover, the WissKI Data Viewer</a>.
+        Hangover is licensed under the terms of <a href="#license.text">AGPL 3.0</a>.
+        Hangover makes use of code of several libraries, both in the <a href="#license.frontend">Frontend</a> and <a href="#license.backend">Backend</a> parts.
+        Some of these libraries require that we reproduce a copy of their license here, which we gladly do.
+    </p>
+
+    <div>
+        <h2 id="license.text">License</h2>
+
+        <p>
+            <small><a href="#top">Back to Top</a></small>
+        </p>
+
+        <p>
+            Hangover is available under the terms of <code>AGPL 3.0</code>, the text of which can be found below. 
+            Content on this site is not subject to this license, only the hangover software itself.
+        </p>
+
+        <pre>{{ .License }}</pre>
+
+    </div>
+
+    <div>
+        <h2 id="license.frontend">Frontend</h2>
+    
+        <p>
+            <small><a href="#top">Back to Top</a></small>
+        </p>
+    
+        <pre>{{ .Frontend }}</pre>
+    </div>
+
+    <div>
+        <h2 id="license.backend">Backend</h2>
+    
+        <p>
+            <small><a href="#top">Back to Top</a></small>
+        </p>
+    
+        <p>
+            The backend may contain code from the following projects:
+        </p>
+    
+        <pre>{{ .Backend }}</pre>
+    </div>
+
+{{ end }}
+

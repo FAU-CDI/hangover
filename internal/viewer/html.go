@@ -64,8 +64,8 @@ var entityTemplate = assets.Assetshangover.MustParseShared(
 //go:embed templates/index.html
 var indexHTML string
 
-//go:embed templates/legal.html
-var legalHTML string
+//go:embed templates/about.html
+var aboutHTML string
 
 var indexTemplate *template.Template = assets.Assetshangover.MustParseShared(
 	"index.html",
@@ -73,9 +73,9 @@ var indexTemplate *template.Template = assets.Assetshangover.MustParseShared(
 	contextTemplateFuncs,
 )
 
-var legalTemplate *template.Template = assets.Assetshangover.MustParseShared(
-	"legal.html",
-	legalHTML,
+var aboutTemplate *template.Template = assets.Assetshangover.MustParseShared(
+	"about.html",
+	aboutHTML,
 	contextTemplateFuncs,
 )
 
@@ -197,7 +197,7 @@ func (viewer *Viewer) htmlPerf(w http.ResponseWriter, r *http.Request) {
 func (viewer *Viewer) htmlLegal(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
-	err := legalTemplate.Execute(w, htmlLegalContext{
+	err := aboutTemplate.Execute(w, htmlLegalContext{
 		Globals:  viewer.contextGlobal(),
 		License:  hangover.License,
 		Backend:  hangover.Notices,
