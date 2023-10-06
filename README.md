@@ -40,7 +40,7 @@ A further high-level overview can be found in:
 
 ## Repository Overview
 
-This repository contains two executables, [hangover](#hangover---a-wisski-data-viewer) and [n2j](#n2j---a-wisski-exporter).
+This repository contains three executables, [hangover](#hangover---a-wisski-data-viewer),  [n2j](#n2j---a-wisski-exporter) and [headache](#)
 They are described in detail below.
 
 ## Installation
@@ -48,7 +48,8 @@ They are described in detail below.
 ### from source
 
 1. Install [Go](https://go.dev/), Version 1.21 or newer
-2. Install [Yarn](https://yarnpkg.com/) (to build some frontend stuff)
+2. Optional: Install [Yarn](https://yarnpkg.com/) (if you're tweaking the frontend code)
+3. Optional: Install [Fyne Dependencies](https://developer.fyne.io/started/#prerequisites) (if you're building the gui application)
 3. Clone this repository somewhere.
 4. Fetch dependencies:
 
@@ -133,6 +134,13 @@ Like `hangover`, it takes both a pathbuilder and export as an argument.
 By default, it produces a single `.json` file on standard output.
 
 Further options supports a various set of other options, which can be found using  `n2j -help`.
+
+#### headache - A Hangover GUI
+
+Headache is a GUI on top of hangover.
+
+(work in progress)
+
 
 ## Development
 

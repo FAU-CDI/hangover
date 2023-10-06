@@ -1,7 +1,7 @@
 Website = "https://github.com/fau-cdi/hangover"
 
 [Details]
-Icon = "internal/assets/logo/Icon.svg"
+Icon = "internal/assets/logo/Icon.png"
 Name = "Headache"
 ID = "de.fau.data.wisski.headache"
 Version = "0.0.1"

@@ -39,8 +39,8 @@ type Headache struct {
 }
 
 var icon = &fyne.StaticResource{
-	StaticName:    "Icon.svg",
-	StaticContent: hangover.IconSVG,
+	StaticName:    "Icon.png",
+	StaticContent: hangover.IconPNG,
 }
 
 // New setups a new Headache application
