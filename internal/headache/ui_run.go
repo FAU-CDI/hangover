@@ -58,7 +58,7 @@ func (h *Headache) setupRunWindow() {
 	)
 
 	// setup the ox
-	h.setContent(layout)
+	h.setContent(container.NewScroll(layout))
 
 	// create a context and run it!
 	context, _, cancel := h.newWindowContext(context.Background())

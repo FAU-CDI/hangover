@@ -31,7 +31,6 @@ func newDataOpener(label string, parent fyne.Window, vNq, vPB binding.String) *w
 // newFileSelector creates a two new widgets, a readonly entry and a file selector
 func newFileSelector(label string, parent fyne.Window, v binding.String, validator func(path string) error) (*widget.Entry, *widget.Button) {
 	w := widget.NewEntryWithData(v)
-	w.Disable()
 	w.Validator = validator
 
 	b := widget.NewButton(label, func() {

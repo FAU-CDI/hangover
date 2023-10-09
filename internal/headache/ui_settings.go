@@ -5,38 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
+	"strings"
 	"sync/atomic"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/tkw1536/pkglib/fsx"
 )
-
-// validateAddress checks if address is valid
-func validateAddress(addr string) error {
-	if addr == "" {
-		return fmt.Errorf("empty address")
-	}
-
-	_, port, err := net.SplitHostPort(addr)
-	if err != nil {
-		return fmt.Errorf("invalid address: %w", err)
-	}
-
-	if _, err := strconv.ParseUint(port, 10, 16); err != nil {
-		return fmt.Errorf("invalid port: %w", err)
-	}
-
-	return nil
-}
 
 const settingsWindowText = `
 This program (headache) implements a GUI for hangover, the WissKI Data Viewer.  
 
 To start the viewer, simply select the exported triplestore data and pathbuilder below.
-Then click the start button below. `
+Then click the start button below (you may have to scroll to the bottom). `
 
 // setupSettingsWindow configures the main window for the settings view
 func (h *Headache) setupSettingsWindow() {
@@ -55,18 +40,22 @@ func (h *Headache) setupSettingsWindow() {
 	inverseOf := widget.NewMultiLineEntry()
 	inverseOf.Bind(h.settings.inverseOf)
 
-	quadsWidget, quadsButton := newFileSelector("Select Quads", h.w, h.settings.nquads, func(path string) error {
-		if path == "" {
-			return errors.New("must select a path")
-		}
-		return nil
-	})
+	quadsWidget, quadsButton := newFileSelector("Select '.nq' File", h.w, h.settings.nquads, isFile)
+	pbWidget, pbButton := newFileSelector("Select '.xml' File", h.w, h.settings.pathbuilder, func(path string) error {
+		if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+			res, err := http.Get(path)
+			if err != nil {
+				return fmt.Errorf("unable to download pathbuilder %q: %w", path, err)
+			}
+			defer res.Body.Close()
 
-	pbWidget, pbButton := newFileSelector("Select Pathbuilder", h.w, h.settings.pathbuilder, func(path string) error {
-		if path == "" {
-			return errors.New("must select a path")
+			if res.StatusCode != http.StatusOK {
+				return fmt.Errorf("unable to download pathbuilder %q: expected code %d, but got %d", path, http.StatusOK, res.StatusCode)
+			}
+
+			return nil
 		}
-		return nil
+		return isFile(path)
 	})
 
 	openHeadache := newDataOpener("Find Quads + Pathbuilder from folder ", h.w, h.settings.nquads, h.settings.pathbuilder)
@@ -81,10 +70,10 @@ func (h *Headache) setupSettingsWindow() {
 			{Widget: layout.NewSpacer()},
 
 			{Text: "Triplestore Export", Widget: quadsButton},
-			{Widget: quadsWidget, HintText: "Exported Triplestore Data to load. Typically with ending nq. "},
+			{Widget: quadsWidget, HintText: "Exported Triplestore Data to load, a path to an '.nq' file. "},
 
 			{Text: "Pathbuilder Export", Widget: pbButton},
-			{Widget: pbWidget, HintText: "Pathbuilder to load. Typically with ending xml. "},
+			{Widget: pbWidget, HintText: "Pathbuilder to load. A url to download it from, or path to an '.xml' file. "},
 
 			{Widget: layout.NewSpacer()},
 
@@ -113,9 +102,11 @@ func (h *Headache) setupSettingsWindow() {
 
 	// setup the content
 	h.setContent(
-		container.NewVBox(
-			widget.NewLabel(settingsWindowText),
-			form,
+		container.NewScroll(
+			container.NewVBox(
+				widget.NewLabel(settingsWindowText),
+				form,
+			),
 		),
 	)
 
@@ -140,4 +131,41 @@ func (h *Headache) setupSettingsWindow() {
 		// setup the run window
 		go h.setupRunWindow()
 	}()
+}
+
+// validateAddress checks if address is valid
+func validateAddress(addr string) error {
+	if addr == "" {
+		return fmt.Errorf("empty address")
+	}
+
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return fmt.Errorf("invalid address: %w", err)
+	}
+
+	if _, err := strconv.ParseUint(port, 10, 16); err != nil {
+		return fmt.Errorf("invalid port: %w", err)
+	}
+
+	return nil
+}
+
+// isFile validates that path is a file.
+//
+// If path is not a file, returns an error.
+// Otherwise, returns nil.
+func isFile(path string) error {
+	if path == "" {
+		return errors.New("no file path provided")
+	}
+
+	ok, err := fsx.IsRegular(path, true)
+	if err != nil {
+		return fmt.Errorf("not a file: %q: %w", path, err)
+	}
+	if !ok {
+		return fmt.Errorf("not a file: %q", path)
+	}
+	return nil
 }
