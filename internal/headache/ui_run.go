@@ -85,12 +85,12 @@ func (h *Headache) runViewer(listener net.Listener, ctx context.Context, cancel 
 		defer listener.Close()  // close the listener
 		defer h.handler.Close() // kill the cache
 
-		flags := h.settings.Flags()
+		h.handler.RenderFlags = h.settings.Flags()
 		pb, nq := h.settings.Pathbuilder(), h.settings.Nquads()
 
 		// create the glass by indexing
 		h.handler.Stats.Log("loading files", "pathbuilder", pb, "nquads", nq)
-		drincw, err := glass.Create(pb, nq, "", flags, h.handler.Stats)
+		drincw, err := glass.Create(pb, nq, "", h.handler.RenderFlags, h.handler.Stats)
 		if err != nil {
 			h.handler.Stats.LogError("unable to load dataset", err)
 			return
