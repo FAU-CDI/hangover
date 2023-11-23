@@ -14,6 +14,7 @@ type settings struct {
 	nquads      binding.String
 	pathbuilder binding.String
 
+	public binding.String
 	images binding.Bool
 	html   binding.Bool
 
@@ -46,6 +47,7 @@ func (settings *settings) Flags() (flags viewer.RenderFlags) {
 
 	flags.ImageRender, _ = settings.images.Get()
 	flags.HTMLRender, _ = settings.html.Get()
+	flags.PublicURL, _ = settings.public.Get()
 
 	return flags
 }
@@ -58,6 +60,7 @@ func newSettings() (s settings) {
 	s.nquads = binding.NewString()
 	s.pathbuilder = binding.NewString()
 
+	s.public = binding.NewString()
 	s.images = binding.NewBool()
 	s.html = binding.NewBool()
 

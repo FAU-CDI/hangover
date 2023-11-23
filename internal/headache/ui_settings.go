@@ -34,6 +34,9 @@ func (h *Headache) setupSettingsWindow() {
 	images := widget.NewCheckWithData("Render Images", h.settings.images)
 	html := widget.NewCheckWithData("Render HTML", h.settings.html)
 
+	public := widget.NewMultiLineEntry()
+	public.Bind(h.settings.public)
+
 	sameAs := widget.NewMultiLineEntry()
 	sameAs.Bind(h.settings.sameAs)
 
@@ -82,6 +85,7 @@ func (h *Headache) setupSettingsWindow() {
 
 			{Widget: layout.NewSpacer()},
 
+			{Text: "Public URLs", Widget: public, HintText: "Public URL(s) to replace with viewer content. One per line. "},
 			{Widget: html, HintText: "Render HTML instead of displaying source code only"},
 			{Widget: images, HintText: "Render images instead of displaying a link to the url"},
 

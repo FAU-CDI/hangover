@@ -16,6 +16,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/sparkl"
 	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/gorilla/mux"
+	"github.com/tkw1536/pkglib/text"
 )
 
 // cspell:words WissKI
@@ -62,8 +63,8 @@ type RenderFlags struct {
 
 func (rf RenderFlags) PublicURIS() (public []string) {
 	// add all the public urls
-	for _, raw := range strings.Split(rf.PublicURL, ",") {
-		url, err := url.Parse(raw)
+	for _, raw := range text.Splitter(",\n")(rf.PublicURL) {
+		url, err := url.Parse(strings.TrimSpace(raw))
 		if err != nil {
 			rf.Stats.LogError("parse url", err)
 			continue
