@@ -11,7 +11,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/tkw1536/pkglib/iterator"
+	"github.com/tkw1536/pkglib/traversal"
 )
 
 // StoreBundle loads all entities from the given bundle into a new storage, which is then returned.
@@ -258,11 +258,11 @@ var debugLogID int64 // id of the current log id
 //
 // Any values found along the path are written to the returned channel which is then closed.
 // If an error occurs, it is written to errDst before the channel is closed.
-func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) iterator.Iterator[igraph.Path] {
+func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) traversal.Iterator[igraph.Path] {
 	// start with the path array
 	uris := append([]string{}, path.PathArray...)
 	if len(uris) == 0 {
-		return iterator.Empty[igraph.Path](nil)
+		return traversal.Empty[igraph.Path](nil)
 	}
 
 	// add the datatype property if are not a group
@@ -279,12 +279,12 @@ func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) it
 
 	set, err := index.PathsStarting(wisski.Type, impl.Label(uris[0]))
 	if err != nil {
-		return iterator.Empty[igraph.Path](err)
+		return traversal.Empty[igraph.Path](err)
 	}
 	if debugLogAllPaths {
 		size, err := set.Size()
 		if err != nil {
-			return iterator.Empty[igraph.Path](err)
+			return traversal.Empty[igraph.Path](err)
 		}
 		st.LogDebug("path", "id", debugID, "uri", uris[0], "size", size)
 	}
@@ -292,18 +292,18 @@ func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) it
 	for i := 1; i < len(uris); i++ {
 		if i%2 == 0 {
 			if err := set.Ending(wisski.Type, impl.Label(uris[i])); err != nil {
-				return iterator.Empty[igraph.Path](err)
+				return traversal.Empty[igraph.Path](err)
 			}
 		} else {
 			if err := set.Connected(impl.Label(uris[i])); err != nil {
-				return iterator.Empty[igraph.Path](err)
+				return traversal.Empty[igraph.Path](err)
 			}
 		}
 
 		if debugLogAllPaths {
 			size, err := set.Size()
 			if err != nil {
-				return iterator.Empty[igraph.Path](err)
+				return traversal.Empty[igraph.Path](err)
 			}
 			st.LogDebug("uri", "id", debugID, "uris", uris[i], "size", size)
 		}

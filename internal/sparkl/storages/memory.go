@@ -7,7 +7,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/tkw1536/pkglib/iterator"
+	"github.com/tkw1536/pkglib/traversal"
 )
 
 type MemoryEngine struct{}
@@ -99,8 +99,8 @@ func (bs *Memory) Finalize() error {
 	return nil
 }
 
-func (bs *Memory) Get(parentPathIndex int) iterator.Iterator[LabelWithParent] {
-	return iterator.New(func(sender iterator.Generator[LabelWithParent]) {
+func (bs *Memory) Get(parentPathIndex int) traversal.Iterator[LabelWithParent] {
+	return traversal.New(func(sender traversal.Generator[LabelWithParent]) {
 		defer sender.Return()
 
 		for _, entity := range bs.Entities {
@@ -109,7 +109,7 @@ func (bs *Memory) Get(parentPathIndex int) iterator.Iterator[LabelWithParent] {
 				parent = entity.Path[parentPathIndex]
 			}
 
-			if sender.Yield(LabelWithParent{
+			if !sender.Yield(LabelWithParent{
 				Label:  entity.URI,
 				Parent: parent,
 			}) {

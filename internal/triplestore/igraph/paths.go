@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
-	"github.com/tkw1536/pkglib/iterator"
+	"github.com/tkw1536/pkglib/traversal"
 )
 
 // cspell:words sparql twiesing
@@ -20,7 +20,7 @@ const invalidSize = -1
 // A Paths object should only be created from a GraphIndex; the zero value is invalid.
 // It can be further refined using the [Connected] and [Ending] methods.
 type Paths struct {
-	elements   iterator.Iterator[element]
+	elements   traversal.Iterator[element]
 	index      *Index
 	predicates []impl.ID
 	size       int // if known, otherwise invalidSize
@@ -39,9 +39,9 @@ func (index *Index) PathsStarting(predicate, object impl.Label) (*Paths, error) 
 		return nil, err
 	}
 
-	return index.newQuery(func(sender iterator.Generator[element]) {
+	return index.newQuery(func(sender traversal.Generator[element]) {
 		err := index.posIndex.Fetch(p, o, func(s impl.ID, l impl.ID) error {
-			if sender.Yield(element{
+			if !sender.Yield(element{
 				Node:    s,
 				Triples: []impl.ID{l},
 				Parent:  nil,
@@ -58,10 +58,10 @@ func (index *Index) PathsStarting(predicate, object impl.Label) (*Paths, error) 
 }
 
 // newQuery creates a new Query object that contains nodes with the given ids
-func (index *Index) newQuery(source func(sender iterator.Generator[element])) (q *Paths) {
+func (index *Index) newQuery(source func(sender traversal.Generator[element])) (q *Paths) {
 	q = &Paths{
 		index:    index,
-		elements: iterator.New(source),
+		elements: traversal.New(source),
 		size:     invalidSize,
 	}
 	return q
@@ -82,9 +82,9 @@ var errAborted = errors.New("paths: aborted")
 
 // expand expands the nodes in this query by adding a link to each element found in the index
 func (set *Paths) expand(p impl.ID) error {
-	set.elements = iterator.Connect(set.elements, func(subject element, sender iterator.Generator[element]) (stop bool) {
+	set.elements = traversal.Connect(set.elements, func(subject element, sender traversal.Generator[element]) (ok bool) {
 		err := set.index.psoIndex.Fetch(p, subject.Node, func(object impl.ID, l impl.ID) error {
-			if sender.Yield(element{
+			if !sender.Yield(element{
 				Node:    object,
 				Triples: []impl.ID{l},
 				Parent:  &subject,
@@ -94,10 +94,11 @@ func (set *Paths) expand(p impl.ID) error {
 			return nil
 		})
 
-		if err != errAborted {
-			sender.YieldError(err)
+		// if we have a "real" error, yield it and stop!
+		if err != nil && err != errAborted {
+			return sender.YieldError(err)
 		}
-		return err != nil && err != errAborted
+		return true
 	})
 	set.size = -1
 	return nil
@@ -119,14 +120,13 @@ func (set *Paths) Ending(predicate, object impl.Label) error {
 
 // restrict restricts the set of nodes by those mapped in the index
 func (set *Paths) restrict(p, o impl.ID) error {
-	set.elements = iterator.Connect(set.elements, func(subject element, sender iterator.Generator[element]) bool {
+	set.elements = traversal.Connect(set.elements, func(subject element, sender traversal.Generator[element]) bool {
 		tid, has, err := set.index.posIndex.Has(p, o, subject.Node)
 		if err != nil {
-			sender.YieldError(err)
-			return true
+			return sender.YieldError(err)
 		}
 		if !has {
-			return false
+			return true
 		}
 
 		subject.Triples = append(subject.Triples, tid)
@@ -145,28 +145,28 @@ func (set *Paths) Size() (int, error) {
 	}
 
 	// we don't know the size, so we need to fully expand it
-	all, err := iterator.Drain(set.elements)
+	all, err := traversal.Drain(set.elements)
 	if err != nil {
 		return 0, err
 	}
 	set.size = len(all)
-	set.elements = iterator.Slice(all)
+	set.elements = traversal.Slice(all)
 	return set.size, nil
 }
 
 // Paths returns an iterator over paths contained in this Paths.
 // It may only be called once, afterwards further calls may be invalid.
-func (set *Paths) Paths() iterator.Iterator[Path] {
-	return iterator.New(func(generator iterator.Generator[Path]) {
+func (set *Paths) Paths() traversal.Iterator[Path] {
+	return traversal.New(func(generator traversal.Generator[Path]) {
 		defer generator.Return()
 
 		for set.elements.Next() {
 			element := set.elements.Datum()
 			path, err := set.makePath(element)
-			if generator.YieldError(err) {
+			if !generator.YieldError(err) {
 				return
 			}
-			if generator.Yield(path) {
+			if !generator.Yield(path) {
 				return
 			}
 		}

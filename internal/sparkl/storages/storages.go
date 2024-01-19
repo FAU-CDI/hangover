@@ -9,7 +9,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/tkw1536/pkglib/iterator"
+	"github.com/tkw1536/pkglib/traversal"
 )
 
 // BundleEngine is a function that initializes and returns a new BundleStorage
@@ -64,7 +64,7 @@ type BundleStorage interface {
 	// The iterator is guaranteed to iterate in some consistent order, but no further guarantees beyond that.
 	//
 	// parentPathIndex returns the index of the parent uri in child paths.
-	Get(parentPathIndex int) iterator.Iterator[LabelWithParent]
+	Get(parentPathIndex int) traversal.Iterator[LabelWithParent]
 
 	// Count counts the number of entities in this storage.
 	Count() (int64, error)

@@ -12,7 +12,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/tkw1536/pkglib/iterator"
+	"github.com/tkw1536/pkglib/traversal"
 )
 
 type DiskEngine struct {
@@ -190,8 +190,8 @@ func (ds *Disk) Finalize() error {
 	return ds.DB.SetReadOnly()
 }
 
-func (ds *Disk) Get(parentPathIndex int) iterator.Iterator[LabelWithParent] {
-	return iterator.New(func(sender iterator.Generator[LabelWithParent]) {
+func (ds *Disk) Get(parentPathIndex int) traversal.Iterator[LabelWithParent] {
+	return traversal.New(func(sender traversal.Generator[LabelWithParent]) {
 		defer sender.Return()
 
 		it := ds.DB.NewIterator(nil, nil)
@@ -213,11 +213,11 @@ func (ds *Disk) Get(parentPathIndex int) iterator.Iterator[LabelWithParent] {
 				uri.Label = impl.Label(it.Key())
 			}
 
-			if sender.YieldError(err) {
+			if !sender.YieldError(err) {
 				return
 			}
 
-			if sender.Yield(uri) {
+			if !sender.Yield(uri) {
 				return
 			}
 		}
