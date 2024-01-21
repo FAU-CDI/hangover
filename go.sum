@@ -92,8 +92,6 @@ github.com/fyne-io/gl-js v0.0.0-20230506162202-1fdaa286a934 h1:dZC5aKobSN07hf71o
 github.com/fyne-io/gl-js v0.0.0-20230506162202-1fdaa286a934/go.mod h1:d4clgH0/GrRwWjRzJJQXxT/h1TyuNSfF/X64zb/3Ggg=
 github.com/fyne-io/glfw-js v0.0.0-20240101223322-6e1efdc71b7a h1:ybgRdYvAHTn93HW79bLiBiJwVL4jVeyGQRZMgImoeWs=
 github.com/fyne-io/glfw-js v0.0.0-20240101223322-6e1efdc71b7a/go.mod h1:gsGA2dotD4v0SR6PmPCYvS9JuOeMwAtmfvDE7mbYXMY=
-github.com/fyne-io/image v0.0.0-20231202055200-35923e9b8fe0 h1:MCbI6egRZwu5gHZTzOKgiI2U+k+aezzPMRMOYwjbtRg=
-github.com/fyne-io/image v0.0.0-20231202055200-35923e9b8fe0/go.mod h1:aX1w6epS9BQn2bePY+3rkQejetaffeFhXl0s8QjXJJk=
 github.com/fyne-io/image v0.0.0-20240119095650-e97186d4fe4a h1:+wTRuw25eyS8VJ6OndN13mtxP/NF9YbxYUi7tX7x5DI=
 github.com/fyne-io/image v0.0.0-20240119095650-e97186d4fe4a/go.mod h1:aX1w6epS9BQn2bePY+3rkQejetaffeFhXl0s8QjXJJk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
@@ -109,12 +107,12 @@ github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3 h1:nanQfMsOs3
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-sql-driver/mysql v1.7.1 h1:lUIinVbN1DY0xBg0eMOzmmtGoHwWBbvnWubQUrtU8EI=
 github.com/go-sql-driver/mysql v1.7.1/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
-github.com/go-text/render v0.0.0-20240115073905-d685668a29df h1:vO//Ag1LXAWRiEmdDYYta+xIZeKReCCRSzs/sm9JWxw=
-github.com/go-text/render v0.0.0-20240115073905-d685668a29df/go.mod h1:Yww7wr2yRAWo3zKRPO2rc155nccyXcE9FwyXXm9ys+w=
-github.com/go-text/typesetting v0.1.0 h1:vioSaLPYcHwPEPLT7gsjCGDCoYSbljxoHJzMnKwVvHw=
-github.com/go-text/typesetting v0.1.0/go.mod h1:d22AnmeKq/on0HNv73UFriMKc4Ez6EqZAofLhAzpSzI=
-github.com/go-text/typesetting-utils v0.0.0-20231211103740-d9332ae51f04 h1:zBx+p/W2aQYtNuyZNcTfinWvXBQwYtDfme051PR/lAY=
-github.com/go-text/typesetting-utils v0.0.0-20231211103740-d9332ae51f04/go.mod h1:DDxDdQEnB70R8owOx3LVpEFvpMK9eeH1o2r0yZhFI9o=
+github.com/go-text/render v0.0.0-20230619120952-35bccb6164b8 h1:VkKnvzbvHqgEfm351rfr8Uclu5fnwq8HP2ximUzJsBM=
+github.com/go-text/render v0.0.0-20230619120952-35bccb6164b8/go.mod h1:h29xCucjNsDcYb7+0rJokxVwYAq+9kQ19WiFuBKkYtc=
+github.com/go-text/typesetting v0.0.0-20230616162802-9c17dd34aa4a h1:VjN8ttdfklC0dnAdKbZqGNESdERUxtE3l8a/4Grgarc=
+github.com/go-text/typesetting v0.0.0-20230616162802-9c17dd34aa4a/go.mod h1:evDBbvNR/KaVFZ2ZlDSOWWXIUKq0wCOEtzLxRM8SG3k=
+github.com/go-text/typesetting-utils v0.0.0-20230616150549-2a7df14b6a22 h1:LBQTFxP2MfsyEDqSKmUBZaDuDHN1vpqDyOZjcqS7MYI=
+github.com/go-text/typesetting-utils v0.0.0-20230616150549-2a7df14b6a22/go.mod h1:DDxDdQEnB70R8owOx3LVpEFvpMK9eeH1o2r0yZhFI9o=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/godbus/dbus/v5 v5.1.0 h1:4KLkAxT3aOY8Li4FRJe/KvhoNFFxo0m6fNuFUO8QJUk=
 github.com/godbus/dbus/v5 v5.1.0/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
