@@ -73,8 +73,6 @@ func main() {
 	var drincw glass.Glass
 	if idx == "" {
 		handler.Stats.Log("loading files", "pathbuilder", pb, "nquads", nq)
-		sparkl.ParsePredicateString(&flags.Predicates.SameAs, sameAs)
-		sparkl.ParsePredicateString(&flags.Predicates.InverseOf, inverseOf)
 
 		drincw, err = glass.Create(pb, nq, cache, flags, handler.Stats)
 	} else {
@@ -112,7 +110,7 @@ var nArgs []string
 var addr string = ":3000"
 
 var flags viewer.RenderFlags
-var sameAs string = string(wisski.SameAs)
+var sameAs string = string(wisski.DefaultSameAsProperties)
 var inverseOf string = string(wisski.InverseOf)
 
 var footerHTML string = "powered by <a href='https://github.com/FAU-CDI/hangover' target='_blank' rel='noopener noreferer'>hangover</a>. "
@@ -147,4 +145,8 @@ func init() {
 
 	flag.Parse()
 	nArgs = flag.Args()
+
+	// setup predicates
+	flags.Predicates.SameAs = sparkl.ParsePredicateString(sameAs)
+	flags.Predicates.InverseOf = sparkl.ParsePredicateString(inverseOf)
 }

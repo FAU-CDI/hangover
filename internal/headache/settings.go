@@ -42,8 +42,9 @@ func (settings *settings) Nquads() (nq string) {
 func (settings *settings) Flags() (flags viewer.RenderFlags) {
 	sa, _ := settings.sameAs.Get()
 	io, _ := settings.inverseOf.Get()
-	sparkl.ParsePredicateString(&flags.Predicates.SameAs, sa)
-	sparkl.ParsePredicateString(&flags.Predicates.InverseOf, io)
+
+	flags.Predicates.SameAs = sparkl.ParsePredicateString(sa)
+	flags.Predicates.InverseOf = sparkl.ParsePredicateString(io)
 
 	flags.ImageRender, _ = settings.images.Get()
 	flags.HTMLRender, _ = settings.html.Get()
@@ -65,7 +66,7 @@ func newSettings() (s settings) {
 	s.html = binding.NewBool()
 
 	s.sameAs = binding.NewString()
-	s.sameAs.Set(string(wisski.SameAs))
+	s.sameAs.Set(string(wisski.DefaultSameAsProperties))
 
 	s.inverseOf = binding.NewString()
 	s.inverseOf.Set(string(wisski.InverseOf))

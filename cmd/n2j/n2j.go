@@ -54,8 +54,8 @@ func main() {
 	}
 
 	var predicates sparkl.Predicates
-	sparkl.ParsePredicateString(&predicates.SameAs, sameAs)
-	sparkl.ParsePredicateString(&predicates.InverseOf, inverseOf)
+	predicates.SameAs = sparkl.ParsePredicateString(sameAs)
+	predicates.InverseOf = sparkl.ParsePredicateString(inverseOf)
 
 	// make an engine
 	engine := sparkl.NewEngine(cache)
@@ -87,7 +87,7 @@ func main() {
 
 var nArgs []string
 var cache string
-var sameAs = string(wisski.SameAs)
+var sameAs = string(wisski.DefaultSameAsProperties)
 var inverseOf = string(wisski.InverseOf)
 var debugProfile = ""
 

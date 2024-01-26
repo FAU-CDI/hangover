@@ -18,10 +18,9 @@ type Predicates struct {
 
 // ParsePredicateString parses a value of comma-or-newline-separated value into a list of impl.Labels
 // Empty values are ignored.
-func ParsePredicateString(target *[]impl.Label, value string) {
+func ParsePredicateString(value string) []impl.Label {
 	if value == "" {
-		*target = nil
-		return
+		return nil
 	}
 
 	var values []string
@@ -31,13 +30,14 @@ func ParsePredicateString(target *[]impl.Label, value string) {
 		values = append(values, strings.Split(c, "\n")...)
 	}
 
-	*target = make([]impl.Label, 0, len(values))
+	labels := make([]impl.Label, 0, len(values))
 	for _, value := range values {
 		value = strings.TrimSpace(value)
 		if value != "" {
-			*target = append(*target, impl.Label(value))
+			labels = append(labels, impl.Label(value))
 		}
 	}
+	return labels
 }
 
 // NewEngine creates an engine that stores data at the specified path.
