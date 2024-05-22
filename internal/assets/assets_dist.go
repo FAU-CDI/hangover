@@ -6,12 +6,12 @@ package assets
 
 // Assetshangover contains assets for the 'hangover' entrypoint.
 var Assetshangover = Assets{
-	Scripts: `<script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover.6bd51b9b.js"></script><script src="/assets/hangover.7e5f6bec.js" nomodule defer></script>`,
+	Scripts: `<script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover.d1388a7a.js"></script><script src="/assets/hangover.15b30d0d.js" nomodule defer></script>`,
 	Styles:  `<link rel="stylesheet" href="/assets/hangover.e8e5e272.css">`,	
 }
 
 // Assetshangover_fallback contains assets for the 'hangover_fallback' entrypoint.
 var Assetshangover_fallback = Assets{
-	Scripts: `<script nomodule defer src="/assets/hangover.7e5f6bec.js"></script><script type="module" src="/assets/hangover.6bd51b9b.js"></script><script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover_fallback.948ee401.js"></script><script src="/assets/hangover_fallback.111191b2.js" nomodule defer></script>`,
+	Scripts: `<script nomodule defer src="/assets/hangover.15b30d0d.js"></script><script type="module" src="/assets/hangover.d1388a7a.js"></script><script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover_fallback.948ee401.js"></script><script src="/assets/hangover_fallback.111191b2.js" nomodule defer></script>`,
 	Styles:  `<link rel="stylesheet" href="/assets/hangover.e8e5e272.css"><link rel="stylesheet" href="/assets/hangover_fallback.38d394c2.css">`,	
 }
