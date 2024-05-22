@@ -21,6 +21,11 @@
                 </div>
             </td>
         </tr>
+        <tr>
+            <td colspan="5">
+                {{ template "viewer_render_graph.html" combine "Globals" $globals "Entity" $entity }}
+            </td>
+        </tr>
         {{ if $links }}
             <tr>
                 <td colspan="5">
