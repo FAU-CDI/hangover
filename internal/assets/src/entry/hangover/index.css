@@ -20,6 +20,11 @@ img.logo {
     display: block;
 }
 
+img.preview {
+    max-height: 25vw;
+    max-width: 25vh;
+}
+
 nav a::before,
 nav a::after,
 nav b::before,

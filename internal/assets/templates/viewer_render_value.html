@@ -8,7 +8,7 @@
     {{ if $globals.ImageRender }}
         {{ $url := $globals.ReplaceURL $value }}
         <a href="{{ $url }}" rel="noopener noreferrer" target="_blank">
-            <img src="{{ $url }}">
+            <img src="{{ $url }}" class="preview" loading="lazy">
         </a>
     {{ else }}
         <a class="image" href="{{ $value }}" rel="noopener noreferrer" target="_blank">{{ $value }}</a>
