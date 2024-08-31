@@ -20,6 +20,8 @@ type settings struct {
 
 	sameAs    binding.String
 	inverseOf binding.String
+
+	tipsy binding.String
 }
 
 // Addr returns the address to listen on
@@ -50,6 +52,8 @@ func (settings *settings) Flags() (flags viewer.RenderFlags) {
 	flags.HTMLRender, _ = settings.html.Get()
 	flags.PublicURL, _ = settings.public.Get()
 
+	flags.TipsyURL, _ = settings.tipsy.Get()
+
 	return flags
 }
 
@@ -70,6 +74,9 @@ func newSettings() (s settings) {
 
 	s.inverseOf = binding.NewString()
 	s.inverseOf.Set(string(wisski.InverseOf))
+
+	s.tipsy = binding.NewString()
+	s.tipsy.Set("https://tipsy.guys.wtf")
 
 	return
 }

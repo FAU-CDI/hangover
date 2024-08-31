@@ -34,6 +34,9 @@ func (h *Headache) setupSettingsWindow() {
 	images := widget.NewCheckWithData("Render Images", h.settings.images)
 	html := widget.NewCheckWithData("Render HTML", h.settings.html)
 
+	tipsy := widget.NewEntryWithData(h.settings.tipsy)
+	tipsy.Validator = isValidTipsy
+
 	public := widget.NewMultiLineEntry()
 	public.Bind(h.settings.public)
 
@@ -88,6 +91,10 @@ func (h *Headache) setupSettingsWindow() {
 			{Text: "Public URLs", Widget: public, HintText: "Public URL(s) to replace with viewer content. One per line. "},
 			{Widget: html, HintText: "Render HTML instead of displaying source code only"},
 			{Widget: images, HintText: "Render images instead of displaying a link to the url"},
+
+			{Widget: layout.NewSpacer()},
+
+			{Widget: tipsy, HintText: "Embed a TIPSY instance from the given URL"},
 
 			{Widget: layout.NewSpacer()},
 
@@ -172,4 +179,12 @@ func isFile(path string) error {
 		return fmt.Errorf("not a file: %q", path)
 	}
 	return nil
+}
+
+func isValidTipsy(url string) error {
+	if url == "" || strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+		return nil
+	}
+
+	return errors.New("URL must be empty or start with 'http://' or 'https://'")
 }
