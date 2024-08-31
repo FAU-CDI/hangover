@@ -1,0 +1,7 @@
+{{ template "base.html" . }}
+
+{{ define "title" }}Hangover - Pathbuilder - TIPSY{{ end }}
+
+{{ define "body" }}
+<div id="tipsy" {{ .URL }} {{ .Data }} {{ .Filename }}>Loading TIPSY, please wait ...</div>
+{{ end }}

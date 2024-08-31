@@ -29,7 +29,7 @@ type Assets struct {
 //go:embed assets_disclaimer.txt
 var Disclaimer string
 
-//go:generate node build.mjs hangover hangover_fallback
+//go:generate node build.mjs hangover hangover_fallback tipsy
 
 // MustParse parses a new template from the given source
 // and calls [RegisterAssoc] on it.

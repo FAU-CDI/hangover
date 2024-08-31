@@ -126,6 +126,7 @@ The most important ones are:
 Futhermore, the viewer also provides some convenience options for deployment:
 - `-footer`: Allows customizing the html to appear in the footer. 
 - `-strict-csp`: Adds a stricter [`Content-Security-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) header that only allows external images and audio from the `public` uris to load, but nothing else.
+- `tipsy`: Allows embedding the current pathbuilder into [TIPSY](https://github.com/tkw1536/TIPSY). Provide the URL of the TIPSY instance to embed, e.g. `https://tipsy.guys.wtf`.
 
 #### n2j - A WissKI Exporter
 

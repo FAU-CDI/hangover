@@ -52,6 +52,7 @@ func (viewer *Viewer) Close() error {
 
 type RenderFlags struct {
 	PublicURL   string
+	TipsyURL    string
 	Predicates  sparkl.Predicates
 	StrictCSP   bool // use strict content-security-policy for images and media by only allowing content from public uris
 	HTMLRender  bool
@@ -79,6 +80,13 @@ func (rf RenderFlags) PublicURIS() (public []string) {
 	return public
 }
 
+func (rf RenderFlags) Tipsy() string {
+	if strings.HasPrefix(rf.TipsyURL, "http://") || strings.HasPrefix(rf.TipsyURL, "https://") {
+		return rf.TipsyURL
+	}
+	return ""
+}
+
 // CSPHeader returns the CSPHeader to be included in viewer responses
 func (rf RenderFlags) CSPHeader() string {
 	// don't allow anything by default
@@ -90,6 +98,9 @@ func (rf RenderFlags) CSPHeader() string {
 	} else {
 		// by default only allow self styles
 		header += "style-src 'self'; "
+	}
+	if tipsy := rf.Tipsy(); tipsy != "" {
+		header += "frame-src " + tipsy + "; "
 	}
 
 	// determine the source for media and images
@@ -114,6 +125,10 @@ func (viewer *Viewer) setupMux() {
 		viewer.mux.HandleFunc("/", viewer.htmlIndex)
 		viewer.mux.HandleFunc("/about", viewer.htmlLegal)
 		viewer.mux.HandleFunc("/pathbuilder", viewer.htmlPathbuilder)
+
+		if viewer.RenderFlags.Tipsy() != "" {
+			viewer.mux.HandleFunc("/tipsy", viewer.htmlTipsy)
+		}
 		viewer.mux.HandleFunc("/perf", viewer.htmlPerf)
 
 		viewer.mux.HandleFunc("/bundle/{bundle}", viewer.htmlBundle).Queries("limit", "{limit:\\d+}", "skip", "{skip:\\d+}")

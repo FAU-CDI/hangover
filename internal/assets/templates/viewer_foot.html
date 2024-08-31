@@ -14,7 +14,7 @@
         Public URL: {{ .Globals.PublicURL}}<br />
         SameAs Predicates: {{ .Globals.Predicates.SameAs }}<br />
         InverseOf Predicates: {{ .Globals.Predicates.InverseOf }}<br />
-        <a href="/pathbuilder">Pathbuilder</a><br />
+        <a href="/pathbuilder">Pathbuilder</a> {{ if .Globals.Tipsy }} <a href="/tipsy">TIPSY</a>{{ end }}<br />
         <a href="/perf">Viewer Performance</a><br />
         <a href="/about">About & License Notices</a><br />
     </small>

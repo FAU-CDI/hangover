@@ -11,6 +11,7 @@ import (
 	_ "embed"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
+	"github.com/FAU-CDI/drincw/pathbuilder/pbxml"
 	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/assets"
 	"github.com/FAU-CDI/hangover/internal/stats"
@@ -18,6 +19,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/FAU-CDI/hangover/pkg/htmlx"
 	"github.com/gorilla/mux"
+	"golang.org/x/net/html"
 )
 
 // cspell:words pathbuilder
@@ -94,6 +96,15 @@ var pathbuilderHTML string
 var pbTemplate *template.Template = assets.Assetshangover.MustParseShared(
 	"pathbuilder.html",
 	pathbuilderHTML,
+	contextTemplateFuncs,
+)
+
+//go:embed templates/tipsy.html
+var tipsy string
+
+var tipsyTemplate *template.Template = assets.Assetstipsy.MustParseShared(
+	"tipsy.html",
+	tipsy,
 	contextTemplateFuncs,
 )
 
@@ -331,6 +342,44 @@ func (viewer *Viewer) htmlPathbuilder(w http.ResponseWriter, r *http.Request) {
 	err := pbTemplate.Execute(w, htmlPathbuilderContext{
 		Globals:     viewer.contextGlobal(),
 		Pathbuilder: viewer.Pathbuilder,
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+type htmlTipsyContext struct {
+	Globals contextGlobal
+
+	URL      template.HTMLAttr
+	Data     template.HTMLAttr
+	Filename template.HTMLAttr
+}
+
+func makeDataAttr(name string, value string) template.HTMLAttr {
+	return template.HTMLAttr(` data-` + name + `="` + html.EscapeString(value) + `"`)
+}
+
+func (viewer *Viewer) htmlTipsy(w http.ResponseWriter, r *http.Request) {
+	if viewer.htmlFallback(w, r) {
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+
+	xml, err := pbxml.Marshal(*viewer.Pathbuilder)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = tipsyTemplate.Execute(w, htmlTipsyContext{
+		Globals: viewer.contextGlobal(),
+
+		URL:      makeDataAttr("url", viewer.RenderFlags.Tipsy()),
+		Data:     makeDataAttr("data", string(xml)),
+		Filename: makeDataAttr("filename", "hangover.xml"),
 	})
 	if err != nil {
 		panic(err)

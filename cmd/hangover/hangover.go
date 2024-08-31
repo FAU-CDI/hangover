@@ -142,6 +142,7 @@ func init() {
 	flag.StringVar(&footerHTML, "footer", footerHTML, "html to include in footer of every page")
 	flag.BoolVar(&flags.StrictCSP, "strict-csp", flags.StrictCSP, "include a strict csp header in every page")
 	flag.BoolVar(&benchMode, "bench", benchMode, "benchmarking mode: only load for statistics and exit")
+	flag.StringVar(&flags.TipsyURL, "tipsy", flags.TipsyURL, "embed a tipsy at the given url. Must start with 'http://' or 'https://'")
 
 	flag.Parse()
 	nArgs = flag.Args()
