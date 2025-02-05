@@ -31,7 +31,18 @@ func main() {
 		defer profile.Start(profile.ProfilePath(debugProfile)).Stop()
 	}
 
-	if mysql != "" && sqlite != "" {
+	var selected int
+	if mysql != "" {
+		selected++
+	}
+	if sqlite != "" {
+		selected++
+	}
+	if csvPath != "" {
+		selected++
+	}
+
+	if selected > 1 {
 		st.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
 		st.LogError("parse arguments", errBothSqliteAndMysql)
 	}
@@ -75,9 +86,11 @@ func main() {
 
 	switch {
 	case mysql != "":
-		doSQL(&pb, index, bEngine, "mysql", mysql, st)
+		doSQL(&pb, index, bEngine, "mysql", mysql, false, st)
 	case sqlite != "":
-		doSQL(&pb, index, bEngine, "sqlite", sqlite, st)
+		doSQL(&pb, index, bEngine, "sqlite", sqlite, false, st)
+	case csvPath != "":
+		doCSV(&pb, index, bEngine, csvPath, st)
 	default:
 		doJSON(&pb, index, bEngine, st)
 	}
@@ -92,6 +105,7 @@ var inverseOf = string(wisski.InverseOf)
 var debugProfile = ""
 
 var sqlite string
+var csvPath string
 var mysql string
 
 var sqlSeperator string = ","
@@ -106,6 +120,7 @@ func init() {
 
 	flag.StringVar(&cache, "cache", cache, "During indexing, cache data in the given directory as opposed to memory")
 	flag.StringVar(&sqlite, "sqlite", sqlite, "Export an sqlite database to the given path")
+	flag.StringVar(&csvPath, "csv", csvPath, "Export CSV files at the given path")
 	flag.StringVar(&sqlite, "mysql", mysql, "Export a mysql database. Use a connection string of the form `username:password@host/database`")
 
 	flag.StringVar(&sqlSeperator, "sql-seperator", sqlSeperator, "Use seperator on multi-valued fields")

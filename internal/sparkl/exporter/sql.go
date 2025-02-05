@@ -18,6 +18,7 @@ import (
 // SQL implements an exporter for storing data inside an sql database.
 // TODO(twiesing): For now this only supports string-like fields.
 type SQL struct {
+	SkipClose       bool
 	DB              *sql.DB
 	batches         map[string][]wisski.Entity
 	Separator       string // separator for database multi-valued fields
@@ -230,6 +231,9 @@ func (sql *SQL) End(bundle *pathbuilder.Bundle) error {
 }
 
 func (sql *SQL) Close() error {
+	if sql.SkipClose {
+		return nil
+	}
 	return sql.DB.Close() // close the database
 }
 
