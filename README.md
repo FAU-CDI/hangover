@@ -2,7 +2,7 @@
 
 ![Hangover Logo](./internal/assets/logo/Icon.svg "Hangover Logo")
 
-<!-- spellchecker:words nquad CORDI nquads kirmes drincw -->
+<!-- spellchecker:words nquad CORDI nquads kirmes drincw WissKI pathbuilder -->
 
 [![CI](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml/badge.svg)](https://github.com/FAU-CDI/hangover/actions/workflows/go.yml)
 
@@ -14,7 +14,7 @@ The data itself is stored as triples inside a graph database, and is typically e
 The metadata and description are stored inside a so-called [Pathbuilder](https://wiss-ki.eu/documentation/data-modeling/pathbuilder).
 These parts are typically exported on a regular basis for both backup and archival purposes. 
 
-Unfortunately there is a cognative impedance mismatch between the data stored in the graph database and the data entered in the WissKI interface. 
+Unfortunately there is a cognitive impedance mismatch between the data stored in the graph database and the data entered in the WissKI interface. 
 The triples may contain the information displayed in WissKI, but in order to properly understand them the pathbuilder, typically available only in WissKI, is required. 
 This becomes a problem when you take into account that installing, maintaining, and running a WissKI-based system itself is a complex progress, and requires a system administrator with significant technical expertise.
 
@@ -97,6 +97,7 @@ You can add any further hangover parameters as arguments.
 
 ## Usage
 
+
 ### hangover - A WissKI Data Viewer
 
 The `hangover` executable implements the WissKI Data Viewer.
@@ -128,24 +129,24 @@ Futhermore, the viewer also provides some convenience options for deployment:
 - `-strict-csp`: Adds a stricter [`Content-Security-Policy`](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) header that only allows external images and audio from the `public` uris to load, but nothing else.
 - `tipsy`: Allows embedding the current pathbuilder into [TIPSY](https://github.com/tkw1536/TIPSY). Provide the URL of the TIPSY instance to embed, e.g. `https://tipsy.guys.wtf`.
 
-#### n2j - A WissKI Exporter
+### headache
+
+A graphical configuration frontend for the hangover executable.
+Run the executable, select the graph database export and pathbuilder, then scroll to the bottom and hit "Start Viewer". 
+
+#### n2j - WissKI exporter
 
 n2j stands for `NQuads 2 JSON` and can convert a WissKI export into:
-- A single JSON to standard output (default)
-- An SQLITE file somewhere on disk
-- A SQL database somewhere
-- A set of CSV files somewhere
 
-Like `hangover`, it takes both a pathbuilder and export as an argument.
+- A single JSON to standard output (default; possibly big because all entities are contained in a single output)
+- An SQLITE file on disk (`--sqlite /path/to/sqlite.db`)
+- A set of MySQL tables somewhere (`-mysql username:password@host/database`)
+- A set of CSV files on disk (`-csv /path/to/folder`; folder needs to exist)
+
+Like `hangover`, it takes both a pathbuilder and graph database as an export.
 By default, it produces a single `.json` file on standard output.
-
-Further options it supports a various set of other options, which can be found using  `n2j -help`.
-
-#### headache - A Hangover GUI
-
-Headache is a GUI on top of hangover.
-
-(work in progress)
+Use the arguments above to produce different format instead. 
+Further options can be found using  `n2j -help`.
 
 
 ## Development
