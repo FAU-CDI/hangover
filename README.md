@@ -130,11 +130,16 @@ Futhermore, the viewer also provides some convenience options for deployment:
 
 #### n2j - A WissKI Exporter
 
-n2j stands for `NQuads 2 JSON` and can convert a WissKI export into json or csv (or more general, relational) format.
+n2j stands for `NQuads 2 JSON` and can convert a WissKI export into:
+- A single JSON to standard output (default)
+- An SQLITE file somewhere on disk
+- A SQL database somewhere
+- A set of CSV files somewhere
+
 Like `hangover`, it takes both a pathbuilder and export as an argument.
 By default, it produces a single `.json` file on standard output.
 
-Further options supports a various set of other options, which can be found using  `n2j -help`.
+Further options it supports a various set of other options, which can be found using  `n2j -help`.
 
 #### headache - A Hangover GUI
 
