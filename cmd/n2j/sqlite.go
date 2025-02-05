@@ -87,7 +87,6 @@ func doCSV(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.Bu
 		}
 	}
 
-	return
 }
 
 func doCSVTable(db *sql.DB, table string, path string) error {
