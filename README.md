@@ -47,7 +47,7 @@ They are described in detail below.
 
 ### from source
 
-1. Install [Go](https://go.dev/), Version 1.21 or newer
+1. Install [Go](https://go.dev/), Version 1.23 or newer
 2. Optional: Install [Yarn](https://yarnpkg.com/) (if you're tweaking the frontend code)
 3. Optional: Install [Fyne Dependencies](https://developer.fyne.io/started/#prerequisites) (if you're building the gui application)
 3. Clone this repository somewhere.
