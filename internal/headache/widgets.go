@@ -16,7 +16,7 @@ func newDataOpener(label string, parent fyne.Window, vNq, vPB binding.String) *w
 				return
 			}
 
-			nq, pb, _, err := hangover.FindSource(false, uc.Path())
+			nq, pb, err := hangover.FindSource(uc.Path())
 			if err != nil {
 				return
 			}

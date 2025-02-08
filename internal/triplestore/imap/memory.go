@@ -1,8 +1,6 @@
 package imap
 
 import (
-	"bytes"
-	"encoding/gob"
 	"errors"
 	"runtime"
 )
@@ -10,17 +8,6 @@ import (
 // Memory contains the main in-memory value
 type Memory[Key comparable, Value any] struct {
 	mp map[Key]Value
-}
-
-func (m Memory[Key, Value]) GobEncode() ([]byte, error) {
-	var buffer bytes.Buffer
-	err := gob.NewEncoder(&buffer).Encode(m.mp)
-	return buffer.Bytes(), err
-}
-
-func (m *Memory[Key, Value]) GobDecode(src []byte) error {
-	reader := bytes.NewReader(src)
-	return gob.NewDecoder(reader).Decode(&m.mp)
 }
 
 func (m Memory[Key, Value]) IsNil() bool {

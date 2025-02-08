@@ -45,7 +45,7 @@ func main() {
 	done := make(chan struct{})
 
 	// start listening, so that even during loading we are not performing that badly
-	if export == "" && !benchMode {
+	if !benchMode {
 		listener, err = net.Listen("tcp", addr)
 		if err != nil {
 			handler.Stats.LogError("listen", err)
@@ -64,32 +64,17 @@ func main() {
 	}
 
 	// find the paths
-	nq, pb, idx, err := hangover.FindSource(true, nArgs...)
+	nq, pb, err := hangover.FindSource(nArgs...)
 	if err != nil {
 		handler.Stats.LogFatal("find source", err)
 	}
 
 	// create a new glass
 	var drincw glass.Glass
-	if idx == "" {
-		handler.Stats.Log("loading files", "pathbuilder", pb, "nquads", nq)
-
-		drincw, err = glass.Create(pb, nq, cache, flags, handler.Stats)
-	} else {
-		handler.Stats.Log("loading index", "index", idx)
-		drincw, err = glass.Import(idx, handler.Stats)
-	}
+	handler.Stats.Log("loading files", "pathbuilder", pb, "nquads", nq)
+	drincw, err = glass.Create(pb, nq, cache, flags, handler.Stats)
 	if err != nil {
 		handler.Stats.LogFatal("unable to load or make index", err)
-	}
-
-	// create an export if requested
-	if export != "" {
-		handler.Stats.Log("exporting", "file", export)
-		if err := glass.Export(export, drincw, handler.Stats); err != nil {
-			os.Exit(1)
-		}
-		return
 	}
 
 	// otherwise create a viewer
@@ -116,7 +101,6 @@ var inverseOf string = string(wisski.InverseOf)
 var footerHTML string = "powered by <a href='https://github.com/FAU-CDI/hangover' target='_blank' rel='noopener noreferer'>hangover</a>. "
 
 var cache string
-var export string
 var debugServer string
 var benchMode bool
 
@@ -138,7 +122,6 @@ func init() {
 	flag.StringVar(&inverseOf, "inverseof", inverseOf, "InverseOf Properties")
 	flag.StringVar(&cache, "cache", cache, "During indexing, cache data in the given directory as opposed to memory")
 	flag.StringVar(&debugServer, "debug-listen", debugServer, "start a profiling server on the given address")
-	flag.StringVar(&export, "export", export, "export completed index to path and exit")
 	flag.StringVar(&footerHTML, "footer", footerHTML, "html to include in footer of every page")
 	flag.BoolVar(&flags.StrictCSP, "strict-csp", flags.StrictCSP, "include a strict csp header in every page")
 	flag.BoolVar(&benchMode, "bench", benchMode, "benchmarking mode: only load for statistics and exit")

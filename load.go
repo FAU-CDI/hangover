@@ -14,9 +14,9 @@ var errIndexPassed = errors.New("you should provide a path to an xml and nq file
 
 // FindSource finds the sources for the given path.
 // FindSource does not guarantee that contents are loadable.
-func FindSource(allowIndex bool, argv ...string) (nq, xml, index string, err error) {
+func FindSource(argv ...string) (nq, xml string, err error) {
 	if len(argv) == 0 || len(argv) > 2 {
-		return "", "", "", errWrongArgCount
+		return "", "", errWrongArgCount
 	}
 
 	// two arguments provided: use xml, then nqauds
@@ -26,35 +26,31 @@ func FindSource(allowIndex bool, argv ...string) (nq, xml, index string, err err
 	} else {
 		isDir, err := isDirectory(argv[0])
 		if err != nil {
-			return "", "", "", err
+			return "", "", err
 		}
 
 		// try to read the index
 		if !isDir {
-			if !allowIndex {
-				return "", "", "", errIndexPassed
-			}
-			index = argv[0]
-			return "", "", index, err
+			return "", "", errIndexPassed
 		}
 
 		base := argv[0]
 
 		xmls, err := filepath.Glob(filepath.Join(base, "*.xml"))
 		if err != nil {
-			return "", "", "", err
+			return "", "", err
 		}
 		if len(xmls) != 1 {
-			return "", "", "", fmt.Errorf("need exactly one '*.xml' in %q, but got %d", base, len(xmls))
+			return "", "", fmt.Errorf("need exactly one '*.xml' in %q, but got %d", base, len(xmls))
 		}
 		xml = xmls[0]
 
 		nqs, err := filepath.Glob(filepath.Join(base, "*.nq"))
 		if err != nil {
-			return "", "", "", err
+			return "", "", err
 		}
 		if len(nqs) != 1 {
-			return "", "", "", fmt.Errorf("need exactly one '*.xml' in %q, but got %d", base, len(nqs))
+			return "", "", fmt.Errorf("need exactly one '*.xml' in %q, but got %d", base, len(nqs))
 		}
 		nq = nqs[0]
 	}
@@ -63,14 +59,14 @@ func FindSource(allowIndex bool, argv ...string) (nq, xml, index string, err err
 	for _, file := range [2]string{nq, xml} {
 		ok, err := isFile(file)
 		if err != nil {
-			return "", "", "", err
+			return "", "", err
 		}
 		if !ok {
-			return "", "", "", fmt.Errorf("%q is not a regular file", file)
+			return "", "", fmt.Errorf("%q is not a regular file", file)
 		}
 	}
 
-	return nq, xml, "", nil
+	return nq, xml, nil
 }
 
 func isDirectory(path string) (ok bool, err error) {

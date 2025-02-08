@@ -1,7 +1,6 @@
 package sparkl
 
 import (
-	"encoding/gob"
 	"errors"
 	"runtime"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/sgob"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -47,52 +45,6 @@ func (cache *Cache) Close() error {
 		cache.engine.Close(),
 		cache.uris.Close(),
 	)
-}
-
-// EncodeTo encodes this cache object to the given gob.Encoder.
-func (cache *Cache) EncodeTo(encoder *gob.Encoder) error {
-	for _, obj := range []any{
-		cache.beIndex,
-		cache.biIndex,
-		cache.ebIndex,
-		cache.bundleNames,
-		cache.sameAs,
-		cache.aliasOf,
-		cache.engine.FStorage,
-		cache.engine.RStorage,
-	} {
-		if err := sgob.Encode(encoder, obj); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (cache *Cache) DecodeFrom(decoder *gob.Decoder) error {
-	if cache.uris != nil {
-		if err := cache.uris.Close(); err != nil {
-			return err
-		}
-	}
-
-	for _, obj := range []any{
-		&cache.beIndex,
-		&cache.biIndex,
-		&cache.ebIndex,
-		&cache.bundleNames,
-		&cache.sameAs,
-		&cache.aliasOf,
-		&cache.engine.FStorage,
-		&cache.engine.RStorage,
-	} {
-		if err := sgob.Decode(decoder, obj); err != nil {
-			return err
-		}
-	}
-
-	cache.uris = &imap.IMap{}
-	return cache.uris.Reset(&cache.engine)
 }
 
 func (cache Cache) Entities(bundle_machine string) []wisski.Entity {

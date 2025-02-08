@@ -48,7 +48,7 @@ func main() {
 	}
 
 	// find the paths
-	nqp, pbp, _, err := hangover.FindSource(false, nArgs...)
+	nqp, pbp, err := hangover.FindSource(nArgs...)
 	if err != nil {
 		st.Log("Usage: n2j [-help] [...flags] /path/to/pathbuilder /path/to/nquads")
 		st.LogFatal("find source", err)

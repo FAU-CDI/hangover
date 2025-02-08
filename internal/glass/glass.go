@@ -2,10 +2,6 @@
 package glass
 
 import (
-	"compress/gzip"
-	"encoding/gob"
-	"errors"
-	"os"
 	"runtime/debug"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
@@ -17,8 +13,6 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/viewer"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/FAU-CDI/hangover/pkg/progress"
-	"github.com/FAU-CDI/hangover/pkg/sgob"
 )
 
 // cspell:words WissKI pathbuilder nquads
@@ -34,57 +28,6 @@ type Glass struct {
 
 func (glass *Glass) Close() error {
 	return glass.Cache.Close()
-}
-
-// EncodeTo encodes a glass to a given encoder
-func (glass *Glass) EncodeTo(encoder *gob.Encoder) error {
-	// encode the pathbuilder as xml
-	pbxml, err := pbxml.Marshal(glass.Pathbuilder)
-	if err != nil {
-		return err
-	}
-
-	// encode all the fields
-	for _, obj := range []any{
-		GlassVersion,
-		pbxml,
-		glass.Flags,
-	} {
-		if err := sgob.Encode(encoder, obj); err != nil {
-			return err
-		}
-	}
-
-	// encode the payload
-	return glass.Cache.EncodeTo(encoder)
-}
-
-// DecodeFrom decodes a glass from the given decoder
-func (glass *Glass) DecodeFrom(decoder *gob.Decoder) (err error) {
-	var version int
-	var xml []byte
-	for _, obj := range []any{
-		&version,
-		&xml,
-		&glass.Flags,
-	} {
-		if err := sgob.Decode(decoder, obj); err != nil {
-			return err
-		}
-	}
-
-	// decode the xml again
-	glass.Pathbuilder, err = pbxml.Unmarshal(xml)
-	if err != nil {
-		return err
-	}
-
-	if version != GlassVersion {
-		return errInvalidVersion
-	}
-
-	glass.Cache = new(sparkl.Cache)
-	return glass.Cache.DecodeFrom(decoder)
 }
 
 // Create creates a new glass from the given pathbuilder and nquads.
@@ -154,71 +97,4 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 
 	drincw.Flags = flags
 	return drincw, nil
-}
-
-// Export writes a glass to the given path
-func Export(path string, drincw Glass, st *stats.Stats) (err error) {
-	f, err := os.Create(path)
-	if err != nil {
-		st.LogError("create export", err)
-		return err
-	}
-	defer f.Close()
-
-	writer, err := gzip.NewWriterLevel(f, gzip.BestCompression)
-	if err != nil {
-		st.LogError("create gzip writer", err)
-		return err
-	}
-	defer writer.Flush()
-
-	return st.DoStage(stats.StageExportIndex, func() error {
-		counter := &progress.Writer{
-			Writer:     writer,
-			Rewritable: *st.Rewritable(),
-		}
-
-		err = drincw.EncodeTo(gob.NewEncoder(counter))
-		counter.Flush(true)
-
-		if err != nil {
-			st.LogError("encode export", err)
-		}
-		return err
-	})
-}
-
-var errInvalidVersion = errors.New("Glass Export: Invalid version")
-
-// Import loads a glass from disk
-func Import(path string, st *stats.Stats) (drincw Glass, err error) {
-	defer debug.FreeOSMemory() // force clearing free memory
-
-	f, err := os.Open(path)
-	if err != nil {
-		st.LogError("open export", err)
-		return drincw, err
-	}
-	defer f.Close()
-
-	reader, err := gzip.NewReader(f)
-	if err != nil {
-		st.LogError("open export", err)
-		return drincw, err
-	}
-
-	err = st.DoStage(stats.StageImportIndex, func() error {
-		counter := &progress.Reader{
-			Reader:     reader,
-			Rewritable: *st.Rewritable(),
-		}
-		err = drincw.DecodeFrom(gob.NewDecoder(counter))
-		counter.Flush(true)
-		if err != nil {
-			st.LogError("decode export", err)
-			return err
-		}
-		return nil
-	})
-	return drincw, err
 }
