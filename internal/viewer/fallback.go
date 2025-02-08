@@ -27,7 +27,7 @@ type htmlLoadingContext struct {
 	Progress stats.Progress
 }
 
-func (viewer *Viewer) htmlFallback(w http.ResponseWriter, r *http.Request) (sent bool) {
+func (viewer *Viewer) htmlFallback(w http.ResponseWriter, _ *http.Request) (sent bool) {
 	progress := viewer.Stats.Progress()
 	if progress.Done {
 		return false
@@ -57,7 +57,7 @@ type ProgressMessage struct {
 	Progress stats.Progress
 }
 
-func (viewer *Viewer) jsonFallback(w http.ResponseWriter, r *http.Request) (sent bool) {
+func (viewer *Viewer) jsonFallback(w http.ResponseWriter, _ *http.Request) (sent bool) {
 	progress := viewer.Stats.Progress()
 	if progress.Done {
 		return false
