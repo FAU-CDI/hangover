@@ -209,13 +209,10 @@ func (set *Paths) makePath(elem element) (path Path, err error) {
 	var rNodes, rTriples []impl.ID
 
 	e := &elem
-	for {
+	for e != nil {
 		rNodes = append(rNodes, e.Node)
 		rTriples = append(rTriples, e.Triples...)
 		e = e.Parent
-		if e == nil {
-			break
-		}
 	}
 
 	// make a new path

@@ -1,0 +1,147 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.7 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.7">
+  <diagram name="Page-1" id="knLdefWj8xyFPlL_k0VA">
+    <mxGraphModel dx="1793" dy="1068" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1220" pageHeight="410" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-50" value="Serve" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-44" target="EanT_ptKQ8dP-sCmMVAc-45">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-44" value="WissKI Entity Archive&lt;div&gt;(JSON-LD + Manifest)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="490" y="90" width="450" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-1" target="EanT_ptKQ8dP-sCmMVAc-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-41" value="Join" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="EanT_ptKQ8dP-sCmMVAc-21">
+          <mxGeometry x="-0.015" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-1" value="Columns&lt;div&gt;(Sets of Values)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="260" y="135" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-32" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-2" target="EanT_ptKQ8dP-sCmMVAc-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-47" value="Enrich" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="EanT_ptKQ8dP-sCmMVAc-32">
+          <mxGeometry x="-0.0625" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-2" value="Data-Only Archive" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="135" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-11" target="EanT_ptKQ8dP-sCmMVAc-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-42" value="Index" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="EanT_ptKQ8dP-sCmMVAc-20">
+          <mxGeometry x="-0.0119" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-11" value="Triples&lt;div&gt;(Set of Triples)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="10" y="135" width="130" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-13" target="EanT_ptKQ8dP-sCmMVAc-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-13" value="Raw Triples&lt;div&gt;(nq, rdf, ...)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="25" y="55" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-16" target="EanT_ptKQ8dP-sCmMVAc-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-40" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-16" target="EanT_ptKQ8dP-sCmMVAc-11">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="90" y="205" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="75" y="255" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-16" value="Triplestore&lt;div&gt;(SPARQL)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="150" y="235" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-18" target="EanT_ptKQ8dP-sCmMVAc-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-18" value="WissKI API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="540" y="10" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-31" value="&lt;div&gt;Data and Media Archive&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="135" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-37" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-34" target="EanT_ptKQ8dP-sCmMVAc-31">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="75" />
+              <mxPoint x="850" y="75" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-36" value="FILES directory" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="870" y="10" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-39" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-36" target="EanT_ptKQ8dP-sCmMVAc-31">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="25" as="sourcePoint" />
+            <mxPoint x="510" y="135" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="920" y="75" />
+              <mxPoint x="850" y="75" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-34" value="Real Resource" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="730" y="10" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-45" value="Moonshine&lt;div&gt;(WissKI API + HTML Server)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="135" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-46" value="Tabular Export&lt;div&gt;(CSV / XSLX)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="500" y="280" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-54" value="SQL Export&lt;div&gt;(SQLITE / SQL)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="665" y="280" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-69" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.867;exitY=1.004;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-44" target="EanT_ptKQ8dP-sCmMVAc-56">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-56" value="HTML Export&lt;div&gt;(HTML5 / SSG)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="830" y="280" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-67" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-65" target="EanT_ptKQ8dP-sCmMVAc-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-65" value="Clean Triples&lt;div&gt;(RDF)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="582.5" y="360" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-68" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.683;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-44" target="EanT_ptKQ8dP-sCmMVAc-66">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-66" value="&lt;div&gt;OpenRefine&lt;/div&gt;&lt;div&gt;(???)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="747.5" y="360" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-70" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.133;exitY=1.006;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-44" target="EanT_ptKQ8dP-sCmMVAc-46">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="550" y="250" as="sourcePoint" />
+            <mxPoint x="610" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-71" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-44" target="EanT_ptKQ8dP-sCmMVAc-54">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="640" y="260" as="sourcePoint" />
+            <mxPoint x="700" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EanT_ptKQ8dP-sCmMVAc-72" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.321;exitY=1.001;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="EanT_ptKQ8dP-sCmMVAc-44" target="EanT_ptKQ8dP-sCmMVAc-65">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="530" y="370" as="sourcePoint" />
+            <mxPoint x="700" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

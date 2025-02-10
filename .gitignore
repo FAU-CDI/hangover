@@ -15,3 +15,5 @@ go.work.sum
 /dist/
 
 fyne-cross
+
+*.bkp
