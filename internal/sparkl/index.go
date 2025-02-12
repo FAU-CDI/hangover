@@ -56,15 +56,16 @@ func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts 
 	}
 
 	// read the "same as" triples first
-	var total int
+	var totalCount, dataCount int
 	err := st.DoStage(stats.StageScanSameAs, func() (err error) {
-		total, err = indexSameAs(source, &index, predicates.SameAs, opts, st)
+		totalCount, dataCount, err = indexSameAs(source, &index, predicates.SameAs, opts, st)
 		return
 	})
 	if err != nil {
 		index.Close()
 		return nil, err
 	}
+	st.LogDebug("index count", "total", totalCount, "data", dataCount)
 
 	// update stats
 	st.StoreIndexStats(index.Stats())
@@ -77,7 +78,7 @@ func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts 
 
 	// read the "inverse" triples next
 	err = st.DoStage(stats.StageScanInverse, func() error {
-		return indexInverseOf(source, &index, predicates.InverseOf, total, opts, st)
+		return indexInverseOf(source, &index, predicates.InverseOf, totalCount, opts, st)
 	})
 	if err != nil {
 		index.Close()
@@ -95,7 +96,7 @@ func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts 
 
 	// and then read all the other data
 	err = st.DoStage(stats.StageScanTriples, func() error {
-		return indexData(source, &index, total, opts, st)
+		return indexData(source, &index, totalCount, dataCount, opts, st)
 	})
 	if err != nil {
 		index.Close()
@@ -160,10 +161,10 @@ func addPathArrayToMasks(pmask map[impl.Label]struct{}, ary []string) {
 }
 
 // indexSameAs inserts SameAs pairs into the index
-func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Label, opts IndexOptions, stats *stats.Stats) (count int, err error) {
+func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Label, opts IndexOptions, stats *stats.Stats) (allCount, dataCount int, err error) {
 	err = source.Open()
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	defer source.Close()
 
@@ -175,25 +176,27 @@ func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Lab
 	for {
 		tok := source.Next()
 
-		stats.SetCT(count, count)
-		count++
+		stats.SetCT(allCount, allCount)
+		allCount++
 
 		// check if we should compact
-		if opts.shouldCompact(count) {
+		if opts.shouldCompact(allCount) {
 			if err := index.Compact(); err != nil {
-				return 0, err
+				return 0, 0, err
 			}
 		}
 
 		switch {
 		case tok.Err == io.EOF:
-			return count, nil
+			return allCount, dataCount, nil
 		case tok.Err != nil:
-			return 0, tok.Err
+			return 0, 0, tok.Err
 		case !tok.HasDatum:
 			if _, ok := sameAss[tok.Predicate]; ok {
 				index.MarkIdentical(tok.Subject, tok.Object)
 			}
+		default:
+			dataCount++
 		}
 	}
 }
@@ -243,18 +246,22 @@ func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl
 }
 
 // indexData inserts data into the index
-func indexData(source Source, index *igraph.Index, total int, opts IndexOptions, stats *stats.Stats) error {
+func indexData(source Source, index *igraph.Index, totalCount, dataCount int, opts IndexOptions, stats *stats.Stats) error {
 	err := source.Open()
 	if err != nil {
 		return err
 	}
 	defer source.Close()
 
+	if err := index.Grow(uint64(dataCount)); err != nil {
+		return err
+	}
+
 	var counter int
 	for {
 		tok := source.Next()
 		counter++
-		stats.SetCT(counter, total)
+		stats.SetCT(counter, totalCount)
 
 		// check if we should compact
 		if opts.shouldCompact(counter) {

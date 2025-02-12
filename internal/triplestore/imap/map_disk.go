@@ -110,6 +110,11 @@ type DiskStorage[Key comparable, Value any] struct {
 	UnmarshalValue func(dest *Value, src []byte) error
 }
 
+func (ds *DiskStorage[Key, Value]) Grow(size uint64) error {
+	// not supported
+	return nil
+}
+
 func (ds *DiskStorage[Key, Value]) Set(key Key, value Value) error {
 	keyB, err := ds.MarshalKey(key)
 	if err != nil {

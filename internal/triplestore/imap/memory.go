@@ -2,12 +2,30 @@ package imap
 
 import (
 	"errors"
+	"math"
 	"runtime"
 )
 
 // Memory contains the main in-memory value
 type Memory[Key comparable, Value any] struct {
 	mp map[Key]Value
+}
+
+var errIntTooBig = errors.New("new size does not fit into int")
+
+func (memory *Memory[Key, Value]) Grow(size uint64) error {
+	if size >= uint64(math.MaxInt) {
+		return errIntTooBig
+	}
+
+	// no point in trying to resize an already existing map!
+	if len(memory.mp) != 0 {
+		return nil
+	}
+
+	// create the fresh map to be big enough!
+	memory.mp = make(map[Key]Value, size)
+	return nil
 }
 
 func (m Memory[Key, Value]) IsNil() bool {
@@ -23,16 +41,17 @@ func MakeMemory[Key comparable, Value any](size int) Memory[Key, Value] {
 
 var errMemoryUnintialized = errors.New("map not initalized")
 
-// Compact causes any changes to be flushed to disk and performs common cleanup tasks
+// Compact causes any changes to be flushed to disk and performs common cleanup tasks.
+// This is a no-op.
 func (Memory[Key, Value]) Compact() error {
-	runtime.GC()
 	return nil
 }
 
-// Finalize makes this map read-only.
-// It is a no-op.
+// Finalize marks this map as read-only and performs common cleanup tasks.
+// This is a no-op.
 func (ims Memory[Key, Value]) Finalize() error {
-	return errors.Join(ims.Compact(), nil)
+	runtime.GC()
+	return nil
 }
 
 func (ims Memory[Key, Value]) Set(key Key, value Value) error {

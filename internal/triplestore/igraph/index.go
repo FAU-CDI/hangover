@@ -206,6 +206,18 @@ func (index *Index) addMask(predicate impl.Label, mask map[impl.ID]struct{}) (im
 	return ids, ok, nil
 }
 
+var errGrowOverflow = errors.New("Grow: Too many triples and data")
+
+// Grow attempts to reserve space for as many data as is created by calls to AddData.
+// This must happen before any call to AddData to have any effect.
+// May also have no effect at all if the backend doesn't do anything.
+func (index *Index) Grow(data uint64) error {
+	if index.finalized.Load() {
+		return ErrFinalized
+	}
+	return index.data.Grow(data)
+}
+
 // AddTriple inserts a subject-predicate-object triple into the index.
 // Adding a triple more than once has no effect.
 //
