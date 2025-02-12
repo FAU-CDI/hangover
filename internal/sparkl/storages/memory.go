@@ -54,7 +54,7 @@ func (bs *Memory) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple
 	return nil
 }
 
-func (bs *Memory) AddFieldValue(uri impl.Label, field string, value impl.Datum, language impl.Language, path []impl.Label, triples []igraph.Triple) error {
+func (bs *Memory) AddFieldValue(uri impl.Label, field string, value impl.Datum, path []impl.Label, triples []igraph.Triple) error {
 	id, ok := bs.lookup[uri]
 	if !ok {
 		return ErrNoEntity
@@ -64,10 +64,9 @@ func (bs *Memory) AddFieldValue(uri impl.Label, field string, value impl.Datum, 
 	defer bs.addField.Unlock()
 
 	bs.Entities[id].Fields[field] = append(bs.Entities[id].Fields[field], wisski.FieldValue{
-		Value:    value,
-		Language: language,
-		Path:     path,
-		Triples:  triples,
+		Datum:   value,
+		Path:    path,
+		Triples: triples,
 	})
 
 	return nil

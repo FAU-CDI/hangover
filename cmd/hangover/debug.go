@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"net/http/pprof"
 
+	"github.com/FAU-CDI/hangover/internal/viewer"
 	"github.com/gorilla/mux"
 )
 
-func listenDebug() {
+func listenDebug(handler *viewer.Viewer) {
 	router := mux.NewRouter()
 	router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 	router.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))

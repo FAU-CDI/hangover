@@ -44,7 +44,6 @@ type Token struct {
 	Subject   impl.Label
 	Predicate impl.Label
 	Object    impl.Label
-	Language  impl.Language
 	HasDatum  bool
 }
 
@@ -93,16 +92,15 @@ func (qs *QuadSource) Next() Token {
 				Object:    oI,
 			}
 		} else {
-			var language impl.Language
 			var datum impl.Datum
 
 			// if this is a language string
 			ldatum, ok := value.Object.(quad.LangString)
 			if ok {
-				language = impl.Language(ldatum.Lang)
-				datum = impl.Datum(ldatum.Native().(string))
+				datum.Value = ldatum.Native().(string)
+				datum.Language = ldatum.Lang
 			} else {
-				datum = impl.Datum(fmt.Sprint(value.Object.Native()))
+				datum.Value = fmt.Sprint(value.Object.Native())
 			}
 
 			return Token{
@@ -110,7 +108,6 @@ func (qs *QuadSource) Next() Token {
 				Predicate: pI,
 				HasDatum:  true,
 				Datum:     datum,
-				Language:  language,
 			}
 		}
 	}

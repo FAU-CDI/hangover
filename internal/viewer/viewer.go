@@ -37,9 +37,9 @@ type Viewer struct {
 }
 
 // NewViewer creates a new viewer that logs to the given output
-func NewViewer(writer io.Writer) *Viewer {
+func NewViewer(writer io.Writer, debug bool) *Viewer {
 	return &Viewer{
-		Stats: stats.NewStats(writer),
+		Stats: stats.NewStats(writer, debug),
 	}
 }
 

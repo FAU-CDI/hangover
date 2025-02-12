@@ -61,7 +61,7 @@
             </td>
             {{ else }}
             <td class="break">
-                <code>{{ .Datum }}</code>
+                <code>{{ .Datum.Value }}</code>
             </td>
             {{ end }}
 
@@ -71,8 +71,8 @@
                 Inverted
                 {{ else }}
                 Data
-                {{ if .Language }}
-                    <code class="lang">{{ .Language }}</code>
+                {{ if .Datum.Language }}
+                    <code class="lang">{{ .Datum.Language }}</code>
                 {{ end }}
                 {{ end }}
             </td>

@@ -283,8 +283,7 @@ func (sql *SQL) insertFieldTables(bundle *pathbuilder.Bundle, field pathbuilder.
 		for _, value := range entity.Fields[field.MachineName()] {
 			values = append(values, []any{
 				entity.URI,
-				value.Value,
-				value.Language,
+				value.Datum,
 			})
 		}
 	}
@@ -332,7 +331,7 @@ func (sql *SQL) insertBundleTable(bundle *pathbuilder.Bundle, parent impl.Label,
 				continue
 			}
 			for _, v := range fvalues {
-				fmt.Fprintf(&builder, "%v%s", v.Value, sql.Separator)
+				fmt.Fprintf(&builder, "%v%s", v.Datum, sql.Separator)
 			}
 			values[i] = append(values[i], builder.String()[:builder.Len()-len(sql.Separator)])
 			builder.Reset()

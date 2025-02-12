@@ -76,9 +76,8 @@ type Triple struct {
 	SPredicate impl.Label
 	SObject    impl.Label
 
-	// Datum and Language hold the data value of this triple and the corresponding language
-	Datum    impl.Datum
-	Language impl.Language
+	// Datum of this triple
+	Datum impl.Datum
 
 	// ID uniquely identifies this triple.
 	// Two triples are identical iff their IDs are identical.
@@ -109,7 +108,7 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 		return rdf.Triple{}, err
 	}
 
-	if triple.Datum == "" {
+	if triple.Role != Data {
 		var object string
 		if !canonical {
 			object = string(triple.Object)
@@ -125,10 +124,10 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 	} else {
 		var err error
 
-		if triple.Language != "" {
-			spo.Obj, err = rdf.NewLangLiteral(string(triple.Datum), string(triple.Language))
+		if triple.Datum.Language != "" {
+			spo.Obj, err = rdf.NewLangLiteral(string(triple.Datum.Value), string(triple.Datum.Language))
 		} else {
-			spo.Obj, err = rdf.NewLiteral(string(triple.Datum))
+			spo.Obj, err = rdf.NewLiteral(string(triple.Datum.Value))
 		}
 		if err != nil {
 			return rdf.Triple{}, err

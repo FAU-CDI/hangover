@@ -16,12 +16,14 @@ func l(i int) impl.Label {
 
 // d returns a datum from an int
 func d(i int) impl.Datum {
-	return impl.Datum(strconv.Itoa(i))
+	return impl.Datum{
+		Value: strconv.Itoa(i),
+	}
 }
 
 // di is the inverse of the [d] function
 func di(d impl.Datum) int {
-	i64, err := strconv.ParseInt(string(d), 10, 64)
+	i64, err := strconv.ParseInt(d.Value, 10, 64)
 	if err != nil {
 		panic("di: failed to parse")
 	}

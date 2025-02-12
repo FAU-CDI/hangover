@@ -21,11 +21,11 @@ import (
 	"github.com/tkw1536/pkglib/perf"
 )
 
-var handler = viewer.NewViewer(os.Stderr)
-
 func main() {
+	handler := viewer.NewViewer(os.Stderr, debug)
+
 	if debugServer != "" {
-		go listenDebug()
+		go listenDebug(handler)
 	}
 
 	if len(nArgs) == 0 || len(nArgs) > 2 {
@@ -100,6 +100,7 @@ var inverseOf string = string(wisski.InverseOf)
 
 var footerHTML string = "powered by <a href='https://github.com/FAU-CDI/hangover' target='_blank' rel='noopener noreferer'>hangover</a>. "
 
+var debug bool
 var cache string
 var debugServer string
 var benchMode bool
@@ -121,6 +122,7 @@ func init() {
 	flag.StringVar(&sameAs, "sameas", sameAs, "SameAs Properties")
 	flag.StringVar(&inverseOf, "inverseof", inverseOf, "InverseOf Properties")
 	flag.StringVar(&cache, "cache", cache, "During indexing, cache data in the given directory as opposed to memory")
+	flag.BoolVar(&debug, "debug", debug, "Setup debug logging")
 	flag.StringVar(&debugServer, "debug-listen", debugServer, "start a profiling server on the given address")
 	flag.StringVar(&footerHTML, "footer", footerHTML, "html to include in footer of every page")
 	flag.BoolVar(&flags.StrictCSP, "strict-csp", flags.StrictCSP, "include a strict csp header in every page")

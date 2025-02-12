@@ -1,5 +1,5 @@
 {{ $globals := .Globals }}
-{{ $value := datum2string .Value.Value }}
+{{ $value := .Value.Datum.Value }}
 {{ if eq .Field.FieldType "entity_reference" }}
     <a class="uri" href="/wisski/get?uri={{ $value }}">{{ $value }}</a>
 {{ else if eq .Field.FieldType "link" }}

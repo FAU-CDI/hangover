@@ -78,8 +78,7 @@ func (entity Entity) appendTriples(triples []igraph.Triple) []igraph.Triple {
 
 // FieldValue represents the value of a field inside an entity
 type FieldValue struct {
-	Value    impl.Datum
-	Language impl.Language
-	Path     []impl.Label
-	Triples  []igraph.Triple
+	Datum   impl.Datum
+	Path    []impl.Label
+	Triples []igraph.Triple
 }

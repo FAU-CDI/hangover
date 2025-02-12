@@ -79,7 +79,7 @@ func (s *sEntity) Decode(data []byte) error {
 
 func init() {
 	gob.Register(impl.Label(""))
-	gob.Register(impl.Datum(""))
+	gob.Register(impl.Datum{})
 	gob.Register(igraph.Role(0))
 
 	gob.Register(wisski.FieldValue{})

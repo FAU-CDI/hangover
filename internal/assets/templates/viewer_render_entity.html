@@ -64,16 +64,18 @@
         {{ if ne $i 0 }}
         <tr>
             {{ end }}
-            {{ if $value.Language }}
-            <td lang="{{$value.Language}}">
+
+            {{ $lang := $value.Datum.Language }}
+            {{ if $lang }}
+            <td lang="{{$lang}}">
             {{ else }}
-                <td colspan="2">
+            <td colspan="2">
             {{ end }}
                 {{ template "viewer_render_value.html" combine "Globals" $globals "Field" $field "Value" $value }}
             </td>
-            {{ if $value.Language }}
+            {{ if $lang }}
             <td class="collapse">
-                <code class="lang">{{ $value.Language }}</code>
+                <code class="lang">{{ $lang }}</code>
             </td>
             {{ end }}
         </tr>

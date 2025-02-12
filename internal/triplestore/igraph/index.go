@@ -27,14 +27,13 @@ import (
 //
 // Index may not be modified concurrently, however it is possible to run several queries concurrently.
 type Index struct {
-	data      imap.HashMap[impl.ID, impl.Datum]    // holds data mappings
-	inverses  imap.HashMap[impl.ID, impl.ID]       // inverse ids for a given id
-	language  imap.HashMap[impl.ID, impl.Language] // ids for the language of each datum
-	psoIndex  ThreeStorage                         // <predicate> <subject> <object>
-	posIndex  ThreeStorage                         // <predicate> <object> <subject>
-	triples   imap.HashMap[impl.ID, IndexTriple]   // values for the triples
-	pMask     map[impl.ID]struct{}                 // mask for predicates
-	dMask     map[impl.ID]struct{}                 // mask for data
+	data      imap.HashMap[impl.ID, impl.Datum]  // holds data mappings
+	inverses  imap.HashMap[impl.ID, impl.ID]     // inverse ids for a given id
+	psoIndex  ThreeStorage                       // <predicate> <subject> <object>
+	posIndex  ThreeStorage                       // <predicate> <object> <subject>
+	triples   imap.HashMap[impl.ID, IndexTriple] // values for the triples
+	pMask     map[impl.ID]struct{}               // mask for predicates
+	dMask     map[impl.ID]struct{}               // mask for data
 	labels    imap.IMap
 	stats     Stats
 	finalized atomic.Bool
@@ -96,11 +95,6 @@ func (index *Index) Triple(id impl.ID) (triple Triple, err error) {
 		return triple, err
 	}
 
-	triple.Language, err = index.language.GetZero(t.Items[2].Literal)
-	if err != nil {
-		return triple, err
-	}
-
 	triple.ID = id
 	return triple, nil
 }
@@ -125,12 +119,6 @@ func (index *Index) Reset(engine Engine) (err error) {
 		return err
 	}
 	closers = append(closers, &index.labels)
-
-	index.language, err = engine.Language()
-	if err != nil {
-		return
-	}
-	closers = append(closers, index.language)
 
 	index.data, err = engine.Data()
 	if err != nil {
@@ -301,21 +289,12 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label) error {
 	return nil
 }
 
-// AddData inserts a non-language subject-predicate-data triple into the index.
+// AddLangData inserts a subject-predicate-data triple into the index.
 // Adding multiple items to a specific subject with a specific predicate is supported.
 //
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
 func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum) error {
-	return index.AddLangData(subject, predicate, object, "")
-}
-
-// AddLangData inserts a language-specific subject-predicate-data triple into the index.
-// Adding multiple items to a specific subject with a specific predicate is supported.
-//
-// Reset must have been called, or this function may panic.
-// After all Add operations have finished, Finalize must be called.
-func (index *Index) AddLangData(subject, predicate impl.Label, object impl.Datum, lang impl.Language) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -332,19 +311,13 @@ func (index *Index) AddLangData(subject, predicate impl.Label, object impl.Datum
 		return nil
 	}
 
-	// get labels for subject and object
+	// store the new datum for the object
 	o := index.labels.Next()
 	if err := index.data.Set(o, object); err != nil {
 		return err
 	}
 
-	// store the language (unless it is the default)
-	if lang != "" {
-		if err := index.language.Set(o, lang); err != nil {
-			return err
-		}
-	}
-
+	// add the subject
 	s, err := index.labels.Add(subject)
 	if err != nil {
 		return err

@@ -46,12 +46,16 @@ type Stats struct {
 }
 
 // NewStats creates a new stats object that writes statistics to the given output.
-func NewStats(w io.Writer) *Stats {
+func NewStats(w io.Writer, debug bool) *Stats {
+	level := slog.LevelInfo
+	if debug {
+		level = slog.LevelDebug
+	}
 	if w == nil {
 		return &Stats{}
 	}
 	return &Stats{
-		logger:     slog.New(slog.NewTextHandler(w, nil)),
+		logger:     slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: level})),
 		rewritable: &progress.Rewritable{Writer: w, FlushInterval: progress.DefaultFlushInterval},
 	}
 }

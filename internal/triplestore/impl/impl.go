@@ -1,13 +1,10 @@
 package impl
 
+import "encoding/json"
+
 // Label represents the label of individual triple members.
 // A label is a uri.
 type Label string
-
-// AsDatum returns a Datum representing a label.
-func (label Label) AsDatum() Datum {
-	return Datum(label)
-}
 
 // LabelAsByte encodes a label as a set of bytes.
 func LabelAsByte(label Label) []byte {
@@ -21,27 +18,17 @@ func ByteAsLabel(label []byte) Label {
 
 // Datum is the type of data used across the implementation.
 // It may or may not be comparable.
-type Datum string
+type Datum struct {
+	Value    string
+	Language string
+}
 
 // DatumAsByte encodes a datum as a set of bytes.
-func DatumAsByte(datum Datum) []byte {
-	return []byte(datum)
+func DatumAsByte(datum Datum) ([]byte, error) {
+	return json.Marshal(&datum)
 }
 
 // ByteAsDatum decodes a datum from a set of bytes.
-func ByteAsDatum(datum []byte) Datum {
-	return Datum(datum)
-}
-
-// Language represents a language for a triple.
-type Language string
-
-// LanguageAsByte encodes a language as a set of bytes.
-func LanguageAsByte(language Language) []byte {
-	return []byte(language)
-}
-
-// ByteAsLanguage decodes a language from a set of bytes.
-func ByteAsLanguage(language []byte) Language {
-	return Language(language)
+func ByteAsDatum(dest *Datum, src []byte) error {
+	return json.Unmarshal(src, dest)
 }
