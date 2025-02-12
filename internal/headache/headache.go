@@ -44,7 +44,7 @@ var icon = &fyne.StaticResource{
 }
 
 // New setups a new Headache application
-func New() *Headache {
+func New(debug bool) *Headache {
 
 	// create a new app and window
 	var h Headache
@@ -68,7 +68,7 @@ func New() *Headache {
 		container.NewAppTabs(h.m, h.g),
 	)
 
-	h.handler = viewer.NewViewer(io.MultiWriter(h.console, os.Stderr))
+	h.handler = viewer.NewViewer(io.MultiWriter(h.console, os.Stderr), debug)
 	h.handler.Stats.OnUpdate = h.status.Set
 
 	return &h

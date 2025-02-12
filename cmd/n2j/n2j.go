@@ -25,7 +25,7 @@ var errBothSqliteAndMysql = errors.New("both -sqlite and -mysql were given")
 
 func main() {
 	// create a new status
-	st := stats.NewStats(os.Stderr)
+	st := stats.NewStats(os.Stderr, debug)
 
 	if debugProfile != "" {
 		defer profile.Start(profile.ProfilePath(debugProfile)).Stop()
@@ -108,6 +108,8 @@ var sqlite string
 var csvPath string
 var mysql string
 
+var debug bool
+
 var sqlSeperator string = ","
 var sqlFieldTables bool
 
@@ -122,6 +124,8 @@ func init() {
 	flag.StringVar(&sqlite, "sqlite", sqlite, "Export an sqlite database to the given path")
 	flag.StringVar(&csvPath, "csv", csvPath, "Export CSV files at the given path")
 	flag.StringVar(&sqlite, "mysql", mysql, "Export a mysql database. Use a connection string of the form `username:password@host/database`")
+
+	flag.BoolVar(&debug, "debug", debug, "Setup debug logging")
 
 	flag.StringVar(&sqlSeperator, "sql-seperator", sqlSeperator, "Use seperator on multi-valued fields")
 	flag.BoolVar(&sqlFieldTables, "sql-field-tables", sqlFieldTables, "Store values for fields in seperate tables")
