@@ -9,7 +9,7 @@ RUN set -x ; \
   adduser -u 82 -D -S -G www-data www-data && exit 0 ; exit 1
 
 # build the backend
-FROM docker.io/library/golang:1.23-bookworm as builder
+FROM docker.io/library/golang:1.24-bookworm as builder
 
 # install dependencies
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -

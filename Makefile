@@ -35,9 +35,9 @@ $(WINDOWS_AMD64):dist/%_windows_amd64.exe:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $@ ./cmd/$*/
 
 cross:
-	fyne-cross darwin -arch=amd64,arm64 -app-id de.fau.data.wisski.headache ./cmd/headache
-	fyne-cross linux -app-id de.fau.data.wisski.headache ./cmd/headache
-	fyne-cross windows -arch=amd64 -app-id de.fau.data.wisski.headache ./cmd/headache
+	go tool fyne-cross darwin -arch=amd64,arm64 -app-id de.fau.data.wisski.headache -env GOTOOLCHAIN=auto ./cmd/headache
+	go tool fyne-cross linux -app-id de.fau.data.wisski.headache  -env GOTOOLCHAIN=auto ./cmd/headache
+	go tool fyne-cross windows -arch=amd64 -app-id de.fau.data.wisski.headache  -env GOTOOLCHAIN=auto ./cmd/headache
 
 clean:
 	rm -rf dist
