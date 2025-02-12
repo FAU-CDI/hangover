@@ -208,7 +208,7 @@ func (st *Stats) LogFatal(message string, err error) {
 // If status is nil, a nil diff is returned.
 func (st *Stats) Diff() perf.Diff {
 	// if there is no status, don't do a diff
-	if st == nil || st.done.Load() {
+	if st == nil || !st.done.Load() {
 		var zero perf.Diff
 		return zero
 	}
