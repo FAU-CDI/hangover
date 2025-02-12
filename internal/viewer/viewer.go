@@ -36,6 +36,10 @@ type Viewer struct {
 	init   sync.Once
 }
 
+func (viewer *Viewer) logPublicURI(uri string, err error) {
+	viewer.Stats.LogError("unable to parse public url", err, "uri", uri)
+}
+
 // NewViewer creates a new viewer that logs to the given output
 func NewViewer(writer io.Writer, debug bool) *Viewer {
 	return &Viewer{
@@ -57,17 +61,16 @@ type RenderFlags struct {
 	StrictCSP   bool // use strict content-security-policy for images and media by only allowing content from public uris
 	HTMLRender  bool
 	ImageRender bool
-
-	// Stats holds the status to use for logging
-	Stats *stats.Stats
 }
 
-func (rf RenderFlags) PublicURIS() (public []string) {
+func (rf RenderFlags) PublicURLs(onError func(string, error)) (public []string) {
 	// add all the public urls
 	for _, raw := range text.Splitter(",\n")(rf.PublicURL) {
 		url, err := url.Parse(strings.TrimSpace(raw))
 		if err != nil {
-			rf.Stats.LogError("parse url", err)
+			if onError != nil {
+				onError(raw, err)
+			}
 			continue
 		}
 
@@ -88,7 +91,7 @@ func (rf RenderFlags) Tipsy() string {
 }
 
 // CSPHeader returns the CSPHeader to be included in viewer responses
-func (rf RenderFlags) CSPHeader() string {
+func (rf RenderFlags) CSPHeader(onURIError func(string, error)) string {
 	// don't allow anything by default
 	header := "default-src 'none'; connect-src 'self'; script-src 'self'; font-src 'self'; "
 
@@ -108,7 +111,7 @@ func (rf RenderFlags) CSPHeader() string {
 	source := "*"
 
 	if rf.StrictCSP {
-		source = strings.Join(rf.PublicURIS(), " ")
+		source = strings.Join(rf.PublicURLs(onURIError), " ")
 	}
 
 	if rf.ImageRender || rf.HTMLRender {
@@ -155,7 +158,7 @@ func (viewer *Viewer) setupMux() {
 			http.ServeContent(w, r, "favicon.ico", time.Time{}, bytes.NewReader(hangover.IconSVG))
 		})
 
-		viewer.cspHeader = viewer.RenderFlags.CSPHeader()
+		viewer.cspHeader = viewer.RenderFlags.CSPHeader(viewer.logPublicURI)
 	})
 }
 func (viewer *Viewer) Prepare(cache *sparkl.Cache, pb *pathbuilder.Pathbuilder) {

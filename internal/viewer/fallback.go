@@ -40,7 +40,7 @@ func (viewer *Viewer) htmlFallback(w http.ResponseWriter, _ *http.Request) (sent
 		Progress: progress,
 	})
 	if err != nil {
-		viewer.RenderFlags.Stats.LogError("render fallback", err)
+		viewer.Stats.LogError("render fallback", err)
 	}
 
 	return true

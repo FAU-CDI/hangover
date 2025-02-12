@@ -2,8 +2,8 @@ package viewer
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -43,7 +43,7 @@ var contextTemplateFuncs = template.FuncMap{
 	},
 	"debug": func(value any) string {
 		// log out a value for debugging
-		log.Printf("%#v", value)
+		fmt.Printf("%#v", value)
 		return ""
 	},
 }
@@ -143,7 +143,7 @@ func (viewer *Viewer) contextGlobal() (global contextGlobal) {
 		return
 	}
 
-	for _, public := range viewer.RenderFlags.PublicURIS() {
+	for _, public := range viewer.RenderFlags.PublicURLs(viewer.logPublicURI) {
 		prefix, err := url.JoinPath(public, "wisski")
 		if err != nil {
 			continue
@@ -414,7 +414,7 @@ func (viewer *Viewer) sendToResolver(w http.ResponseWriter, r *http.Request) {
 	if viewer.htmlFallback(w, r) {
 		return
 	}
-	publics := viewer.RenderFlags.PublicURIS()
+	publics := viewer.RenderFlags.PublicURLs(viewer.logPublicURI)
 	uris := make([]impl.Label, 0, len(publics))
 	for _, public := range publics {
 		uri, err := url.JoinPath(public, r.URL.Path)
@@ -474,7 +474,6 @@ func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	err := entityTemplate.Execute(w, context)
 	if err != nil {
-		panic(err)
-		viewer.RenderFlags.Stats.LogError("render entity", err)
+		viewer.Stats.LogError("render entity", err)
 	}
 }
