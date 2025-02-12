@@ -44,6 +44,7 @@ type Token struct {
 	Subject   impl.Label
 	Predicate impl.Label
 	Object    impl.Label
+	Source    impl.Source
 	HasDatum  bool
 }
 
@@ -78,18 +79,22 @@ func (qs *QuadSource) Next() Token {
 			return Token{Err: err}
 		}
 
-		sI, sOK := asURILike(value.Subject)
-		pI, pOK := asURILike(value.Predicate)
+		var source impl.Source
+		source.Graph, _ = asLabel(value.Label)
+
+		sI, sOK := asLabel(value.Subject)
+		pI, pOK := asLabel(value.Predicate)
 		if !(sOK && pOK) {
 			continue
 		}
 
-		oI, oOK := asURILike(value.Object)
+		oI, oOK := asLabel(value.Object)
 		if oOK {
 			return Token{
 				Subject:   sI,
 				Predicate: pI,
 				Object:    oI,
+				Source:    source,
 			}
 		} else {
 			var datum impl.Datum
@@ -108,6 +113,7 @@ func (qs *QuadSource) Next() Token {
 				Predicate: pI,
 				HasDatum:  true,
 				Datum:     datum,
+				Source:    source,
 			}
 		}
 	}
@@ -120,12 +126,12 @@ func (qs *QuadSource) Close() error {
 	return nil
 }
 
-func asURILike(value quad.Value) (uri impl.Label, ok bool) {
+func asLabel(value quad.Value) (uri impl.Label, ok bool) {
 	switch datum := value.(type) {
 	case quad.IRI:
-		return impl.Label(string(datum)), true
+		return impl.Label(datum), true
 	case quad.BNode:
-		return impl.Label(string(datum)), true
+		return impl.Label(datum), true
 	default:
 		return "", false
 	}

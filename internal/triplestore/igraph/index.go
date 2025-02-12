@@ -38,6 +38,11 @@ type Index struct {
 	stats     Stats
 	finalized atomic.Bool
 	triple    impl.ID // id for a given triple
+
+	// map between sources
+	// TODO: extend this more
+	sources       map[impl.Source]impl.ID
+	reverseSource map[impl.ID]impl.Source
 }
 
 // Stats returns statistics from this graph
@@ -91,6 +96,11 @@ func (index *Index) Triple(id impl.ID) (triple Triple, err error) {
 	}
 
 	triple.Datum, _, err = index.data.Get(t.Items[2].Literal)
+	if err != nil {
+		return triple, err
+	}
+
+	triple.Source, err = index.getSource(t.Source)
 	if err != nil {
 		return triple, err
 	}
@@ -158,6 +168,9 @@ func (index *Index) Reset(engine Engine) (err error) {
 	var s Stats
 	index.stats = s
 
+	index.sources = make(map[impl.Source]impl.ID)
+	index.reverseSource = make(map[impl.ID]impl.Source)
+
 	return nil
 }
 
@@ -206,8 +219,6 @@ func (index *Index) addMask(predicate impl.Label, mask map[impl.ID]struct{}) (im
 	return ids, ok, nil
 }
 
-var errGrowOverflow = errors.New("Grow: Too many triples and data")
-
 // Grow attempts to reserve space for as many data as is created by calls to AddData.
 // This must happen before any call to AddData to have any effect.
 // May also have no effect at all if the backend doesn't do anything.
@@ -223,7 +234,7 @@ func (index *Index) Grow(data uint64) error {
 //
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
-func (index *Index) AddTriple(subject, predicate, object impl.Label) error {
+func (index *Index) AddTriple(subject, predicate, object impl.Label, source impl.Source) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -249,12 +260,18 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label) error {
 	if err != nil {
 		return err
 	}
+	// get the source
+	g, err := index.addSource(source)
+	if err != nil {
+		return err
+	}
 
 	// forward id
 	id := index.triple.Inc()
 	index.triples.Set(id, IndexTriple{
-		Role:  Regular,
-		Items: [3]imap.TripleID{s, p, o},
+		Role:   Regular,
+		Source: g,
+		Items:  [3]imap.TripleID{s, p, o},
 	})
 
 	conflicted, err := index.insert(s.Canonical, p.Canonical, o.Canonical, id)
@@ -273,7 +290,8 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label) error {
 		// reverse id
 		iid := index.triple.Inc()
 		index.triples.Set(iid, IndexTriple{
-			Role: Inverse,
+			Role:   Inverse,
+			Source: g,
 			Items: [3]imap.TripleID{
 				{
 					Canonical: o.Canonical,
@@ -301,12 +319,34 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label) error {
 	return nil
 }
 
+// addSource returns the id for the given source
+func (index *Index) addSource(source impl.Source) (impl.ID, error) {
+	if id, ok := index.sources[source]; ok {
+		return id, nil
+	}
+
+	next := index.triple.Inc()
+	index.sources[source] = next
+	index.reverseSource[next] = source
+	return next, nil
+}
+
+var errUnknownSource = errors.New("unknown source")
+
+func (index *Index) getSource(id impl.ID) (impl.Source, error) {
+	source, ok := index.reverseSource[id]
+	if !ok {
+		return impl.Source{}, errUnknownSource
+	}
+	return source, nil
+}
+
 // AddLangData inserts a subject-predicate-data triple into the index.
 // Adding multiple items to a specific subject with a specific predicate is supported.
 //
 // Reset must have been called, or this function may panic.
 // After all Add operations have finished, Finalize must be called.
-func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum) error {
+func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum, source impl.Source) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
@@ -335,10 +375,17 @@ func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum) er
 		return err
 	}
 
+	// get the source
+	g, err := index.addSource(source)
+	if err != nil {
+		return err
+	}
+
 	// store the original triple
 	id := index.triple.Inc()
 	if err := index.triples.Set(id, IndexTriple{
-		Role: Data,
+		Role:   Data,
+		Source: g,
 		Items: [3]imap.TripleID{
 			s,
 			p,

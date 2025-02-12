@@ -29,6 +29,9 @@
             <th>
                 Kinds
             </th>
+            <th>
+                Graph
+            </th>
         </tr>
     </thead>
 
@@ -75,6 +78,9 @@
                     <code class="lang">{{ .Datum.Language }}</code>
                 {{ end }}
                 {{ end }}
+            </td>
+            <td class="collapse">
+                <code class="uri">{{ .Source.Graph }}</code>
             </td>
         </tr>
         {{ end }}

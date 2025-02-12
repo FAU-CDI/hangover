@@ -60,38 +60,38 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		for i := 0; i < N; i++ {
 			// add triple (3i+6, 0, 3i + 7) or the inverse
 			if i%4 == 0 || i%4 == 1 {
-				g.AddTriple(l(3*i+6), l(0), l(3*i+7))
+				g.AddTriple(l(3*i+6), l(0), l(3*i+7), impl.Source{})
 			} else {
-				g.AddTriple(l(3*i+7), l(-1), l(3*i+6))
+				g.AddTriple(l(3*i+7), l(-1), l(3*i+6), impl.Source{})
 			}
 
 			// add triple (3i+7, 1, 3i + 8) or the inverse
 			if i%4 == 0 || i%4 == 2 {
-				g.AddTriple(l(3*i+7), l(1), l(3*i+8))
+				g.AddTriple(l(3*i+7), l(1), l(3*i+8), impl.Source{})
 			} else {
-				g.AddTriple(l(3*i+8), l(-2), l(3*i+7))
+				g.AddTriple(l(3*i+8), l(-2), l(3*i+7), impl.Source{})
 			}
 
 			// add labels to 3i + 6 and 3i+7
-			g.AddTriple(l(3*i+6), l(2), l(2))
+			g.AddTriple(l(3*i+6), l(2), l(2), impl.Source{})
 
-			g.AddTriple(l(3*i+7), l(3), l(3))
+			g.AddTriple(l(3*i+7), l(3), l(3), impl.Source{})
 
 			// add some data (namely the i) to 3i+8
 			// (or the inverse)
 			if i%4 == 0 {
 				// i %4 == 0 ==> i % 2 == 0 ==> we can just use the identical label
-				g.AddData(l(-(3*i + 8)), l(3), d(i))
+				g.AddData(l(-(3*i + 8)), l(3), d(i), impl.Source{})
 			} else {
-				g.AddData(l(3*i+8), l(3), d(i))
+				g.AddData(l(3*i+8), l(3), d(i), impl.Source{})
 			}
 		}
 
 		// randomly fill 100 more elements
 		source := rand.New(rand.NewSource(int64(N)))
 		for i := 0; i < 100; i++ {
-			g.AddTriple(l(source.Intn(N)), l(4), l(source.Intn(N)))
-			g.AddTriple(l(source.Intn(N)), l(5), l(source.Intn(N)))
+			g.AddTriple(l(source.Intn(N)), l(4), l(source.Intn(N)), impl.Source{})
+			g.AddTriple(l(source.Intn(N)), l(5), l(source.Intn(N)), impl.Source{})
 		}
 	}
 	if err := g.Finalize(); err != nil {

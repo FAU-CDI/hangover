@@ -32,3 +32,9 @@ func DatumAsByte(datum Datum) ([]byte, error) {
 func ByteAsDatum(dest *Datum, src []byte) error {
 	return json.Unmarshal(src, dest)
 }
+
+// Source represents source information for a triple
+type Source struct {
+	Graph      Label
+	Identifier string
+}

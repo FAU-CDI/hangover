@@ -25,14 +25,16 @@ func (stats Stats) String() string {
 
 // IndexTriple represents a triple stored inside the index
 type IndexTriple struct {
-	Role  // Why was this triple stored?
-	Items [3]imap.TripleID
+	Role   // Why was this triple stored?
+	Source impl.ID
+	Items  [3]imap.TripleID
 }
 
 func MarshalTriple(triple IndexTriple) ([]byte, error) {
-	result := make([]byte, 6*impl.IDLen+1)
+	result := make([]byte, 7*impl.IDLen+1)
 	impl.MarshalIDs(
 		result[1:],
+		triple.Source,
 		triple.Items[0].Literal,
 		triple.Items[1].Literal,
 		triple.Items[2].Literal,
@@ -47,12 +49,13 @@ func MarshalTriple(triple IndexTriple) ([]byte, error) {
 var errDecodeTriple = errors.New("DecodeTriple: src too short")
 
 func UnmarshalTriple(dest *IndexTriple, src []byte) error {
-	if len(src) < 6*impl.IDLen+1 {
+	if len(src) < 7*impl.IDLen+1 {
 		return errDecodeTriple
 	}
 	dest.Role = Role(src[0])
 	impl.UnmarshalIDs(
 		src[1:],
+		&dest.Source,
 		&(dest.Items[0].Literal),
 		&(dest.Items[1].Literal),
 		&(dest.Items[2].Literal),
@@ -77,7 +80,8 @@ type Triple struct {
 	SObject    impl.Label
 
 	// Datum of this triple
-	Datum impl.Datum
+	Datum  impl.Datum
+	Source impl.Source
 
 	// ID uniquely identifies this triple.
 	// Two triples are identical iff their IDs are identical.
