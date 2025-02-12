@@ -94,7 +94,6 @@ func Values(context context.Context, index *igraph.Index, path *pathbuilder.Path
 
 				Nodes:    instance.Nodes,
 				Datum:    instance.Datum,
-				Language: instance.Language,
 
 				Triples: instance.Triples,
 			}
