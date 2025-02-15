@@ -17,6 +17,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tkw1536/pkglib v0.0.0-20250415153013-42f5cb7cb7da
 	golang.org/x/net v0.39.0
+	zombiezen.com/go/sqlite v1.4.0
 )
 
 require (

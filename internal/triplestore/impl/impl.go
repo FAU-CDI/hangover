@@ -24,8 +24,8 @@ func ByteAsLabel(label []byte) Label {
 // Datum is the type of data used across the implementation.
 // It may or may not be comparable.
 type Datum struct {
-	Value    string
-	Language string
+	Value    string `json:"value"`
+	Language string `json:"language"`
 }
 
 // DatumAsByte encodes a datum as a set of bytes.
@@ -47,6 +47,6 @@ func ByteAsDatum(dest *Datum, src []byte) error {
 
 // Source represents source information for a triple.
 type Source struct {
-	Graph      Label
-	Identifier string
+	Graph      Label  `json:"graph,omitzero"`
+	Identifier string `json:"identifier,omitzero"`
 }

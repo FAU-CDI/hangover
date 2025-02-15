@@ -1,4 +1,4 @@
-package wisski2
+package wca
 
 import (
 	"context"
@@ -26,9 +26,6 @@ type Value struct {
 	// Datum held by this value.
 	// If an only if there is a datatype property.
 	Datum impl.Datum
-
-	// Language of the datum (if applicable).
-	Language impl.Language
 
 	// Triples that are of relevance to this path.
 	// No guarantee on order, may include sameAs relationships.
@@ -92,8 +89,8 @@ func Values(context context.Context, index *igraph.Index, path *pathbuilder.Path
 				Path:        path,
 				Pathbuilder: pathbuilder,
 
-				Nodes:    instance.Nodes,
-				Datum:    instance.Datum,
+				Nodes: instance.Nodes,
+				Datum: instance.Datum,
 
 				Triples: instance.Triples,
 			}
