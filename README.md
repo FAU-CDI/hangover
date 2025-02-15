@@ -1,5 +1,7 @@
 # Hangover - A WissKI Data Viewer
 
+** VERSION 2: WORK IN PROGRESS **
+
 ![Hangover Logo](./internal/assets/logo/Icon.svg "Hangover Logo")
 
 <!-- spellchecker:words nquad CORDI nquads kirmes drincw WissKI pathbuilder -->
