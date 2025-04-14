@@ -97,7 +97,7 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 	return gErr
 }
 
-// LoadPathbuilder loads all paths in the given pathbuilder
+// LoadPathbuilder loads all paths in the given pathbuilder.
 func LoadPathbuilder(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, stats *stats.Stats) (map[string][]wisski.Entity, error) {
 	mp := exporter.Map{
 		Data: make(map[string][]wisski.Entity, len(pb.Bundles())),

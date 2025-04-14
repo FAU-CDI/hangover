@@ -12,7 +12,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-// DiskEngine represents an engine that stores everything on disk
+// DiskEngine represents an engine that stores everything on disk.
 type DiskEngine struct {
 	imap.DiskMap
 }
@@ -95,7 +95,7 @@ func NewDiskHash(path string) (ThreeStorage, error) {
 	return dh, nil
 }
 
-// ThreeHash implements ThreeStorage in memory
+// ThreeHash implements ThreeStorage in memory.
 type ThreeDiskHash struct {
 	DB *leveldb.DB
 }
@@ -103,14 +103,14 @@ type ThreeDiskHash struct {
 func (tlm *ThreeDiskHash) Add(a, b, c impl.ID, l impl.ID, conflict func(old, new impl.ID) (impl.ID, error)) (conflicted bool, err error) {
 	key := impl.EncodeIDs(a, b, c)
 	value, err := tlm.DB.Get(key, nil)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		l, err = conflict(impl.DecodeID(value, 0), l)
 		if err != nil {
 			return false, err
 		}
 		conflicted = true
-	case leveldberrors.ErrNotFound:
+	case errors.Is(err, leveldberrors.ErrNotFound):
 	}
 	return conflicted, tlm.DB.Put(impl.EncodeIDs(a, b, c), impl.EncodeIDs(l), nil)
 }
@@ -159,7 +159,7 @@ func (tlm *ThreeDiskHash) Fetch(a, b impl.ID, f func(c impl.ID, l impl.ID) error
 
 func (tlm *ThreeDiskHash) Has(a, b, c impl.ID) (id impl.ID, ok bool, err error) {
 	value, err := tlm.DB.Get(impl.EncodeIDs(a, b, c), nil)
-	if err == leveldberrors.ErrNotFound {
+	if errors.Is(err, leveldberrors.ErrNotFound) {
 		var invalid impl.ID
 		return invalid, false, nil
 	}

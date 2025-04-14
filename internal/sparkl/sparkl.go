@@ -10,7 +10,7 @@ import (
 
 // cspell:words sparkl
 
-// Predicates represent special predicates
+// Predicates represent special predicates.
 type Predicates struct {
 	SameAs    []impl.Label
 	InverseOf []impl.Label

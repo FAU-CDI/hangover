@@ -6,7 +6,7 @@ import (
 	"runtime"
 )
 
-// Memory contains the main in-memory value
+// Memory contains the main in-memory value.
 type Memory[Key comparable, Value any] struct {
 	mp map[Key]Value
 }
@@ -32,7 +32,7 @@ func (m Memory[Key, Value]) IsNil() bool {
 	return m.mp == nil
 }
 
-// MakeMemory makes a new memory instance
+// MakeMemory makes a new memory instance.
 func MakeMemory[Key comparable, Value any](size int) Memory[Key, Value] {
 	return Memory[Key, Value]{
 		mp: make(map[Key]Value, size),
@@ -63,7 +63,7 @@ func (ims Memory[Key, Value]) Set(key Key, value Value) error {
 	return nil
 }
 
-// Get returns the given value if it exists
+// Get returns the given value if it exists.
 func (ims Memory[Key, Value]) Get(key Key) (Value, bool, error) {
 	value, ok := ims.mp[key]
 	return value, ok, nil
@@ -79,7 +79,7 @@ func (ims Memory[Key, Value]) Has(key Key) (bool, error) {
 	return ok, nil
 }
 
-// Delete deletes the given key from this storage
+// Delete deletes the given key from this storage.
 func (ims Memory[Key, Value]) Delete(key Key) error {
 	delete(ims.mp, key)
 	return nil
@@ -96,7 +96,7 @@ func (ims Memory[Key, Value]) Iterate(f func(Key, Value) error) error {
 	return nil
 }
 
-// Close closes this MapStorage, deleting all values
+// Close closes this MapStorage, deleting all values.
 func (ims *Memory[Key, Value]) Close() error {
 	ims.mp = nil
 	runtime.GC() // re-claim all the memory if needed

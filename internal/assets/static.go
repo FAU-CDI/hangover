@@ -10,7 +10,7 @@ import (
 //go:embed dist
 var staticFS embed.FS
 
-// AssetHandler handles serving static files under the /assets/ route
+// AssetHandler handles serving static files under the /assets/ route.
 var AssetHandler http.Handler
 
 func init() {

@@ -9,7 +9,7 @@ import (
 	"github.com/anglo-korean/rdf"
 )
 
-// Stats holds statistics about triples in the index
+// Stats holds statistics about triples in the index.
 type Stats struct {
 	DirectTriples     uint64
 	DatumTriples      uint64
@@ -23,7 +23,7 @@ func (stats Stats) String() string {
 	return fmt.Sprintf("{direct:%d,datum:%d,mask(pred):%d,mask(data):%d,inverse:%d,conflict:%d}", stats.DirectTriples, stats.DatumTriples, stats.MaskedPredTriples, stats.MaskedDataTriples, stats.InverseTriples, stats.ConflictTriples)
 }
 
-// IndexTriple represents a triple stored inside the index
+// IndexTriple represents a triple stored inside the index.
 type IndexTriple struct {
 	Role   // Why was this triple stored?
 	Source impl.ID
@@ -66,7 +66,7 @@ func UnmarshalTriple(dest *IndexTriple, src []byte) error {
 	return nil
 }
 
-// Triple represents a triple found inside a graph
+// Triple represents a triple found inside a graph.
 type Triple struct {
 	// the literal SPO for this triple, as found in the original data.
 	Subject   impl.Label
@@ -91,7 +91,7 @@ type Triple struct {
 	Role Role
 }
 
-// Triple returns this Triple as an rdf triple
+// Triple returns this Triple as an rdf triple.
 func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 	var subject, predicate string
 	if !canonical {
@@ -124,7 +124,6 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 		if err != nil {
 			return rdf.Triple{}, err
 		}
-
 	} else {
 		var err error
 
@@ -141,26 +140,26 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 	return
 }
 
-// Compare compares this triple to another triple based on it's id
+// Compare compares this triple to another triple based on it's id.
 func (triple Triple) Compare(other Triple) int {
 	return triple.ID.Compare(other.ID)
 }
 
-// Inferred returns if this triple has been inferred
+// Inferred returns if this triple has been inferred.
 func (triple Triple) Inferred() bool {
 	return triple.Role == Inverse
 }
 
-// Role represents the role of the triple
+// Role represents the role of the triple.
 type Role uint8
 
 const (
-	// Regular represents a regular (non-inferred) triple
+	// Regular represents a regular (non-inferred) triple.
 	Regular Role = iota
 
-	// Inverse represents an inferred inverse triple
+	// Inverse represents an inferred inverse triple.
 	Inverse
 
-	// Data represents a data triple
+	// Data represents a data triple.
 	Data
 )

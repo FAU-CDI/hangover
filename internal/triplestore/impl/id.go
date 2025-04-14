@@ -24,10 +24,10 @@ func (id *ID) GobDecode(src []byte) error {
 	return UnmarshalID(id, src)
 }
 
-// IDLen is the size of an encoded ID struct in bytes
+// IDLen is the size of an encoded ID struct in bytes.
 const IDLen = 4
 
-// Valid checks if this ID is valid
+// Valid checks if this ID is valid.
 func (id ID) Valid() bool {
 	// NOTE(twiesing): We start this loop from the back as a performance optimization
 	// because most IDs are expected to be small, so most of them will be faster
@@ -39,7 +39,7 @@ func (id ID) Valid() bool {
 	return false
 }
 
-// Reset resets this id to an invalid value
+// Reset resets this id to an invalid value.
 func (id *ID) Reset() {
 	id.data = [IDLen]byte{}
 }
@@ -95,30 +95,30 @@ func (id ID) String() string {
 // dest must be of at least size [IDLen].
 func (id ID) Encode(dest []byte) {
 	_ = dest[IDLen-1] // boundary hint to compiler
-	copy(dest[:], id.data[:])
+	copy(dest, id.data[:])
 }
 
 // Decode sets this id to be the values that has been decoded from src.
 // src must be of at least size IDLen, or a runtime panic occurs.
 func (id *ID) Decode(src []byte) {
 	_ = src[IDLen-1] // boundary hint to compiler
-	copy(id.data[:], src[:])
+	copy(id.data[:], src)
 }
 
 var errMarshal = errors.New("MarshalIDs: invalid length")
 
-// MarshalIDs is like EncodeIDs, but also takes a []byte to write to
+// MarshalIDs is like EncodeIDs, but also takes a []byte to write to.
 func MarshalIDs(dst []byte, ids ...ID) error {
 	if len(dst) < len(ids)*IDLen {
 		return errMarshal
 	}
-	for i := 0; i < len(ids); i++ {
+	for i := range ids {
 		ids[i].Encode(dst[i*IDLen:])
 	}
 	return nil
 }
 
-// MarshalID is like MarshalIDs, but takes takes only a single value
+// MarshalID is like MarshalIDs, but takes takes only a single value.
 func MarshalID(value ID) ([]byte, error) {
 	dest := make([]byte, IDLen)
 	return dest, MarshalIDs(dest, value)
@@ -136,13 +136,13 @@ func EncodeIDs(ids ...ID) []byte {
 // The behavior of slices that do not evenly divide into IDs is not defined.
 func DecodeIDs(src []byte) []ID {
 	ids := make([]ID, len(src)/IDLen)
-	for i := 0; i < len(ids); i++ {
+	for i := range ids {
 		ids[i].Decode(src[i*IDLen:])
 	}
 	return ids
 }
 
-// DecodeID works like DecodeIDs, but only decodes the id with index i
+// DecodeID works like DecodeIDs, but only decodes the id with index i.
 func DecodeID(src []byte, index int) (id ID) {
 	id.Decode(src[index*IDLen:])
 	return

@@ -114,7 +114,7 @@ var sqlSeperator string = ","
 var sqlFieldTables bool
 
 func init() {
-	var legalFlag bool = false
+	var legalFlag = false
 	flag.BoolVar(&legalFlag, "legal", legalFlag, "Display legal notices and exit")
 
 	flag.StringVar(&sameAs, "sameas", sameAs, "SameAs Properties")

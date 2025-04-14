@@ -9,19 +9,19 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// l returns a label from an int
+// l returns a label from an int.
 func l(i int) impl.Label {
 	return impl.Label(strconv.Itoa(i))
 }
 
-// d returns a datum from an int
+// d returns a datum from an int.
 func d(i int) impl.Datum {
 	return impl.Datum{
 		Value: strconv.Itoa(i),
 	}
 }
 
-// di is the inverse of the [d] function
+// di is the inverse of the [d] function.
 func di(d impl.Datum) int {
 	i64, err := strconv.ParseInt(d.Value, 10, 64)
 	if err != nil {
@@ -37,7 +37,6 @@ func di(d impl.Datum) int {
 //
 // It then forms a single query against this graph, ensuring that the correct result set is returned.
 func graphTest(t *testing.T, engine Engine, N int) {
-
 	var g Index
 	defer g.Close()
 
@@ -51,13 +50,13 @@ func graphTest(t *testing.T, engine Engine, N int) {
 
 		// mark some identical labels
 		// by using the negatives
-		for i := 0; i < N; i++ {
+		for i := range N {
 			if i%2 == 0 {
 				g.MarkIdentical(l(3*i+8), l(-(3*i + 8)))
 			}
 		}
 
-		for i := 0; i < N; i++ {
+		for i := range N {
 			// add triple (3i+6, 0, 3i + 7) or the inverse
 			if i%4 == 0 || i%4 == 1 {
 				g.AddTriple(l(3*i+6), l(0), l(3*i+7), impl.Source{})
@@ -89,7 +88,7 @@ func graphTest(t *testing.T, engine Engine, N int) {
 
 		// randomly fill 100 more elements
 		source := rand.New(rand.NewSource(int64(N)))
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			g.AddTriple(l(source.Intn(N)), l(4), l(source.Intn(N)), impl.Source{})
 			g.AddTriple(l(source.Intn(N)), l(5), l(source.Intn(N)), impl.Source{})
 		}
@@ -262,11 +261,10 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		if !reflect.DeepEqual(triples, wantTriples) {
 			t.Errorf("triples = %v, want = %v", triples, wantTriples)
 		}
-
 	}
 
 	counter := 0
-	for i := 0; i < N; i++ {
+	for i := range N {
 		counter++
 		_, ok := encountered[d(i)]
 		if !ok {

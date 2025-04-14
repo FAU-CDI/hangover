@@ -12,7 +12,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// BundleEngine is a function that initializes and returns a new BundleStorage
+// BundleEngine is a function that initializes and returns a new BundleStorage.
 type BundleEngine interface {
 	NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, error)
 }
@@ -28,7 +28,7 @@ func NewBundleEngine(path string) BundleEngine {
 	}
 }
 
-// BundleStorage is responsible for storing entities for a single bundle
+// BundleStorage is responsible for storing entities for a single bundle.
 type BundleStorage interface {
 	io.Closer
 
@@ -81,7 +81,7 @@ var (
 	ErrNoEntity = errors.New("no such entity")
 )
 
-// LabelWithParent represents a URI along with it's parent
+// LabelWithParent represents a URI along with it's parent.
 type LabelWithParent struct {
 	Label  impl.Label
 	Parent impl.Label

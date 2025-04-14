@@ -11,7 +11,7 @@ import (
 
 // cspell:words triplestore
 
-// Source represents a source of triples
+// Source represents a source of triples.
 type Source interface {
 	// Open opens this data source.
 	//
@@ -27,17 +27,7 @@ type Source interface {
 	Next() Token
 }
 
-// Token represents a token read from a triplestore file.
-//
-// It can represent one of three states:
-//
-// 1. an error token
-// 1. a (subject, predicate, object) token
-// 2. a (subject, predicate, datum) token
-//
-// In the case of 1, Error != nil.
-// In the case of 2, Error == nil && HasDatum = False
-// In the case of 3, Error == nil && HasDatum = True
+// In the case of 3, Error == nil && HasDatum = True.
 type Token struct {
 	Datum     impl.Datum
 	Err       error
@@ -48,7 +38,7 @@ type Token struct {
 	HasDatum  bool
 }
 
-// QuadSource reads triples from a quad file
+// QuadSource reads triples from a quad file.
 type QuadSource struct {
 	Reader io.ReadSeeker
 	reader *nquads.Reader
@@ -71,7 +61,7 @@ func (qs *QuadSource) Open() error {
 	return nil
 }
 
-// Next reads the next token from the QuadSource
+// Next reads the next token from the QuadSource.
 func (qs *QuadSource) Next() Token {
 	for {
 		value, err := qs.reader.ReadQuad()
@@ -84,7 +74,7 @@ func (qs *QuadSource) Next() Token {
 
 		sI, sOK := asLabel(value.Subject)
 		pI, pOK := asLabel(value.Predicate)
-		if !(sOK && pOK) {
+		if !sOK || !pOK {
 			continue
 		}
 

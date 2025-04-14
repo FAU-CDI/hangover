@@ -24,7 +24,7 @@ type IMap struct {
 	id        impl.ID     // last id inserted
 }
 
-// TripleID represents the id of a tripleID
+// TripleID represents the id of a tripleID.
 type TripleID struct {
 	// Canonical holds the id of this triple, that is normalized for inverses and identities.
 	Canonical impl.ID
@@ -34,19 +34,19 @@ type TripleID struct {
 	Literal impl.ID
 }
 
-// Marshal marshals this TripleID into a []byte
+// Marshal marshals this TripleID into a []byte.
 func (ti TripleID) Marshal() ([]byte, error) {
 	return impl.EncodeIDs(ti.Canonical, ti.Literal), nil
 }
 
-// Unmarshal reads this TripleID from a []byte
+// Unmarshal reads this TripleID from a []byte.
 func (ti *TripleID) Unmarshal(src []byte) error {
 	return impl.UnmarshalIDs(src, &(ti.Canonical), &(ti.Literal))
 }
 
 var ErrFinalized = errors.New("IMap is finalized")
 
-// Reset resets this IMap to be empty, closing any previously opened files
+// Reset resets this IMap to be empty, closing any previously opened files.
 func (mp *IMap) Reset(engine Map) error {
 	if err := mp.Close(); err != nil {
 		return err

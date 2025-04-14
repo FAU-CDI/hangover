@@ -39,7 +39,7 @@ func (assets *Assets) MustParse(t *template.Template, value string) *template.Te
 	return t
 }
 
-// MustParseShared is like [MustParse], but creates a new SharedTemplate instead
+// MustParseShared is like [MustParse], but creates a new SharedTemplate instead.
 func (assets *Assets) MustParseShared(name string, value string, funcMap template.FuncMap) *template.Template {
 	return assets.MustParse(NewSharedTemplate(name, funcMap), value)
 }

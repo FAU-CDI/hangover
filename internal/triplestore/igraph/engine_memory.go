@@ -1,13 +1,14 @@
 package igraph
 
 import (
+	"maps"
+	"slices"
+
 	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
-// MemoryEngine represents an engine that stores everything in memory
+// MemoryEngine represents an engine that stores everything in memory.
 type MemoryEngine struct {
 	imap.MemoryMap
 }
@@ -27,14 +28,13 @@ func (MemoryEngine) Inverses() (imap.HashMap[impl.ID, impl.ID], error) {
 func (MemoryEngine) PSOIndex() (ThreeStorage, error) {
 	th := make(ThreeHash)
 	return &th, nil
-
 }
 func (MemoryEngine) POSIndex() (ThreeStorage, error) {
 	th := make(ThreeHash)
 	return &th, nil
 }
 
-// ThreeHash implements ThreeStorage in memory
+// ThreeHash implements ThreeStorage in memory.
 type ThreeHash map[impl.ID]map[impl.ID]*ThreeItem
 
 func (th *ThreeHash) Compact() error {
@@ -82,7 +82,7 @@ func (tlm ThreeHash) Count() (total int64, err error) {
 func (tlm ThreeHash) Finalize() error {
 	for _, a := range tlm {
 		for _, b := range a {
-			b.Keys = maps.Keys(b.Data)
+			b.Keys = slices.AppendSeq(make([]impl.ID, 0, len(b.Data)), maps.Keys(b.Data))
 			slices.SortFunc(b.Keys, impl.ID.Compare)
 		}
 	}

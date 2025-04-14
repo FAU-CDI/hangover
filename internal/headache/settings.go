@@ -7,7 +7,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// Settings represent bound settings
+// Settings represent bound settings.
 type settings struct {
 	addr binding.String
 
@@ -24,7 +24,7 @@ type settings struct {
 	tipsy binding.String
 }
 
-// Addr returns the address to listen on
+// Addr returns the address to listen on.
 func (settings *settings) Addr() string {
 	addr, _ := settings.addr.Get()
 	return addr
@@ -40,7 +40,7 @@ func (settings *settings) Nquads() (nq string) {
 	return
 }
 
-// Flags returns the flags to use for the viewer
+// Flags returns the flags to use for the viewer.
 func (settings *settings) Flags() (flags viewer.RenderFlags) {
 	sa, _ := settings.sameAs.Get()
 	io, _ := settings.inverseOf.Get()

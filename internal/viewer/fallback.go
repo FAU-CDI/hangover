@@ -51,7 +51,7 @@ const (
 	viewerRetrySeconds = "60"
 )
 
-// ProgressMessage is returned by the viewer when the progress is not available
+// ProgressMessage is returned by the viewer when the progress is not available.
 type ProgressMessage struct {
 	Message  string
 	Progress stats.Progress

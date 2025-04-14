@@ -1,6 +1,7 @@
 package sparkl
 
 import (
+	"errors"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -26,7 +27,7 @@ func StoreBundle(bundle *pathbuilder.Bundle, index *igraph.Index, engine storage
 	return storages[0], closer, err
 }
 
-// StoreBundles is like StoreBundle, but takes multiple bundles
+// StoreBundles is like StoreBundle, but takes multiple bundles.
 func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine storages.BundleEngine, st *stats.Stats) ([]storages.BundleStorage, func() error, error) {
 	context := &Context{
 		Index:  index,
@@ -103,7 +104,7 @@ func (context *Context) Wait() error {
 	return context.err
 }
 
-// Close closes this context
+// Close closes this context.
 func (context *Context) Close() (err error) {
 	for {
 		select {
@@ -154,7 +155,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 		// this is the length of the parent path, or zero (if it does not exist).
 		var entityURIIndex int
 		if bundle.Parent != nil {
-			entityURIIndex = len(bundle.Path.PathArray) / 2
+			entityURIIndex = len(bundle.PathArray) / 2
 		}
 
 		// stage 1: load the entities themselves
@@ -188,7 +189,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 					path := paths.Datum()
 
 					err = storage.AddFieldValue(path.Nodes[entityURIIndex], field.MachineName(), path.Value(), path.Nodes, path.Triples)
-					if err != storages.ErrNoEntity {
+					if !errors.Is(err, storages.ErrNoEntity) {
 						context.reportError(err)
 					}
 				}
@@ -231,11 +232,10 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 							return
 						}
 						err := storage.AddChild(child.Parent, bundle.MachineName(), child.Label)
-						if err != storages.ErrNoEntity {
+						if !errors.Is(err, storages.ErrNoEntity) {
 							context.reportError(err)
 						}
 					}
-
 				}(cstorage, bundle.ChildBundles[i])
 			}
 

@@ -22,13 +22,12 @@ func newDataOpener(label string, parent fyne.Window, vNq, vPB binding.String) *w
 			}
 			vNq.Set(nq)
 			vPB.Set(pb)
-
 		}, parent)
 	})
 	return b
 }
 
-// newFileSelector creates a two new widgets, a readonly entry and a file selector
+// newFileSelector creates a two new widgets, a readonly entry and a file selector.
 func newFileSelector(label string, parent fyne.Window, v binding.String, validator func(path string) error) (*widget.Entry, *widget.Button) {
 	w := widget.NewEntryWithData(v)
 	w.Validator = validator

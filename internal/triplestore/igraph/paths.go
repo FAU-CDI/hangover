@@ -26,8 +26,7 @@ type Paths struct {
 	size       int // if known, otherwise invalidSize
 }
 
-// PathsStarting creates a new [PathSet] that represents all one-element paths
-// starting at a vertex which is connected to object with the given predicate
+// starting at a vertex which is connected to object with the given predicate.
 func (index *Index) PathsStarting(predicate, object impl.Label) (*Paths, error) {
 	p, err := index.labels.Forward(predicate)
 	if err != nil {
@@ -51,13 +50,13 @@ func (index *Index) PathsStarting(predicate, object impl.Label) (*Paths, error) 
 			return nil
 		})
 
-		if err != errAborted {
+		if !errors.Is(err, errAborted) {
 			sender.YieldError(err)
 		}
 	}), nil
 }
 
-// newQuery creates a new Query object that contains nodes with the given ids
+// newQuery creates a new Query object that contains nodes with the given ids.
 func (index *Index) newQuery(source func(sender traversal.Generator[element])) (q *Paths) {
 	q = &Paths{
 		index:    index,
@@ -80,7 +79,7 @@ func (set *Paths) Connected(predicate impl.Label) error {
 
 var errAborted = errors.New("paths: aborted")
 
-// expand expands the nodes in this query by adding a link to each element found in the index
+// expand expands the nodes in this query by adding a link to each element found in the index.
 func (set *Paths) expand(p impl.ID) error {
 	set.elements = traversal.Connect(set.elements, func(subject element, sender traversal.Generator[element]) (ok bool) {
 		err := set.index.psoIndex.Fetch(p, subject.Node, func(object impl.ID, l impl.ID) error {
@@ -95,7 +94,7 @@ func (set *Paths) expand(p impl.ID) error {
 		})
 
 		// if we have a "real" error, yield it and stop!
-		if err != nil && err != errAborted {
+		if err != nil && !errors.Is(err, errAborted) {
 			return sender.YieldError(err)
 		}
 		return true
@@ -118,7 +117,7 @@ func (set *Paths) Ending(predicate, object impl.Label) error {
 	return set.restrict(p, o)
 }
 
-// restrict restricts the set of nodes by those mapped in the index
+// restrict restricts the set of nodes by those mapped in the index.
 func (set *Paths) restrict(p, o impl.ID) error {
 	set.elements = traversal.Connect(set.elements, func(subject element, sender traversal.Generator[element]) bool {
 		tid, has, err := set.index.posIndex.Has(p, o, subject.Node)
@@ -175,7 +174,7 @@ func (set *Paths) Paths() traversal.Iterator[Path] {
 	})
 }
 
-// makePath creates a path from an element
+// makePath creates a path from an element.
 func (set *Paths) makePath(elem element) (path Path, err error) {
 	var rNodes, rTriples []impl.ID
 
@@ -198,14 +197,14 @@ func (set *Paths) makePath(elem element) (path Path, err error) {
 	)
 }
 
-// element represents an element of a path
+// element represents an element of a path.
 type element struct {
 	Parent  *element
 	Triples []impl.ID
 	Node    impl.ID
 }
 
-// Path represents a path inside a GraphIndex
+// Path represents a path inside a GraphIndex.
 type Path struct {
 	Datum    impl.Datum
 	Nodes    []impl.Label
@@ -214,8 +213,7 @@ type Path struct {
 	HasDatum bool
 }
 
-// newPath creates a new path from the given index, with the given ids
-// an "r" in front of the variable indicates it is passed in reverse order
+// an "r" in front of the variable indicates it is passed in reverse order.
 func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []impl.ID) (path Path, err error) {
 	// process nodes
 	if len(rNodeIDs) != 0 {
@@ -262,16 +260,9 @@ func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []i
 	}
 
 	return
-
 }
 
-// Value returns the value corresponding to a field represented by this path.
-//
-// The value returned tries the following options in order:
-//
-// - the datum corresponding to the path
-// - the last node, interpreted as a datum
-// - the zero value of the datum type
+// - the zero value of the datum type.
 func (path Path) Value() (value impl.Datum) {
 	if path.HasDatum {
 		return path.Datum

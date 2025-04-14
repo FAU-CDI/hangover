@@ -19,7 +19,7 @@ import (
 
 const GlassVersion = 2
 
-// Glass represents a stand-alone representation of a WissKI
+// Glass represents a stand-alone representation of a WissKI.
 type Glass struct {
 	Pathbuilder pathbuilder.Pathbuilder
 	Cache       *sparkl.Cache

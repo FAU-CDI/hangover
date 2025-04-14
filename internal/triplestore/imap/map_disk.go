@@ -67,7 +67,6 @@ func (de DiskMap) Reverse() (HashMap[impl.ID, impl.Label], error) {
 // NewDiskStorage creates a new disk-based storage with the given options.
 // If the filepath already exists, it is deleted.
 func NewDiskStorage[Key comparable, Value any](path string) (*DiskStorage[Key, Value], error) {
-
 	// If the path already exists, wipe it
 	_, err := os.Stat(path)
 	if err == nil {
@@ -100,7 +99,7 @@ func NewDiskStorage[Key comparable, Value any](path string) (*DiskStorage[Key, V
 	return storage, nil
 }
 
-// DiskStorage implements Storage as an in-memory storage
+// DiskStorage implements Storage as an in-memory storage.
 type DiskStorage[Key comparable, Value any] struct {
 	DB *leveldb.DB
 
@@ -128,7 +127,7 @@ func (ds *DiskStorage[Key, Value]) Set(key Key, value Value) error {
 	return ds.DB.Put(keyB, valueB, nil)
 }
 
-// Get returns the given value if it exists
+// Get returns the given value if it exists.
 func (ds *DiskStorage[Key, Value]) Get(key Key) (v Value, b bool, err error) {
 	keyB, err := ds.MarshalKey(key)
 	if err != nil {
@@ -136,7 +135,7 @@ func (ds *DiskStorage[Key, Value]) Get(key Key) (v Value, b bool, err error) {
 	}
 
 	valueB, err := ds.DB.Get(keyB, nil)
-	if err == leveldb.ErrNotFound {
+	if errors.Is(err, leveldb.ErrNotFound) {
 		return v, false, nil
 	}
 	if err != nil {
@@ -169,7 +168,7 @@ func (ds *DiskStorage[Key, Value]) Has(key Key) (bool, error) {
 	return ok, nil
 }
 
-// Delete deletes the given key from this storage
+// Delete deletes the given key from this storage.
 func (ds *DiskStorage[Key, Value]) Delete(key Key) error {
 	keyB, err := ds.MarshalKey(key)
 	if err != nil {

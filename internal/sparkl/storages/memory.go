@@ -21,7 +21,7 @@ func (MemoryEngine) NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, error
 	}, nil
 }
 
-// Memory implements an in-memory bundle storage
+// Memory implements an in-memory bundle storage.
 type Memory struct {
 	bundle        *pathbuilder.Bundle
 	childStorages map[string]BundleStorage
@@ -31,7 +31,7 @@ type Memory struct {
 	addChild      sync.Mutex
 }
 
-// Add adds an entity to this BundleSlice
+// Add adds an entity to this BundleSlice.
 func (bs *Memory) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple) error {
 	bs.lookup[uri] = len(bs.Entities)
 	entity := wisski.Entity{
@@ -47,7 +47,7 @@ func (bs *Memory) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple
 	}
 
 	for _, bundle := range bs.bundle.ChildBundles {
-		entity.Children[bundle.MachineName()] = make([]wisski.Entity, 0, bundle.Path.MakeCardinality())
+		entity.Children[bundle.MachineName()] = make([]wisski.Entity, 0, bundle.MakeCardinality())
 	}
 
 	bs.Entities = append(bs.Entities, entity)

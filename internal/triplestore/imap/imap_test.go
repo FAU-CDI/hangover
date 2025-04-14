@@ -12,7 +12,6 @@ import (
 // cspell:words itol
 
 func ExampleIMap() {
-
 	var mp IMap
 	mp.Reset(&MemoryMap{})
 
@@ -78,12 +77,12 @@ func ExampleIMap() {
 	// add<again> ID(3) <nil>
 }
 
-// itol is like strconv.itoa, but returns a label
+// itol is like strconv.itoa, but returns a label.
 func itol(i int) impl.Label {
 	return impl.Label(strconv.Itoa(i))
 }
 
-// mapTest performs a test for a given engine
+// mapTest performs a test for a given engine.
 func mapTest(t *testing.T, engine Map, N int) {
 	t.Helper()
 
@@ -105,7 +104,7 @@ func mapTest(t *testing.T, engine Map, N int) {
 	}
 
 	// check that forward mappings work
-	for i := 0; i < N; i++ {
+	for i := range N {
 		id, err := mp.Forward(itol(i))
 		if err != nil {
 			t.Errorf("Forward() returned error %s", err)

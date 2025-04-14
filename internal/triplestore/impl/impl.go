@@ -11,7 +11,7 @@ func LabelAsByte(label Label) []byte {
 	return []byte(label)
 }
 
-// ByteAsLabel returns a label from a []byte
+// ByteAsLabel returns a label from a []byte.
 func ByteAsLabel(label []byte) Label {
 	return Label(label)
 }
@@ -33,7 +33,7 @@ func ByteAsDatum(dest *Datum, src []byte) error {
 	return json.Unmarshal(src, dest)
 }
 
-// Source represents source information for a triple
+// Source represents source information for a triple.
 type Source struct {
 	Graph      Label
 	Identifier string

@@ -10,7 +10,7 @@ type Map interface {
 	Reverse() (HashMap[impl.ID, impl.Label], error)
 }
 
-// HashMap is something that stores key-value pairs
+// HashMap is something that stores key-value pairs.
 type HashMap[Key comparable, Value any] interface {
 	// Grow resizes this hash map to the given size.
 	// if the HashMap already has data in it, may be a no-op.

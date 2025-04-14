@@ -29,7 +29,7 @@ type SQL struct {
 	MakeFieldTables bool // create tables for field values (if false, they get joined with "separator")
 }
 
-// exec executes an sql query
+// exec executes an sql query.
 func (sql *SQL) exec(query string, args []any) (err error) {
 	sql.dbLock.Lock()
 	defer sql.dbLock.Unlock()
@@ -123,7 +123,7 @@ func (*SQL) FieldColumn(field pathbuilder.Field) string {
 	return fieldColumnPrefix + field.MachineName()
 }
 
-// createBundleTable creates a table for the given bundle
+// createBundleTable creates a table for the given bundle.
 func (sql *SQL) createBundleTable(bundle *pathbuilder.Bundle) error {
 	// build all the child tables first!
 	for _, child := range bundle.ChildBundles {
@@ -157,7 +157,7 @@ func (sql *SQL) createBundleTable(bundle *pathbuilder.Bundle) error {
 	return sql.exec(table.Build())
 }
 
-// CreateFieldTable creates a table for the given field
+// CreateFieldTable creates a table for the given field.
 func (sql *SQL) CreateFieldTable(bundle *pathbuilder.Bundle, field pathbuilder.Field) error {
 	table := sqlbuilder.CreateTable(sql.FieldTable(bundle, field)).IfNotExists()
 	table.Define(uriColumn, "TEXT")
@@ -244,7 +244,6 @@ var (
 
 // inserts performs inserts into the table for the provided bundle.
 func (sql *SQL) insert(bundle *pathbuilder.Bundle, parent impl.Label, entities []wisski.Entity) error {
-
 	// 1. insert into the bundle table
 	if err := sql.insertBundleTable(bundle, parent, entities); err != nil {
 		return err

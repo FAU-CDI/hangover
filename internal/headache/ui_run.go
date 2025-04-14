@@ -65,7 +65,7 @@ func (h *Headache) setupRunWindow() {
 	h.runViewer(listener, context, cancel)
 }
 
-// runViewer
+// runViewer.
 func (h *Headache) runViewer(listener net.Listener, ctx context.Context, cancel context.CancelFunc) {
 	// create a new handler
 	h.done.Add(1)

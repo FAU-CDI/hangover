@@ -45,7 +45,7 @@ type Index struct {
 	reverseSource map[impl.ID]impl.Source
 }
 
-// Stats returns statistics from this graph
+// Stats returns statistics from this graph.
 func (index *Index) Stats() Stats {
 	return index.stats
 }
@@ -59,7 +59,7 @@ func (index *Index) TripleCount() (count uint64, err error) {
 	return index.triples.Count()
 }
 
-// Triple returns the triple with the given id
+// Triple returns the triple with the given id.
 func (index *Index) Triple(id impl.ID) (triple Triple, err error) {
 	t, _, err := index.triples.Get(id)
 	if err != nil {
@@ -111,7 +111,6 @@ func (index *Index) Triple(id impl.ID) (triple Triple, err error) {
 
 // Reset resets this index and prepares all internal structures for use.
 func (index *Index) Reset(engine Engine) (err error) {
-
 	if err = index.Close(); err != nil {
 		return err
 	}
@@ -174,12 +173,12 @@ func (index *Index) Reset(engine Engine) (err error) {
 	return nil
 }
 
-// SetPredicateMask sets the masks for predicates
+// SetPredicateMask sets the masks for predicates.
 func (index *Index) SetPredicateMask(predicates map[impl.Label]struct{}) error {
 	return index.setMask(predicates, &index.pMask)
 }
 
-// SetDataMask sets the masks for data
+// SetDataMask sets the masks for data.
 func (index *Index) SetDataMask(predicates map[impl.Label]struct{}) error {
 	return index.setMask(predicates, &index.dMask)
 }
@@ -319,7 +318,7 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label, source impl
 	return nil
 }
 
-// addSource returns the id for the given source
+// addSource returns the id for the given source.
 func (index *Index) addSource(source impl.Source) (impl.ID, error) {
 	if id, ok := index.sources[source]; ok {
 		return id, nil
@@ -437,10 +436,9 @@ func (index *Index) resolveLabelConflict(old, new impl.ID) (impl.ID, error) {
 		return new, nil
 	}
 	return old, nil
-
 }
 
-// insert inserts the provided (subject, predicate, object) ids into the graph
+// insert inserts the provided (subject, predicate, object) ids into the graph.
 func (index *Index) insert(subject, predicate, object impl.ID, label impl.ID) (conflicted bool, err error) {
 	var conflicted1, conflicted2 bool
 
@@ -603,7 +601,7 @@ func (index *Index) Finalize() error {
 	return errors.Join(errs[:]...)
 }
 
-// Close closes any storages attached to this storage
+// Close closes any storages attached to this storage.
 func (index *Index) Close() error {
 	var errors [5]error
 	errors[0] = index.labels.Close()

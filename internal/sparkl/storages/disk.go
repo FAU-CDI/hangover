@@ -1,6 +1,7 @@
 package storages
 
 import (
+	"errors"
 	"iter"
 	"os"
 	"path/filepath"
@@ -12,7 +13,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/errors"
+	lerrors "github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 type DiskEngine struct {
@@ -40,7 +41,7 @@ func (de DiskEngine) NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, erro
 	}, nil
 }
 
-// Disk represents a disk-backed storage
+// Disk represents a disk-backed storage.
 type Disk struct {
 	DB            *leveldb.DB
 	childStorages map[string]BundleStorage
@@ -78,7 +79,7 @@ func (ds *Disk) get(uri impl.Label, f func(*sEntity) error) error {
 
 	// get the entity or return an error
 	data, err := ds.DB.Get([]byte(uri), nil)
-	if err == errors.ErrNotFound {
+	if errors.Is(err, lerrors.ErrNotFound) {
 		return ErrNoEntity
 	}
 	if err != nil {
@@ -116,7 +117,7 @@ func (ds *Disk) update(uri impl.Label, update func(*sEntity) error) error {
 
 	// get the entity or return an error
 	data, err := ds.DB.Get([]byte(uri), nil)
-	if err == errors.ErrNotFound {
+	if errors.Is(err, lerrors.ErrNotFound) {
 		return ErrNoEntity
 	}
 	if err != nil {
@@ -143,7 +144,7 @@ func (ds *Disk) update(uri impl.Label, update func(*sEntity) error) error {
 	return ds.DB.Put([]byte(entity.URI), data, nil)
 }
 
-// Add adds an entity to this BundleSlice
+// Add adds an entity to this BundleSlice.
 func (ds *Disk) Add(uri impl.Label, path []impl.Label, triples []igraph.Triple) error {
 	atomic.AddInt64(&ds.count, 1)
 	return ds.put(func(se *sEntity) error {

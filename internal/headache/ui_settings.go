@@ -23,7 +23,7 @@ This program (headache) implements a GUI for hangover, the WissKI Data Viewer.
 To start the viewer, simply select the exported triplestore data and pathbuilder below.
 Then click the start button below (you may have to scroll to the bottom). `
 
-// setupSettingsWindow configures the main window for the settings view
+// setupSettingsWindow configures the main window for the settings view.
 func (h *Headache) setupSettingsWindow() {
 	h.handler.Stats.Log("setting up settings window")
 
@@ -144,10 +144,10 @@ func (h *Headache) setupSettingsWindow() {
 	}()
 }
 
-// validateAddress checks if address is valid
+// validateAddress checks if address is valid.
 func validateAddress(addr string) error {
 	if addr == "" {
-		return fmt.Errorf("empty address")
+		return errors.New("empty address")
 	}
 
 	_, port, err := net.SplitHostPort(addr)

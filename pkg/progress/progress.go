@@ -21,7 +21,7 @@ type Reader struct {
 func (cr *Reader) Read(bytes []byte) (int, error) {
 	count, err := cr.Reader.Read(bytes)
 	cr.Bytes += int64(count)
-	cr.Rewritable.Write(fmt.Sprintf("Read %s", humanize.Bytes(uint64(cr.Bytes))))
+	cr.Write("Read " + humanize.Bytes(uint64(cr.Bytes)))
 	return count, err
 }
 
@@ -34,11 +34,11 @@ type Writer struct {
 
 func (cw *Writer) Write(bytes []byte) (int, error) {
 	cw.Bytes += int64(len(bytes))
-	cw.Rewritable.Write(fmt.Sprintf("Wrote %s", humanize.Bytes(uint64(cw.Bytes))))
+	cw.Rewritable.Write("Wrote " + humanize.Bytes(uint64(cw.Bytes)))
 	return cw.Writer.Write(bytes)
 }
 
-// DefaultFlushInterval is a reasonable default flush interval
+// DefaultFlushInterval is a reasonable default flush interval.
 const DefaultFlushInterval = time.Second / 30
 
 type Rewritable struct {
@@ -55,7 +55,7 @@ func (rw *Rewritable) Write(value string) {
 }
 
 func (rw *Rewritable) Flush(force bool) {
-	if !(force || time.Since(rw.lastFlush) > rw.FlushInterval) {
+	if !force && time.Since(rw.lastFlush) <= rw.FlushInterval {
 		return
 	}
 
@@ -94,8 +94,8 @@ func (progress *Progress) Set(prefix string, count, total int) {
 	}
 
 	if countS < totalS {
-		progress.Rewritable.Write(fmt.Sprintf("%s: %s/%s", prefix, countS, totalS))
+		progress.Write(fmt.Sprintf("%s: %s/%s", prefix, countS, totalS))
 	} else {
-		progress.Rewritable.Write(fmt.Sprintf("%s: %s", prefix, countS))
+		progress.Write(fmt.Sprintf("%s: %s", prefix, countS))
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 // cspell:words WissKI
 
-// Exporter handles WissKI Entities
+// Exporter handles WissKI Entities.
 type Exporter interface {
 	io.Closer
 

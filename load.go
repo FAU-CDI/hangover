@@ -77,7 +77,7 @@ func isDirectory(path string) (ok bool, err error) {
 	return stats.Mode().IsDir(), nil
 }
 
-// isFile checks if path is a
+// isFile checks if path is a.
 func isFile(path string) (ok bool, err error) {
 	stats, err := os.Stat(path)
 	if err != nil {

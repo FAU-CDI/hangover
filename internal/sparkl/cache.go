@@ -4,12 +4,13 @@ import (
 	"errors"
 	"runtime"
 
+	"maps"
+	"slices"
+
 	"github.com/FAU-CDI/hangover/internal/stats"
 	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // cspell:Words WIssKI imap
@@ -57,7 +58,7 @@ func (cache Cache) BundleNames() []string {
 
 // TODO: Do we want to use an IMap here?
 
-// NewCache creates a new cache from a bundle-entity-map
+// NewCache creates a new cache from a bundle-entity-map.
 func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, impl.Label], st *stats.Stats) (c Cache, err error) {
 	var counter int
 	progress := func() {
@@ -87,7 +88,7 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, i
 		}
 	}
 
-	c.bundleNames = maps.Keys(c.beIndex)
+	c.bundleNames = slices.AppendSeq(make([]string, 0, len(c.beIndex)), maps.Keys(c.beIndex))
 	slices.Sort(c.bundleNames)
 
 	sameAsCount, err := SameAs.Count()
@@ -134,13 +135,13 @@ func (c Cache) canonical(uri impl.Label) impl.ID {
 	return id
 }
 
-// Canonical returns the canonical version of the given uri
+// Canonical returns the canonical version of the given uri.
 func (c Cache) Canonical(uri impl.Label) impl.Label {
 	canon, _ := c.uris.Reverse(c.canonical(uri))
 	return canon
 }
 
-// Aliases returns the Aliases of the given impl.Label, excluding itself
+// Aliases returns the Aliases of the given impl.Label, excluding itself.
 func (c Cache) Aliases(uri impl.Label) []impl.Label {
 	id, err := c.uris.Forward(uri)
 	if err != nil {
@@ -159,14 +160,14 @@ func (c Cache) Aliases(uri impl.Label) []impl.Label {
 	return aliases
 }
 
-// Bundle returns the bundle of the given uri, if any
+// Bundle returns the bundle of the given uri, if any.
 func (c Cache) Bundle(uri impl.Label) (string, bool) {
 	cid := c.canonical(uri)
 	bundle, ok := c.ebIndex[cid]
 	return bundle, ok
 }
 
-// FirstBundle returns the first bundle for which the given impl.Label exists
+// FirstBundle returns the first bundle for which the given impl.Label exists.
 func (c Cache) FirstBundle(uris ...impl.Label) (uri impl.Label, bundle string, ok bool) {
 	for _, uri := range uris {
 		bundle, ok = c.Bundle(uri)
@@ -177,7 +178,7 @@ func (c Cache) FirstBundle(uris ...impl.Label) (uri impl.Label, bundle string, o
 	return
 }
 
-// Entity looks up the given entity
+// Entity looks up the given entity.
 func (c Cache) Entity(uri impl.Label, bundle string) (*wisski.Entity, bool) {
 	index, ok := c.biIndex[bundle][c.canonical(uri)]
 	if !ok {

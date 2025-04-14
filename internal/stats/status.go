@@ -60,8 +60,7 @@ func NewStats(w io.Writer, debug bool) *Stats {
 	}
 }
 
-// Rewritable returns the rewritable associated with this status.
-// It is automatically closed at the end of each stage
+// It is automatically closed at the end of each stage.
 func (st *Stats) Rewritable() *progress.Rewritable {
 	if st == nil {
 		return nil
@@ -69,7 +68,7 @@ func (st *Stats) Rewritable() *progress.Rewritable {
 	return st.rewritable
 }
 
-// Current returns a copy of the current StageStats
+// Current returns a copy of the current StageStats.
 func (st *Stats) Current() StageStats {
 	if st == nil {
 		var zero StageStats
@@ -88,8 +87,7 @@ func (st *Stats) onUpdate() {
 	st.OnUpdate(st)
 }
 
-// StoreIndexStats optionally stores index statistics.
-// If st is nil or done, this call has no effect
+// If st is nil or done, this call has no effect.
 func (st *Stats) StoreIndexStats(stats igraph.Stats) {
 	defer st.onUpdate()
 
@@ -100,7 +98,7 @@ func (st *Stats) StoreIndexStats(stats igraph.Stats) {
 	st.istats.Set(stats)
 }
 
-// IndexStats returns the current stats for the index
+// IndexStats returns the current stats for the index.
 func (st *Stats) IndexStats() igraph.Stats {
 	if st == nil {
 		var zero igraph.Stats
@@ -109,7 +107,7 @@ func (st *Stats) IndexStats() igraph.Stats {
 	return st.istats.Get(nil)
 }
 
-// Current returns a copy of the current StageStats
+// Current returns a copy of the current StageStats.
 func (st *Stats) All() []StageStats {
 	if st == nil {
 		return []StageStats{}
@@ -132,7 +130,7 @@ type Progress struct {
 	Current, Total int
 }
 
-// Progress returns information about the current stage
+// Progress returns information about the current stage.
 func (st *Stats) Progress() (progress Progress) {
 	// fast path: we're already done
 	if st.Done() {
@@ -333,7 +331,6 @@ func (st *Stats) DoStage(stage Stage, f func() error) error {
 
 	// an err occurred => write the stats
 	if err != nil {
-
 		st.end()
 
 		if st.rewritable != nil {
@@ -347,7 +344,7 @@ func (st *Stats) DoStage(stage Stage, f func() error) error {
 	return nil
 }
 
-// StageStats holds the stats for a specific stage
+// StageStats holds the stats for a specific stage.
 type StageStats struct {
 	Stage Stage
 
@@ -384,7 +381,7 @@ func (st *Stats) SetCT(current, total int) {
 	}
 }
 
-// Progress returns a string holding progress information on the current stage
+// Progress returns a string holding progress information on the current stage.
 func (ss StageStats) Progress() string {
 	if ss.Total == 0 {
 		return ""
@@ -396,12 +393,12 @@ func (ss StageStats) Progress() string {
 	}
 }
 
-// Diff returns a diff of the given stage
+// Diff returns a diff of the given stage.
 func (ss StageStats) Diff() perf.Diff {
 	return ss.End.Sub(ss.Start)
 }
 
-// Stage represents a stage used for statistics
+// Stage represents a stage used for statistics.
 type Stage string
 
 const (

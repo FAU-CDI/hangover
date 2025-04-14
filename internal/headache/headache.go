@@ -18,7 +18,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/viewer"
 )
 
-// Headache implements the headache UI
+// Headache implements the headache UI.
 type Headache struct {
 	used atomic.Bool
 
@@ -43,9 +43,8 @@ var icon = &fyne.StaticResource{
 	StaticContent: hangover.IconPNG,
 }
 
-// New setups a new Headache application
+// New setups a new Headache application.
 func New(debug bool) *Headache {
-
 	// create a new app and window
 	var h Headache
 
@@ -74,7 +73,7 @@ func New(debug bool) *Headache {
 	return &h
 }
 
-// RunAndWait runs the app and waits for it to complete
+// RunAndWait runs the app and waits for it to complete.
 func (h *Headache) RunAndWait() {
 	if !h.used.CompareAndSwap(false, true) {
 		panic("RunAndWait already called")

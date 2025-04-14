@@ -120,7 +120,7 @@ func MakeIndex(source Source, predicates Predicates, engine igraph.Engine, opts 
 	return &index, nil
 }
 
-// set mask sets a mask while building the index, causing several triples to not be indexed at all
+// set mask sets a mask while building the index, causing several triples to not be indexed at all.
 func setMask(index *igraph.Index, pb *pathbuilder.Pathbuilder) error {
 	if pb == nil {
 		return nil
@@ -160,7 +160,7 @@ func addPathArrayToMasks(pmask map[impl.Label]struct{}, ary []string) {
 	}
 }
 
-// indexSameAs inserts SameAs pairs into the index
+// indexSameAs inserts SameAs pairs into the index.
 func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Label, opts IndexOptions, stats *stats.Stats) (allCount, dataCount int, err error) {
 	err = source.Open()
 	if err != nil {
@@ -187,7 +187,7 @@ func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Lab
 		}
 
 		switch {
-		case tok.Err == io.EOF:
+		case errors.Is(tok.Err, io.EOF):
 			return allCount, dataCount, nil
 		case tok.Err != nil:
 			return 0, 0, tok.Err
@@ -201,7 +201,7 @@ func indexSameAs(source Source, index *igraph.Index, sameAsPredicates []impl.Lab
 	}
 }
 
-// indexInverseOf inserts InverseOf pairs into the index
+// indexInverseOf inserts InverseOf pairs into the index.
 func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl.Label, total int, opts IndexOptions, stats *stats.Stats) error {
 	if len(inversePredicates) == 0 {
 		return nil
@@ -233,7 +233,7 @@ func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl
 		}
 
 		switch {
-		case tok.Err == io.EOF:
+		case errors.Is(tok.Err, io.EOF):
 			return nil
 		case tok.Err != nil:
 			return tok.Err
@@ -245,7 +245,7 @@ func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl
 	}
 }
 
-// indexData inserts data into the index
+// indexData inserts data into the index.
 func indexData(source Source, index *igraph.Index, totalCount, dataCount int, opts IndexOptions, stats *stats.Stats) error {
 	err := source.Open()
 	if err != nil {
@@ -271,7 +271,7 @@ func indexData(source Source, index *igraph.Index, totalCount, dataCount int, op
 		}
 
 		switch {
-		case tok.Err == io.EOF:
+		case errors.Is(tok.Err, io.EOF):
 			return nil
 		case tok.Err != nil:
 			return tok.Err

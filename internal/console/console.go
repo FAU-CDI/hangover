@@ -9,7 +9,7 @@ import (
 	"github.com/tkw1536/pkglib/status"
 )
 
-// New creates a new console
+// New creates a new console.
 func New(scrollback int) *Console {
 	if scrollback <= 0 {
 		scrollback = 1000
@@ -30,7 +30,7 @@ func New(scrollback int) *Console {
 	return &console
 }
 
-// Console represents a buffer that can be written to and is displayed in a monospaced scroll container
+// Console represents a buffer that can be written to and is displayed in a monospaced scroll container.
 type Console struct {
 	// ScrollBack is the maximum number of lines stored by the container
 	ScrollBack int
@@ -46,7 +46,7 @@ func (console *Console) CanvasObject() fyne.CanvasObject {
 	return console.scroll
 }
 
-// Write writes to the underlying console
+// Write writes to the underlying console.
 func (console *Console) Write(data []byte) (int, error) {
 	return console.buffer.Write(data)
 }

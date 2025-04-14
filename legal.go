@@ -4,7 +4,7 @@ import _ "embed"
 
 // cspell:words gogenlicense
 
-//go:generate gogenlicense -m -t 0.5
+//go:generate go tool gogenlicense -m -t 0.5
 
 //go:embed LICENSE
 var License string

@@ -75,7 +75,6 @@ func (status *status) Set(stats *stats.Stats) {
 	if status.bar.Visible() {
 		status.bar.Refresh()
 	}
-
 }
 
 func setUint64(binding binding.String, value uint64) {

@@ -6,12 +6,12 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/anglo-korean/rdf"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 // cspell:words WissKI
 
-// Entity represents an Entity inside a WissKI Bundle
+// Entity represents an Entity inside a WissKI Bundle.
 type Entity struct {
 	Fields   map[string][]FieldValue // values for specific fields
 	Children map[string][]Entity     // child paths for child bundles
@@ -58,8 +58,7 @@ func (entity Entity) AllTriples() (triples []igraph.Triple) {
 	})
 }
 
-// appendTriples appends triples for this entity to triples
-// It does not deduplicate, and does not return
+// It does not deduplicate, and does not return.
 func (entity Entity) appendTriples(triples []igraph.Triple) []igraph.Triple {
 	triples = append(triples, entity.Triples...)
 	for _, fields := range entity.Fields {
@@ -76,7 +75,7 @@ func (entity Entity) appendTriples(triples []igraph.Triple) []igraph.Triple {
 	return triples
 }
 
-// FieldValue represents the value of a field inside an entity
+// FieldValue represents the value of a field inside an entity.
 type FieldValue struct {
 	Datum   impl.Datum
 	Path    []impl.Label

@@ -9,7 +9,6 @@ import (
 )
 
 func ExampleID() {
-
 	// create a new zero -- which isn't valid
 	var zero ID
 	fmt.Println(zero)
@@ -21,7 +20,7 @@ func ExampleID() {
 
 	// create the value 10
 	var ten ID
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		ten.Inc()
 	}
 
@@ -37,10 +36,9 @@ func ExampleID() {
 	// -1
 	// 1
 	// 0
-
 }
 
-// maximum numbers for the ID "torture tests"
+// maximum numbers for the ID "torture tests".
 const (
 	testIDLarge = (1 << (3 * 8)) // use a full 3 bytes
 	testIDSmall = 10             // (1 << (8 + (8 / 2))) // use 2.5 bytes
@@ -53,7 +51,7 @@ func TestID_Int(t *testing.T) {
 	)
 
 	// increment, which is guaranteed to have that value
-	for i := 0; i < testIDLarge; i++ {
+	for i := range testIDLarge {
 		bi.SetInt64(-1) // store a dirty value into the integer
 		id.Int(&bi)     // decode the value
 
@@ -66,7 +64,7 @@ func TestID_Int(t *testing.T) {
 
 	// next encode and decode again
 	// then check if the values are identical
-	for i := 0; i < testIDLarge; i++ {
+	for i := range testIDLarge {
 		id.LoadInt(bi.SetInt64(int64(i))) // store the integer into the id
 
 		bi.SetInt64(-1) // set a dirty value in the bigint
@@ -81,10 +79,10 @@ func TestID_Int(t *testing.T) {
 
 func BenchmarkID_Inc(b *testing.B) {
 	var id ID
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		id.Reset()
 
-		for j := 0; j < testIDSmall; j++ {
+		for range testIDSmall {
 			id.Inc()
 		}
 	}
@@ -93,19 +91,19 @@ func BenchmarkID_Inc(b *testing.B) {
 func BenchmarkID_Load(b *testing.B) {
 	var id ID
 	var bi big.Int
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		id.LoadInt(&bi)
 	}
 }
 
-// Test that only non-zero values are valid
+// Test that only non-zero values are valid.
 func TestID_Valid(t *testing.T) {
 	var (
 		id ID      // ID representation
 		bi big.Int // to load big integers
 	)
 
-	for i := 0; i < testIDLarge; i++ {
+	for i := range testIDLarge {
 		id.LoadInt(bi.SetInt64(int64(i)))
 
 		got := id.Valid()
@@ -127,7 +125,7 @@ func BenchmarkID_Compare(b *testing.B) {
 
 	b.StartTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		idI.Compare(idJ)
 	}
 }
@@ -144,11 +142,11 @@ func TestID_Compare(t *testing.T) {
 
 	// check that the .Compare() method indeed implements the order
 	// that was induced by their generation
-	for i := 0; i < testIDSmall; i++ {
+	for i := range testIDSmall {
 		idI.LoadInt(big.SetInt64(int64(i))) // set i to the right value
 		idI.Encode(bytesI)                  // and decode the bytes
 
-		for j := 0; j < testIDSmall; j++ {
+		for j := range testIDSmall {
 			idJ.LoadInt(big.SetInt64(int64(j))) // set j
 			idJ.Encode(bytesJ)                  // and decode the bytes
 
@@ -213,7 +211,7 @@ func TestEncodeIDs(t *testing.T) {
 		bytes := EncodeIDs(ids...)
 
 		// check that random access decoding works
-		for i := 0; i < n; i++ {
+		for i := range n {
 			DecodeID(bytes, i).Int(&big)
 			got := big.Int64()
 			want := values[i]

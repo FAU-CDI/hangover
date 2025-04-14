@@ -7,7 +7,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// Engine represents an object that creates storages for an IGraph
+// Engine represents an object that creates storages for an IGraph.
 type Engine interface {
 	imap.Map
 

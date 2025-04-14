@@ -106,7 +106,7 @@ var debugServer string
 var benchMode bool
 
 func init() {
-	var legalFlag bool = false
+	var legalFlag = false
 	flag.BoolVar(&legalFlag, "legal", legalFlag, "Display legal notices and exit")
 	defer func() {
 		if legalFlag {

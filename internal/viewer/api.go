@@ -11,7 +11,7 @@ import (
 
 // cspell:words pathbuilder
 
-// findBundle returns a bundle by machine name and makes sure that appropriate caches are filled
+// findBundle returns a bundle by machine name and makes sure that appropriate caches are filled.
 func (viewer *Viewer) findBundle(machine string) (bundle *pathbuilder.Bundle, ok bool) {
 	bundle = viewer.Pathbuilder.Bundle(machine)
 	if bundle == nil {
@@ -21,7 +21,7 @@ func (viewer *Viewer) findBundle(machine string) (bundle *pathbuilder.Bundle, ok
 	return bundle, true
 }
 
-// findEntity finds an entity by the given bundle machine name
+// findEntity finds an entity by the given bundle machine name.
 func (viewer *Viewer) findEntity(bundle_machine string, uri impl.Label) (bundle *pathbuilder.Bundle, entity *wisski.Entity, ok bool) {
 	bundle, ok = viewer.findBundle(bundle_machine)
 	if !ok {
@@ -52,8 +52,7 @@ func (viewer *Viewer) getBundles() (bundles []*pathbuilder.Bundle, ok bool) {
 	return bundles, true
 }
 
-// getEntityURIs returns the URIs belonging to a single bundle
-// TODO: Make this stream
+// TODO: Make this stream.
 func (viewer *Viewer) getEntityURIs(id string) (bundle *pathbuilder.Bundle, uris []impl.Label, ok bool) {
 	bundle, ok = viewer.findBundle(id)
 	if !ok {
@@ -68,14 +67,13 @@ func (viewer *Viewer) getEntityURIs(id string) (bundle *pathbuilder.Bundle, uris
 	return bundle, uris, true
 }
 
-// getEntityURIs returns the URIs belonging to a single bundle
-// TODO: Make this stream
+// TODO: Make this stream.
 func (viewer *Viewer) getEntity(id string, uri impl.Label) (entity *wisski.Entity, ok bool) {
 	_, entity, ok = viewer.findEntity(id, uri)
 	return
 }
 
-// Perf represents viewer performance
+// Perf represents viewer performance.
 type Perf struct {
 	Stages []stats.StageStats
 	Index  igraph.Stats

@@ -40,7 +40,7 @@ func (viewer *Viewer) logPublicURI(uri string, err error) {
 	viewer.Stats.LogError("unable to parse public url", err, "uri", uri)
 }
 
-// NewViewer creates a new viewer that logs to the given output
+// NewViewer creates a new viewer that logs to the given output.
 func NewViewer(writer io.Writer, debug bool) *Viewer {
 	return &Viewer{
 		Stats: stats.NewStats(writer, debug),
@@ -90,7 +90,7 @@ func (rf RenderFlags) Tipsy() string {
 	return ""
 }
 
-// CSPHeader returns the CSPHeader to be included in viewer responses
+// CSPHeader returns the CSPHeader to be included in viewer responses.
 func (rf RenderFlags) CSPHeader(onURIError func(string, error)) string {
 	// don't allow anything by default
 	header := "default-src 'none'; connect-src 'self'; script-src 'self'; font-src 'self'; "

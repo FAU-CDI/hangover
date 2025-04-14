@@ -10,7 +10,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// sEntityPool is a pool of stored entities
+// sEntityPool is a pool of stored entities.
 var sEntityPool = sync.Pool{
 	New: func() any {
 		return new(sEntity)
@@ -23,7 +23,7 @@ var bufferPool = sync.Pool{
 	},
 }
 
-// sEntity represents a stored entity that does not hold references to child entities
+// sEntity represents a stored entity that does not hold references to child entities.
 type sEntity struct {
 	Fields   map[string][]wisski.FieldValue
 	Children map[string][]impl.Label // child entities
@@ -32,7 +32,7 @@ type sEntity struct {
 	Triples  []igraph.Triple
 }
 
-// Reset resets this stored entity
+// Reset resets this stored entity.
 func (s *sEntity) Reset() {
 	s.Path = nil
 	s.Children = nil
@@ -41,7 +41,7 @@ func (s *sEntity) Reset() {
 	s.URI = ""
 }
 
-// Encode encodes this stored entity into a stream of bytes
+// Encode encodes this stored entity into a stream of bytes.
 func (s *sEntity) Encode() ([]byte, error) {
 	// take a buffer
 	buffer := bufferPool.Get().(*bytes.Buffer)
@@ -63,7 +63,7 @@ func (s *sEntity) Encode() ([]byte, error) {
 	return data, nil
 }
 
-// Decode decodes this stored entity from a stream of bytes
+// Decode decodes this stored entity from a stream of bytes.
 func (s *sEntity) Decode(data []byte) error {
 	// take a buffer
 	buffer := bufferPool.Get().(*bytes.Buffer)

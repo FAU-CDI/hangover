@@ -13,7 +13,7 @@ type Map struct {
 	l    sync.Mutex
 }
 
-// Begin signals that count entities will be transmitted for the given bundle
+// Begin signals that count entities will be transmitted for the given bundle.
 func (mp *Map) Begin(bundle *pathbuilder.Bundle, count int64) error {
 	mp.l.Lock()
 	defer mp.l.Unlock()
@@ -21,7 +21,7 @@ func (mp *Map) Begin(bundle *pathbuilder.Bundle, count int64) error {
 	return nil
 }
 
-// Add adds entities for the given bundle
+// Add adds entities for the given bundle.
 func (mp *Map) Add(bundle *pathbuilder.Bundle, entity *wisski.Entity) error {
 	mp.l.Lock()
 	defer mp.l.Unlock()
@@ -29,7 +29,7 @@ func (mp *Map) Add(bundle *pathbuilder.Bundle, entity *wisski.Entity) error {
 	return nil
 }
 
-// End signals that no more entities will be submitted for the given bundle
+// End signals that no more entities will be submitted for the given bundle.
 func (mp *Map) End(bundle *pathbuilder.Bundle) error {
 	return nil // no-op
 }
