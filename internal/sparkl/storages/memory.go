@@ -1,13 +1,13 @@
 package storages
 
 import (
+	"iter"
 	"sync"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/tkw1536/pkglib/traversal"
 )
 
 type MemoryEngine struct{}
@@ -98,24 +98,22 @@ func (bs *Memory) Finalize() error {
 	return nil
 }
 
-func (bs *Memory) Get(parentPathIndex int) traversal.Iterator[LabelWithParent] {
-	return traversal.New(func(sender traversal.Generator[LabelWithParent]) {
-		defer sender.Return()
-
+func (bs *Memory) Get(parentPathIndex int) iter.Seq2[LabelWithParent, error] {
+	return func(yield func(LabelWithParent, error) bool) {
 		for _, entity := range bs.Entities {
 			var parent impl.Label
 			if parentPathIndex > -1 {
 				parent = entity.Path[parentPathIndex]
 			}
 
-			if !sender.Yield(LabelWithParent{
+			if !yield(LabelWithParent{
 				Label:  entity.URI,
 				Parent: parent,
-			}) {
-				break
+			}, nil) {
+				return
 			}
 		}
-	})
+	}
 }
 
 func (bs *Memory) Count() (int64, error) {

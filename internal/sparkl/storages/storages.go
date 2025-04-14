@@ -3,13 +3,13 @@ package storages
 import (
 	"errors"
 	"io"
+	"iter"
 	"path/filepath"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/tkw1536/pkglib/traversal"
 )
 
 // BundleEngine is a function that initializes and returns a new BundleStorage
@@ -63,8 +63,11 @@ type BundleStorage interface {
 	// Get returns an iterator that iterates over the url of every entity in this bundle, along with their parent URIs.
 	// The iterator is guaranteed to iterate in some consistent order, but no further guarantees beyond that.
 	//
-	// parentPathIndex returns the index of the parent uri in child paths.
-	Get(parentPathIndex int) traversal.Iterator[LabelWithParent]
+	// parentPathIndex is the index of the parent uri in child paths.
+	//
+	// If something goes wrong, the iterator returns err != nil, and no further values.
+	// In such a case, the returned label is invalid.
+	Get(parentPathIndex int) iter.Seq2[LabelWithParent, error]
 
 	// Count counts the number of entities in this storage.
 	Count() (int64, error)

@@ -225,14 +225,17 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 					defer context.childAddWait.Done()
 
 					children := cstorage.Get(entityURIIndex)
-					for children.Next() {
-						child := children.Datum()
+					for child, err := range children {
+						if err != nil {
+							context.reportError(err)
+							return
+						}
 						err := storage.AddChild(child.Parent, bundle.MachineName(), child.Label)
 						if err != storages.ErrNoEntity {
 							context.reportError(err)
 						}
 					}
-					context.reportError(children.Err())
+
 				}(cstorage, bundle.ChildBundles[i])
 			}
 

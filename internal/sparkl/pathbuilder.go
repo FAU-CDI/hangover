@@ -61,12 +61,12 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 				}()
 
 				// load uris from storage
-				uris := storage.Get(-1)
-				defer uris.Close()
 
 				// load all the entities
-				for uris.Next() {
-					element := uris.Datum()
+				for element, err := range storage.Get(-1) {
+					if err != nil {
+						return err
+					}
 					entity, err := storage.Load(element.Label)
 					if err != nil {
 						return err
@@ -76,8 +76,7 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 					}
 				}
 
-				// and return it
-				return uris.Err()
+				return nil
 			}()
 
 			if err != nil {

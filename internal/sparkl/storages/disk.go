@@ -1,6 +1,7 @@
 package storages
 
 import (
+	"iter"
 	"os"
 	"path/filepath"
 	"sync"
@@ -12,7 +13,6 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/tkw1536/pkglib/traversal"
 )
 
 type DiskEngine struct {
@@ -189,10 +189,8 @@ func (ds *Disk) Finalize() error {
 	return ds.DB.SetReadOnly()
 }
 
-func (ds *Disk) Get(parentPathIndex int) traversal.Iterator[LabelWithParent] {
-	return traversal.New(func(sender traversal.Generator[LabelWithParent]) {
-		defer sender.Return()
-
+func (ds *Disk) Get(parentPathIndex int) iter.Seq2[LabelWithParent, error] {
+	return func(yield func(LabelWithParent, error) bool) {
 		it := ds.DB.NewIterator(nil, nil)
 		defer it.Release()
 
@@ -212,17 +210,20 @@ func (ds *Disk) Get(parentPathIndex int) traversal.Iterator[LabelWithParent] {
 				uri.Label = impl.Label(it.Key())
 			}
 
-			if !sender.YieldError(err) {
+			if err != nil {
+				yield(LabelWithParent{}, err)
 				return
 			}
 
-			if !sender.Yield(uri) {
+			if !yield(uri, nil) {
 				return
 			}
 		}
 
-		sender.YieldError(it.Error())
-	})
+		if err := it.Error(); err != nil {
+			yield(LabelWithParent{}, it.Error())
+		}
+	}
 }
 
 func (ds *Disk) Count() (int64, error) {
