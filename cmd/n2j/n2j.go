@@ -84,15 +84,22 @@ func main() {
 	}
 	st.Log("finished indexing", "stats", index.Stats())
 
-	switch {
-	case mysql != "":
-		doSQL(&pb, index, bEngine, "mysql", mysql, false, st)
-	case sqlite != "":
-		doSQL(&pb, index, bEngine, "sqlite", sqlite, false, st)
-	case csvPath != "":
-		doCSV(&pb, index, bEngine, csvPath, st)
-	default:
-		doJSON(&pb, index, bEngine, st)
+	{
+		var err error
+		switch {
+		case mysql != "":
+			_, err = doSQL(&pb, index, bEngine, "mysql", mysql, false, st)
+		case sqlite != "":
+			_, err = doSQL(&pb, index, bEngine, "sqlite", sqlite, false, st)
+		case csvPath != "":
+			err = doCSV(&pb, index, bEngine, csvPath, st)
+		default:
+			err = doJSON(&pb, index, bEngine, st)
+		}
+
+		if err != nil {
+			st.LogFatal("failed to export", err)
+		}
 	}
 }
 

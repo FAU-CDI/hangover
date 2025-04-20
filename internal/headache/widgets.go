@@ -20,8 +20,8 @@ func newDataOpener(label string, parent fyne.Window, vNq, vPB binding.String) *w
 			if err != nil {
 				return
 			}
-			vNq.Set(nq)
-			vPB.Set(pb)
+			_ = vNq.Set(nq)
+			_ = vPB.Set(pb)
 		}, parent)
 	})
 	return b
@@ -43,7 +43,7 @@ func newFileSelector(label string, parent fyne.Window, v binding.String, validat
 				return
 			}
 			w.SetText(uri.Path())
-			w.Validate()
+			_ = w.Validate()
 		}, parent)
 	})
 

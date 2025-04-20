@@ -2,6 +2,7 @@ package sparkl
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
 
 	"maps"
@@ -17,6 +18,8 @@ import (
 
 // Cache represents an easily accessible cache of WissKIObjects.
 // It is held entirely in memory.
+//
+//nolint:recvcheck
 type Cache struct {
 	engine      imap.MemoryMap             // the engine used for the imap
 	beIndex     map[string][]wisski.Entity // mappings from bundles to entities
@@ -59,19 +62,23 @@ func (cache Cache) BundleNames() []string {
 // TODO: Do we want to use an IMap here?
 
 // NewCache creates a new cache from a bundle-entity-map.
-func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, impl.Label], st *stats.Stats) (c Cache, err error) {
+func NewCache(data map[string][]wisski.Entity, sameAs imap.HashMap[impl.Label, impl.Label], st *stats.Stats) (c Cache, err error) {
 	var counter int
 	progress := func() {
 		counter++
+		//nolint:errcheck
+		// #nosec: G104 - no way to report this error
 		st.SetCT(counter, counter)
 	}
 
 	// reset the uris
 	c.uris = &imap.IMap{}
-	c.uris.Reset(&c.engine)
+	if err := c.uris.Reset(&c.engine); err != nil {
+		return Cache{}, fmt.Errorf("failed to reset uris: %w", err)
+	}
 
 	// store the bundle-entity index
-	c.beIndex = Data
+	c.beIndex = data
 	c.biIndex = make(map[string]map[impl.ID]int, len(c.beIndex))
 	c.ebIndex = make(map[impl.ID]string)
 	for bundle, entities := range c.beIndex {
@@ -91,7 +98,7 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, i
 	c.bundleNames = slices.AppendSeq(make([]string, 0, len(c.beIndex)), maps.Keys(c.beIndex))
 	slices.Sort(c.bundleNames)
 
-	sameAsCount, err := SameAs.Count()
+	sameAsCount, err := sameAs.Count()
 	if err != nil {
 		return c, err
 	}
@@ -100,7 +107,7 @@ func NewCache(Data map[string][]wisski.Entity, SameAs imap.HashMap[impl.Label, i
 	c.sameAs = make(map[impl.ID]impl.ID, sameAsCount)
 	c.aliasOf = make(map[impl.ID][]impl.ID, sameAsCount)
 
-	err = SameAs.Iterate(func(alias, canon impl.Label) error {
+	err = sameAs.Iterate(func(alias, canon impl.Label) error {
 		defer progress()
 
 		aliass, err := c.uris.Add(alias)

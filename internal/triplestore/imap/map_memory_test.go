@@ -1,7 +1,13 @@
-package imap
+package imap_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
+)
 
 func TestMemoryMap(t *testing.T) {
-	mapTest(t, &MemoryMap{}, 1_000_000)
+	t.Parallel()
+
+	mapTest(t, &imap.MemoryMap{}, 1_000_000)
 }

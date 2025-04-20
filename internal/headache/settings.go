@@ -60,7 +60,7 @@ func (settings *settings) Flags() (flags viewer.RenderFlags) {
 // newSettings creates new bindings and sets them to their default values.
 func newSettings() (s settings) {
 	s.addr = binding.NewString()
-	s.addr.Set("127.0.0.1:8000")
+	_ = s.addr.Set("127.0.0.1:8000")
 
 	s.nquads = binding.NewString()
 	s.pathbuilder = binding.NewString()
@@ -70,13 +70,13 @@ func newSettings() (s settings) {
 	s.html = binding.NewBool()
 
 	s.sameAs = binding.NewString()
-	s.sameAs.Set(string(wisski.DefaultSameAsProperties))
+	_ = s.sameAs.Set(string(wisski.DefaultSameAsProperties))
 
 	s.inverseOf = binding.NewString()
-	s.inverseOf.Set(string(wisski.InverseOf))
+	_ = s.inverseOf.Set(string(wisski.InverseOf))
 
 	s.tipsy = binding.NewString()
-	s.tipsy.Set("https://tipsy.guys.wtf")
+	_ = s.tipsy.Set("https://tipsy.guys.wtf")
 
 	return
 }

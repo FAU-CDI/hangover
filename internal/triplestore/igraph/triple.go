@@ -32,7 +32,7 @@ type IndexTriple struct {
 
 func MarshalTriple(triple IndexTriple) ([]byte, error) {
 	result := make([]byte, 7*impl.IDLen+1)
-	impl.MarshalIDs(
+	err := impl.MarshalIDs(
 		result[1:],
 		triple.Source,
 		triple.Items[0].Literal,
@@ -43,6 +43,9 @@ func MarshalTriple(triple IndexTriple) ([]byte, error) {
 		triple.Items[2].Canonical,
 	)
 	result[0] = byte(triple.Role)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal ids: %w", err)
+	}
 	return result, nil
 }
 
@@ -53,7 +56,7 @@ func UnmarshalTriple(dest *IndexTriple, src []byte) error {
 		return errDecodeTriple
 	}
 	dest.Role = Role(src[0])
-	impl.UnmarshalIDs(
+	if err := impl.UnmarshalIDs(
 		src[1:],
 		&dest.Source,
 		&(dest.Items[0].Literal),
@@ -62,7 +65,9 @@ func UnmarshalTriple(dest *IndexTriple, src []byte) error {
 		&(dest.Items[0].Canonical),
 		&(dest.Items[1].Canonical),
 		&(dest.Items[2].Canonical),
-	)
+	); err != nil {
+		return fmt.Errorf("failed to unmarshal ids: %w", err)
+	}
 	return nil
 }
 
@@ -128,9 +133,9 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 		var err error
 
 		if triple.Datum.Language != "" {
-			spo.Obj, err = rdf.NewLangLiteral(string(triple.Datum.Value), string(triple.Datum.Language))
+			spo.Obj, err = rdf.NewLangLiteral(triple.Datum.Value, triple.Datum.Language)
 		} else {
-			spo.Obj, err = rdf.NewLiteral(string(triple.Datum.Value))
+			spo.Obj, err = rdf.NewLiteral(triple.Datum.Value)
 		}
 		if err != nil {
 			return rdf.Triple{}, err

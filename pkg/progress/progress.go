@@ -2,6 +2,7 @@
 package progress
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -18,10 +19,21 @@ type Reader struct {
 	Bytes int64 // total number of bytes read (so far)
 }
 
+var errReaderOverflow = errors.New("Writer.Write: bytes overflow")
+
 func (cr *Reader) Read(bytes []byte) (int, error) {
 	count, err := cr.Reader.Read(bytes)
 	cr.Bytes += int64(count)
-	cr.Write("Read " + humanize.Bytes(uint64(cr.Bytes)))
+	if err != nil {
+		return count, fmt.Errorf("failed to read: %w", err)
+	}
+	byteCount := cr.Bytes
+	if byteCount < 0 {
+		return 0, errReaderOverflow
+	}
+	if err := cr.Write("Read " + humanize.Bytes(uint64(byteCount))); err != nil {
+		return count, fmt.Errorf("failed to write to rewritable: %w", err)
+	}
 	return count, err
 }
 
@@ -32,10 +44,23 @@ type Writer struct {
 	Bytes int64 // Total number of bytes written
 }
 
+var errWriterOverflow = errors.New("Writer.Write: bytes overflow")
+
 func (cw *Writer) Write(bytes []byte) (int, error) {
 	cw.Bytes += int64(len(bytes))
-	cw.Rewritable.Write("Wrote " + humanize.Bytes(uint64(cw.Bytes)))
-	return cw.Writer.Write(bytes)
+
+	byteCount := cw.Bytes
+	if byteCount < 0 {
+		return 0, errWriterOverflow
+	}
+	if err := cw.Rewritable.Write("Wrote " + humanize.Bytes(uint64(byteCount))); err != nil {
+		return 0, fmt.Errorf("failed to write to Rewritable: %w", err)
+	}
+	v, err := cw.Writer.Write(bytes)
+	if err != nil {
+		return v, fmt.Errorf("failed to write to Writer: %w", err)
+	}
+	return v, nil
 }
 
 // DefaultFlushInterval is a reasonable default flush interval.
@@ -49,14 +74,18 @@ type Rewritable struct {
 	longestContent int           // longest content ever flushed
 }
 
-func (rw *Rewritable) Write(value string) {
+func (rw *Rewritable) Write(value string) error {
 	rw.content = value
-	rw.Flush(false)
+	err := rw.Flush(false)
+	if err != nil {
+		return fmt.Errorf("failed to flush: %w", err)
+	}
+	return nil
 }
 
-func (rw *Rewritable) Flush(force bool) {
+func (rw *Rewritable) Flush(force bool) error {
 	if !force && time.Since(rw.lastFlush) <= rw.FlushInterval {
-		return
+		return nil
 	}
 
 	// determine the longest string we ever flushed to the output
@@ -66,36 +95,51 @@ func (rw *Rewritable) Flush(force bool) {
 
 	// add a blanking space behind the content
 	blank := strings.Repeat(" ", rw.longestContent-len(rw.content))
-	fmt.Fprintf(rw.Writer, "\r%s%s", rw.content, blank)
+	_, err := fmt.Fprintf(rw.Writer, "\r%s%s", rw.content, blank)
+	if err != nil {
+		return fmt.Errorf("failed to flush: %w", err)
+	}
 
 	// and flush the actual data
 	rw.lastFlush = time.Now()
+
+	return nil
 }
 
 // Close resets any output written to the terminal.
 // After a call to Close(), further calls to Set may re-use it.
-func (rw *Rewritable) Close() {
+func (rw *Rewritable) Close() error {
 	rw.content = ""
-	rw.Flush(true)
-	rw.Writer.Write([]byte("\r"))
+	if err := rw.Flush(true); err != nil {
+		return fmt.Errorf("failed to flush: %w", err)
+	}
 
+	if _, err := rw.Writer.Write([]byte("\r")); err != nil {
+		return fmt.Errorf("failed to close writer: %w", err)
+	}
 	rw.longestContent = 0
+	return nil
 }
 
 type Progress struct {
 	Rewritable
 }
 
-func (progress *Progress) Set(prefix string, count, total int) {
+func (progress *Progress) Set(prefix string, count, total int) error {
 	totalS := strconv.Itoa(total)
 	countS := strconv.Itoa(count)
 	if len(countS) < len(totalS) {
 		countS = strings.Repeat(" ", len(totalS)-len(countS)) + countS
 	}
 
+	var err error
 	if countS < totalS {
-		progress.Write(fmt.Sprintf("%s: %s/%s", prefix, countS, totalS))
+		err = progress.Write(fmt.Sprintf("%s: %s/%s", prefix, countS, totalS))
 	} else {
-		progress.Write(fmt.Sprintf("%s: %s", prefix, countS))
+		err = progress.Write(fmt.Sprintf("%s: %s", prefix, countS))
 	}
+	if err != nil {
+		return fmt.Errorf("failed to write to progress: %w", err)
+	}
+	return nil
 }

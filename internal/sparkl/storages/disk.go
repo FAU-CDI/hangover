@@ -2,6 +2,7 @@ package storages
 
 import (
 	"errors"
+	"fmt"
 	"iter"
 	"os"
 	"path/filepath"
@@ -255,11 +256,14 @@ func (ds *Disk) Load(uri impl.Label) (entity wisski.Entity, err error) {
 	return
 }
 
-func (ds *Disk) Close() error {
+func (ds *Disk) Close() (err error) {
 	if ds.DB != nil {
-		ds.DB.Close()
+		err = ds.DB.Close()
 		ds.DB = nil
 		ds.childStorages = nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to close DB: %w", err)
 	}
 	return nil
 }

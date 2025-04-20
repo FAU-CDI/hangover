@@ -2,6 +2,7 @@ package sparkl
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -41,7 +42,7 @@ func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine sto
 	for _, b := range bundles {
 		total += totalBundleCount(b)
 	}
-	st.SetCT(0, total)
+	context.reportError(st.SetCT(0, total))
 
 	// update the counter every time we finish a bundle
 	var counter atomic.Int64
@@ -49,7 +50,7 @@ func StoreBundles(bundles []*pathbuilder.Bundle, index *igraph.Index, engine sto
 	for i := range storages {
 		storages[i] = context.Store(bundles[i], func() {
 			current := int(counter.Add(1))
-			st.SetCT(current, total)
+			context.reportError(st.SetCT(current, total))
 		})
 	}
 	err := context.Wait()
@@ -159,15 +160,26 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 		}
 
 		// stage 1: load the entities themselves
-		err := (func() error {
+		err := (func() (e error) {
 			paths := extractPath(bundle.Path, context.Index, context.st)
-			defer paths.Close()
+			defer func() {
+				if e2 := paths.Close(); e2 != nil {
+					e2 = fmt.Errorf("failed to close extracted paths: %w", e2)
+					if e == nil {
+						e = e2
+					} else {
+						e = errors.Join(e, e2)
+					}
+				}
+			}()
 
 			for paths.Next() {
 				path := paths.Datum()
 				nodes := path.Nodes
 				triples := path.Triples
-				storage.Add(nodes[entityURIIndex], nodes, triples)
+				if err := storage.Add(nodes[entityURIIndex], nodes, triples); err != nil {
+					return fmt.Errorf("failed to add to storage: %w", err)
+				}
 			}
 
 			return paths.Err()
@@ -183,7 +195,9 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 				defer context.extractWait.Done()
 
 				paths := extractPath(field.Path, context.Index, context.st)
-				defer paths.Close()
+				defer func() {
+					context.reportError(paths.Close())
+				}()
 
 				for paths.Next() {
 					path := paths.Datum()
@@ -240,7 +254,7 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 			}
 
 			wg.Wait()
-			storage.Finalize() // no more writing!
+			context.reportError(storage.Finalize()) // no more writing!
 
 			// tell the storage to be closed on a call to Close()
 			context.closers <- storage

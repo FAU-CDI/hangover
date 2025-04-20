@@ -1,6 +1,8 @@
 package sparkl
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
@@ -15,12 +17,21 @@ import (
 
 // Export loads all top-level paths from the given path-builder from the index into the given engine.
 // Afterwards it is exported into the given exporter.
-func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, exporter exporter.Exporter, stats *stats.Stats) error {
+func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.BundleEngine, exporter exporter.Exporter, stats *stats.Stats) (e error) {
 	bundles := pb.Bundles()
 
 	storages, closer, err := StoreBundles(bundles, index, engine, stats)
 	if closer != nil {
-		defer closer()
+		defer func() {
+			if e2 := closer(); e2 != nil {
+				e2 = fmt.Errorf("failed to close bundle storage: %w", e2)
+				if e == nil {
+					e = e2
+				} else {
+					e = errors.Join(e, e2)
+				}
+			}
+		}()
 	}
 	if err != nil {
 		return err
@@ -38,7 +49,16 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 			err := func() (e error) {
 				storage := storages[i]
 				bundle := bundles[i]
-				defer storage.Close()
+				defer func() {
+					if e2 := storage.Close(); e2 != nil {
+						e2 = fmt.Errorf("failed to close storage: %w", e2)
+						if e == nil {
+							e = e2
+						} else {
+							e = errors.Join(e, e2)
+						}
+					}
+				}()
 
 				// count the number of elements
 				count, err := storage.Count()

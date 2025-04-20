@@ -57,7 +57,7 @@ type ProgressMessage struct {
 	Progress stats.Progress
 }
 
-func (viewer *Viewer) jsonFallback(w http.ResponseWriter, _ *http.Request) (sent bool) {
+func (viewer *Viewer) jsonFallback(w http.ResponseWriter, _ *http.Request) bool {
 	progress := viewer.Stats.Progress()
 	if progress.Done {
 		return false
@@ -66,10 +66,12 @@ func (viewer *Viewer) jsonFallback(w http.ResponseWriter, _ *http.Request) (sent
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Retry-After", viewerRetrySeconds)
 	w.WriteHeader(http.StatusServiceUnavailable)
-	json.NewEncoder(w).Encode(ProgressMessage{
+	if err := json.NewEncoder(w).Encode(ProgressMessage{
 		Message:  viewerNotReady,
 		Progress: progress,
-	})
+	}); err != nil {
+		viewer.Stats.LogDebug("failed to encode fallback response: %w", err)
+	}
 
-	return
+	return true
 }

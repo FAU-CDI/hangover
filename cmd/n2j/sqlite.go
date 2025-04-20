@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"encoding/csv"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -51,20 +53,38 @@ func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.Bu
 	return db, err
 }
 
-func doCSV(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, path string, st *stats.Stats) {
+func doCSV(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, path string, st *stats.Stats) (e error) {
 	// turn it into an sqlite first
 	db, err := doSQL(pb, index, bEngine, "sqlite", ":memory:", true, st)
 	if err != nil {
 		return
 	}
-	defer db.Close()
+	defer func() {
+		if e2 := db.Close(); e2 != nil {
+			e2 = fmt.Errorf("failed to close db: %w", e2)
+			if e == nil {
+				e = e2
+			} else {
+				e = errors.Join(e, e2)
+			}
+		}
+	}()
 
 	// query the list of tables
 	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table';")
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
-	defer rows.Close()
+	defer func() {
+		if e2 := rows.Close(); e2 != nil {
+			e2 = fmt.Errorf("failed to close rows: %w", e2)
+			if e == nil {
+				e = e2
+			} else {
+				e = errors.Join(e, e2)
+			}
+		}
+	}()
 
 	// make it a list
 	var tables []string
@@ -86,26 +106,45 @@ func doCSV(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.Bu
 			st.LogFatal("writing csv table", err)
 		}
 	}
+	return nil
 }
 
-func doCSVTable(db *sql.DB, table string, path string) error {
+func doCSVTable(db *sql.DB, table string, path string) (e error) {
 	// open a csv file matching the name
-	file, err := os.Create(filepath.Join(path, table+".csv"))
+	file, err := os.Create(filepath.Join(path, table+".csv")) // #nosec G304 -- this is intended
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create for table %q: %w", table, err)
 	}
-	defer file.Close()
+	defer func() {
+		if e2 := file.Close(); e2 != nil {
+			e2 = fmt.Errorf("failed to close csv file: %w", e2)
+			if e == nil {
+				e = e2
+			} else {
+				e = errors.Join(e, e2)
+			}
+		}
+	}()
 
 	// create a writer
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
 	// query everything in the table
-	rows, err := db.Query("SELECT * FROM " + table)
+	rows, err := db.Query("SELECT * FROM " + table) // #nosec G202 -- can't parametrize table name
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		if e2 := rows.Close(); e2 != nil {
+			e2 = fmt.Errorf("failed to close rows: %w", e2)
+			if e == nil {
+				e = e2
+			} else {
+				e = errors.Join(e, e2)
+			}
+		}
+	}()
 
 	// write the header
 	columns, err := rows.Columns()

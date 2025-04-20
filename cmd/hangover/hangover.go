@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/FAU-CDI/hangover"
 	"github.com/FAU-CDI/hangover/internal/glass"
@@ -39,14 +40,14 @@ func main() {
 
 	// prepare the handler
 	handler.RenderFlags = flags
-	handler.Footer = template.HTML(footerHTML)
+	handler.Footer = template.HTML(footerHTML) // #nosec G203 -- this is user-intended
 
 	// create a channel to wait for being done listening
 	done := make(chan struct{})
 
 	// start listening, so that even during loading we are not performing that badly
 	if !benchMode {
-		listener, err = net.Listen("tcp", addr)
+		listener, err = net.Listen("tcp", addr) // #nosec G102 -- parametrized by user
 		if err != nil {
 			handler.Stats.LogError("listen", err)
 			os.Exit(1)
@@ -57,7 +58,11 @@ func main() {
 	if !benchMode {
 		go func() {
 			defer close(done)
-			http.Serve(listener, handler)
+			server := http.Server{
+				Handler:           handler,
+				ReadHeaderTimeout: 10 * time.Second,
+			}
+			_ = server.Serve(listener)
 		}()
 	} else {
 		close(done)
@@ -78,12 +83,18 @@ func main() {
 	}
 
 	// otherwise create a viewer
-	defer handler.Close()
+	defer func() {
+		if err := handler.Close(); err != nil {
+			handler.Stats.LogError("failed to close handler", err)
+		}
+	}()
 
-	handler.Stats.DoStage(stats.StageHandler, func() error {
+	if err := handler.Stats.DoStage(stats.StageHandler, func() error {
 		handler.Prepare(drincw.Cache, &drincw.Pathbuilder)
 		return nil
-	})
+	}); err != nil {
+		handler.Stats.LogFatal("failed to do handler stage", err)
+	}
 
 	handler.Stats.Log("finished", "took", handler.Stats.Diff(), "now", perf.Now())
 

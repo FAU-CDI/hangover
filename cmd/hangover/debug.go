@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/pprof"
+	"time"
 
 	"github.com/FAU-CDI/hangover/internal/viewer"
 	"github.com/gorilla/mux"
@@ -18,6 +19,13 @@ func listenDebug(handler *viewer.Viewer) {
 	router.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index)) // special handling for Gorilla mux
 
 	handler.Stats.Log("debug server listening", "addr", debugServer)
-	err := http.ListenAndServe(debugServer, router)
+
+	server := http.Server{
+		Addr:              debugServer,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+	err := server.ListenAndServe()
+
 	handler.Stats.LogFatal("pprof server listen", err)
 }

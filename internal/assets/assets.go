@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -33,9 +34,12 @@ var Disclaimer string
 
 // MustParse parses a new template from the given source
 // and calls [RegisterAssoc] on it.
+// If something goes wrong, calls panic.
 func (assets *Assets) MustParse(t *template.Template, value string) *template.Template {
 	t = template.Must(t.Parse(value))
-	assets.RegisterAssoc(t)
+	if err := assets.RegisterAssoc(t); err != nil {
+		panic(err)
+	}
 	return t
 }
 
@@ -52,7 +56,7 @@ func (assets *Assets) MustMakeFunc(name string, value string, funcMap template.F
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-		template.Execute(w, context(r))
+		_ = template.Execute(w, context(r)) // TODO: handle this error
 	}
 }
 
@@ -62,7 +66,12 @@ func (assets *Assets) MustMakeFunc(name string, value string, funcMap template.F
 // The template "styles" will render all style tags required.
 //
 // If either template already exists, it will be overwritten.
-func (assets *Assets) RegisterAssoc(t *template.Template) {
-	t.New("scripts").Parse(assets.Scripts)
-	t.New("styles").Parse(assets.Styles)
+func (assets *Assets) RegisterAssoc(t *template.Template) error {
+	if _, err := t.New("scripts").Parse(assets.Scripts); err != nil {
+		return fmt.Errorf("failed to parse scripts assets: %w", err)
+	}
+	if _, err := t.New("styles").Parse(assets.Styles); err != nil {
+		return fmt.Errorf("failed to parse styles assets: %w", err)
+	}
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/widget"
 	"github.com/FAU-CDI/hangover/internal/stats"
@@ -44,7 +45,7 @@ type status struct {
 }
 
 func (status *status) Set(stats *stats.Stats) {
-	status.done.Set(stats.Done())
+	_ = status.done.Set(stats.Done())
 
 	// setup index stats
 	istats := stats.IndexStats()
@@ -57,7 +58,7 @@ func (status *status) Set(stats *stats.Stats) {
 
 	// setup current stats
 	current := stats.Current()
-	status.stage.Set(string(current.Stage))
+	_ = status.stage.Set(string(current.Stage))
 
 	if current.Total != 0 && current.Current <= current.Total {
 		text := fmt.Sprintf("%d/%d", current.Current, current.Total)
@@ -73,10 +74,10 @@ func (status *status) Set(stats *stats.Stats) {
 	}
 
 	if status.bar.Visible() {
-		status.bar.Refresh()
+		fyne.Do(status.bar.Refresh)
 	}
 }
 
 func setUint64(binding binding.String, value uint64) {
-	binding.Set(strconv.FormatUint(value, 10))
+	_ = binding.Set(strconv.FormatUint(value, 10))
 }

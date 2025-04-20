@@ -11,6 +11,8 @@ import (
 
 // ID uniquely identifies an object within this implementation.
 // Not all IDs are valid, see [Valid].
+//
+//nolint:recvcheck
 type ID struct {
 	// A big endian array of bytes, so that we can compare lexicographically.
 	data [IDLen]byte
@@ -108,6 +110,7 @@ func (id *ID) Decode(src []byte) {
 var errMarshal = errors.New("MarshalIDs: invalid length")
 
 // MarshalIDs is like EncodeIDs, but also takes a []byte to write to.
+// Only returns a non-nil error if the destination is too small.
 func MarshalIDs(dst []byte, ids ...ID) error {
 	if len(dst) < len(ids)*IDLen {
 		return errMarshal
@@ -128,7 +131,7 @@ func MarshalID(value ID) ([]byte, error) {
 // Each id is encoded sequentially using [Encode].
 func EncodeIDs(ids ...ID) []byte {
 	bytes := make([]byte, len(ids)*IDLen)
-	MarshalIDs(bytes, ids...)
+	_ = MarshalIDs(bytes, ids...) // #nosec G104 - guaranteed
 	return bytes
 }
 
@@ -161,6 +164,7 @@ func UnmarshalID(dest *ID, src []byte) error {
 }
 
 // UnmarshalIDs is like UnmarshalID but decodes into every destination passed.
+// Only returns a non-nil error if src is too small.
 func UnmarshalIDs(src []byte, dests ...*ID) error {
 	if len(src) < len(dests)*IDLen {
 		return errUnmarshal

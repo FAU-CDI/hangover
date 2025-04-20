@@ -3,6 +3,7 @@ package imap
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -25,6 +26,8 @@ type IMap struct {
 }
 
 // TripleID represents the id of a tripleID.
+//
+//nolint:recvcheck
 type TripleID struct {
 	// Canonical holds the id of this triple, that is normalized for inverses and identities.
 	Canonical impl.ID
@@ -63,10 +66,14 @@ func (mp *IMap) Reset(engine Map) error {
 
 	mp.reverse, err = engine.Reverse()
 	if err != nil {
+		errs := make([]error, 1, len(closers)+1)
+		errs[0] = err
 		for _, closer := range closers {
-			closer.Close()
+			if err := closer.Close(); err != nil {
+				errs = append(errs, fmt.Errorf("failed to close: %w", err))
+			}
 		}
-		return err
+		return errors.Join(errs...)
 	}
 
 	mp.id.Reset()
@@ -171,28 +178,32 @@ func (mp *IMap) AddNew(label impl.Label) (ids TripleID, old bool, err error) {
 	}
 
 	// store mappings in both directions
-	mp.forward.Set(label, ids)
-	mp.reverse.Set(ids.Literal, label)
+	if err := mp.forward.Set(label, ids); err != nil {
+		return TripleID{}, false, fmt.Errorf("failed to store forward ids: %w", err)
+	}
+	if err := mp.reverse.Set(ids.Literal, label); err != nil {
+		return TripleID{}, false, fmt.Errorf("failed to store reverse ids: %w", err)
+	}
 
 	// return the id
 	return
 }
 
 // MarkIdentical marks the two labels as being identical.
-// It returns the ID corresponding to the label new.
+// It returns the ID corresponding to the label same.
 //
-// Once applied, all future calls to [Forward] or [Add] with old will act as if being called by new.
+// Once applied, all future calls to [Forward] or [Add] with old will act as if being called by same.
 // A previous ID corresponding to old (if any) is no longer valid.
 //
 // NOTE(twiesing): Each call to MarkIdentical potentially requires iterating over all calls that were previously added to this map.
 // This is a potentially slow operation and should be avoided.
-func (mp *IMap) MarkIdentical(new, old impl.Label) (canonical impl.ID, err error) {
+func (mp *IMap) MarkIdentical(same, old impl.Label) (canonical impl.ID, err error) {
 	// we were already finalized!
 	if mp.finalized.Load() {
 		return canonical, ErrFinalized
 	}
 
-	canonicals, err := mp.Add(new)
+	canonicals, err := mp.Add(same)
 	canonical = canonicals.Canonical // we use the "new" version of canonicals
 	if err != nil {
 		return canonical, err
@@ -222,7 +233,7 @@ func (mp *IMap) MarkIdentical(new, old impl.Label) (canonical impl.ID, err error
 	// alias wasn't fresh, so we need to update everything that currently maps to it
 	// that is stored in the "canonical" map of the first element.
 	err = mp.forward.Iterate(func(label impl.Label, ids TripleID) error {
-		if ids.Canonical != alias || label == new {
+		if ids.Canonical != alias || label == same {
 			return nil
 		}
 
@@ -277,21 +288,16 @@ func (mp *IMap) IdentityMap(storage HashMap[impl.Label, impl.Label]) error {
 //
 // Calling close multiple times results in err = nil.
 func (mp *IMap) Close() error {
-	var errors [2]error
+	var errs [2]error
 
 	if mp.forward != nil {
-		errors[0] = mp.forward.Close()
+		errs[0] = mp.forward.Close()
 		mp.forward = nil
 	}
 	if mp.reverse != nil {
-		errors[1] = mp.reverse.Close()
+		errs[1] = mp.reverse.Close()
 		mp.reverse = nil
 	}
 
-	for _, err := range errors {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errors.Join(errs[0], errs[1])
 }

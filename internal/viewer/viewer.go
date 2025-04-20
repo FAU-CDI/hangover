@@ -123,6 +123,15 @@ func (rf RenderFlags) CSPHeader(onURIError func(string, error)) string {
 	return header
 }
 
+// handlerError wraps the given handler to log the error into the debug log if non-nil.
+func (viewer *Viewer) handlerError(handler func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := handler(w, r); err != nil {
+			viewer.Stats.LogDebug("error handling request", "url", r.URL.String(), "method", r.Method, "err", err)
+		}
+	}
+}
+
 func (viewer *Viewer) setupMux() {
 	viewer.init.Do(func() {
 		viewer.mux.HandleFunc("/", viewer.htmlIndex)
@@ -142,14 +151,14 @@ func (viewer *Viewer) setupMux() {
 		viewer.mux.HandleFunc("/wisski/get", viewer.htmlEntityResolve).Queries("uri", "{uri:.+}")
 		viewer.mux.HandleFunc("/wisski/navigate/{id}/view", viewer.sendToResolver)
 
-		viewer.mux.HandleFunc("/api/v1", viewer.jsonIndex)
-		viewer.mux.HandleFunc("/api/v1/progress", viewer.jsonProgress)
-		viewer.mux.HandleFunc("/api/v1/perf", viewer.jsonPerf)
-		viewer.mux.HandleFunc("/api/v1/bundle/{bundle}", viewer.jsonBundle)
-		viewer.mux.HandleFunc("/api/v1/entity/{bundle}", viewer.jsonEntity).Queries("uri", "{uri:.+}")
+		viewer.mux.HandleFunc("/api/v1", viewer.handlerError(viewer.jsonIndex))
+		viewer.mux.HandleFunc("/api/v1/progress", viewer.handlerError(viewer.jsonProgress))
+		viewer.mux.HandleFunc("/api/v1/perf", viewer.handlerError(viewer.jsonPerf))
+		viewer.mux.HandleFunc("/api/v1/bundle/{bundle}", viewer.handlerError(viewer.jsonBundle))
+		viewer.mux.HandleFunc("/api/v1/entity/{bundle}", viewer.handlerError(viewer.jsonEntity)).Queries("uri", "{uri:.+}")
 
-		viewer.mux.HandleFunc("/api/v1/ntriples/{bundle}", viewer.jsonNTriples).Queries("uri", "{uri:.+}")
-		viewer.mux.HandleFunc("/api/v1/turtle/{bundle}", viewer.jsonTurtle).Queries("uri", "{uri:.+}")
+		viewer.mux.HandleFunc("/api/v1/ntriples/{bundle}", viewer.handlerError(viewer.jsonNTriples)).Queries("uri", "{uri:.+}")
+		viewer.mux.HandleFunc("/api/v1/turtle/{bundle}", viewer.handlerError(viewer.jsonTurtle)).Queries("uri", "{uri:.+}")
 
 		viewer.mux.PathPrefix("/assets/").Handler(assets.AssetHandler)
 

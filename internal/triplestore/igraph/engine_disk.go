@@ -96,11 +96,13 @@ func NewDiskHash(path string) (ThreeStorage, error) {
 }
 
 // ThreeHash implements ThreeStorage in memory.
+//
+//nolint:recvcheck
 type ThreeDiskHash struct {
 	DB *leveldb.DB
 }
 
-func (tlm *ThreeDiskHash) Add(a, b, c impl.ID, l impl.ID, conflict func(old, new impl.ID) (impl.ID, error)) (conflicted bool, err error) {
+func (tlm *ThreeDiskHash) Add(a, b, c impl.ID, l impl.ID, conflict func(old, conflicting impl.ID) (impl.ID, error)) (conflicted bool, err error) {
 	key := impl.EncodeIDs(a, b, c)
 	value, err := tlm.DB.Get(key, nil)
 	switch {

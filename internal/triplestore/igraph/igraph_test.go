@@ -1,11 +1,14 @@
-package igraph
+package igraph_test
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"math"
+	"math/big"
 	"reflect"
 	"strconv"
 	"testing"
 
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
@@ -32,70 +35,95 @@ func di(d impl.Datum) int {
 
 // graphTest implements an integration test for an IGraph with the given engine.
 //
-// It first constructs a graph with O(N) nodes, and forms various connections.
+// It first constructs a graph with O(n) nodes, and forms various connections.
 // It makes use of both inverses and identical relationships.
 //
 // It then forms a single query against this graph, ensuring that the correct result set is returned.
-func graphTest(t *testing.T, engine Engine, N int) {
-	var g Index
-	defer g.Close()
+func graphTest(t *testing.T, engine igraph.Engine, n int) {
+	t.Helper()
 
-	if err := g.Reset(engine); err != nil {
-		t.Errorf("unable to reset: %s", engine)
+	must := func(err error) {
+		t.Helper()
+
+		if err != nil {
+			t.Error(err)
+		}
 	}
+
+	var g igraph.Index
+	defer func() {
+		must(g.Close())
+	}()
+
+	var bigN big.Int
+	bigN.SetInt64(int64(n))
+
+	randN := func() int {
+		t.Helper()
+
+		value, err := rand.Int(rand.Reader, &bigN)
+		must(err)
+
+		number := value.Int64()
+		if number < 0 || number > math.MaxInt {
+			t.Error("randN returned invalid value")
+		}
+
+		return int(number)
+	}
+
+	must(g.Reset(engine))
+
 	{
 		// mark some inverses
-		g.MarkInverse(l(0), l(-1))
-		g.MarkInverse(l(1), l(-2))
+		must(g.MarkInverse(l(0), l(-1)))
+		must(g.MarkInverse(l(1), l(-2)))
 
 		// mark some identical labels
 		// by using the negatives
-		for i := range N {
+		for i := range n {
 			if i%2 == 0 {
-				g.MarkIdentical(l(3*i+8), l(-(3*i + 8)))
+				must(g.MarkIdentical(l(3*i+8), l(-(3*i + 8))))
 			}
 		}
 
-		for i := range N {
+		for i := range n {
 			// add triple (3i+6, 0, 3i + 7) or the inverse
 			if i%4 == 0 || i%4 == 1 {
-				g.AddTriple(l(3*i+6), l(0), l(3*i+7), impl.Source{})
+				must(g.AddTriple(l(3*i+6), l(0), l(3*i+7), impl.Source{}))
 			} else {
-				g.AddTriple(l(3*i+7), l(-1), l(3*i+6), impl.Source{})
+				must(g.AddTriple(l(3*i+7), l(-1), l(3*i+6), impl.Source{}))
 			}
 
 			// add triple (3i+7, 1, 3i + 8) or the inverse
 			if i%4 == 0 || i%4 == 2 {
-				g.AddTriple(l(3*i+7), l(1), l(3*i+8), impl.Source{})
+				must(g.AddTriple(l(3*i+7), l(1), l(3*i+8), impl.Source{}))
 			} else {
-				g.AddTriple(l(3*i+8), l(-2), l(3*i+7), impl.Source{})
+				must(g.AddTriple(l(3*i+8), l(-2), l(3*i+7), impl.Source{}))
 			}
 
 			// add labels to 3i + 6 and 3i+7
-			g.AddTriple(l(3*i+6), l(2), l(2), impl.Source{})
-
-			g.AddTriple(l(3*i+7), l(3), l(3), impl.Source{})
+			must(g.AddTriple(l(3*i+6), l(2), l(2), impl.Source{}))
+			must(g.AddTriple(l(3*i+7), l(3), l(3), impl.Source{}))
 
 			// add some data (namely the i) to 3i+8
 			// (or the inverse)
 			if i%4 == 0 {
 				// i %4 == 0 ==> i % 2 == 0 ==> we can just use the identical label
-				g.AddData(l(-(3*i + 8)), l(3), d(i), impl.Source{})
+				must(g.AddData(l(-(3*i + 8)), l(3), d(i), impl.Source{}))
 			} else {
-				g.AddData(l(3*i+8), l(3), d(i), impl.Source{})
+				must(g.AddData(l(3*i+8), l(3), d(i), impl.Source{}))
 			}
 		}
 
 		// randomly fill 100 more elements
-		source := rand.New(rand.NewSource(int64(N)))
 		for range 100 {
-			g.AddTriple(l(source.Intn(N)), l(4), l(source.Intn(N)), impl.Source{})
-			g.AddTriple(l(source.Intn(N)), l(5), l(source.Intn(N)), impl.Source{})
+			must(g.AddTriple(l(randN()), l(4), l(randN()), impl.Source{}))
+			must(g.AddTriple(l(randN()), l(5), l(randN()), impl.Source{}))
 		}
 	}
-	if err := g.Finalize(); err != nil {
-		t.Fatalf("Unable to finalize: %s", err)
-	}
+
+	must(g.Finalize())
 
 	// query for all of the paths we have just created
 	query, err := g.PathsStarting(l(2), l(2))
@@ -135,10 +163,10 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		wantNodes := []impl.Label{l(3*i + 6), l(3*i + 7), l(3*i + 8)}
 		wantEdges := []impl.Label{l(0), l(1), l(3)}
 
-		wantTriples := make([]Triple, 0, 5)
+		wantTriples := make([]igraph.Triple, 0, 5)
 		{
-			wantTriples = append(wantTriples, Triple{
-				Role: Regular,
+			wantTriples = append(wantTriples, igraph.Triple{
+				Role: igraph.Regular,
 
 				Subject:   l(3*i + 6),
 				Predicate: l(2),
@@ -149,8 +177,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 				SObject:    l(2),
 			})
 
-			wantTriples = append(wantTriples, Triple{
-				Role: Regular,
+			wantTriples = append(wantTriples, igraph.Triple{
+				Role: igraph.Regular,
 
 				Subject:   l(3*i + 7),
 				Predicate: l(3),
@@ -162,8 +190,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 			})
 
 			if i%4 == 0 || i%4 == 1 {
-				wantTriples = append(wantTriples, Triple{
-					Role: Regular,
+				wantTriples = append(wantTriples, igraph.Triple{
+					Role: igraph.Regular,
 
 					Subject:   l(3*i + 6),
 					Predicate: l(0),
@@ -174,8 +202,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 					SObject:    l(3*i + 7),
 				})
 			} else {
-				wantTriples = append(wantTriples, Triple{
-					Role: Inverse,
+				wantTriples = append(wantTriples, igraph.Triple{
+					Role: igraph.Inverse,
 
 					Subject:   l(3*i + 7),
 					Predicate: l(-1),
@@ -188,8 +216,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 			}
 
 			if i%4 == 0 || i%4 == 2 {
-				wantTriples = append(wantTriples, Triple{
-					Role: Regular,
+				wantTriples = append(wantTriples, igraph.Triple{
+					Role: igraph.Regular,
 
 					Subject:   l(3*i + 7),
 					Predicate: l(1),
@@ -200,8 +228,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 					SObject:    l(3*i + 8),
 				})
 			} else {
-				wantTriples = append(wantTriples, Triple{
-					Role: Inverse,
+				wantTriples = append(wantTriples, igraph.Triple{
+					Role: igraph.Inverse,
 
 					Subject:   l(3*i + 8),
 					Predicate: l(-2),
@@ -215,8 +243,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 		}
 
 		if i%4 == 0 {
-			wantTriples = append(wantTriples, Triple{
-				Role: Data,
+			wantTriples = append(wantTriples, igraph.Triple{
+				Role: igraph.Data,
 
 				Subject:   l(-(3*i + 8)),
 				Predicate: l(3),
@@ -227,8 +255,8 @@ func graphTest(t *testing.T, engine Engine, N int) {
 				Datum: d(i),
 			})
 		} else {
-			wantTriples = append(wantTriples, Triple{
-				Role: Data,
+			wantTriples = append(wantTriples, igraph.Triple{
+				Role: igraph.Data,
 
 				Subject:   l(3*i + 8),
 				Predicate: l(3),
@@ -264,7 +292,7 @@ func graphTest(t *testing.T, engine Engine, N int) {
 	}
 
 	counter := 0
-	for i := range N {
+	for i := range n {
 		counter++
 		_, ok := encountered[d(i)]
 		if !ok {

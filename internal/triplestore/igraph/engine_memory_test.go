@@ -1,9 +1,13 @@
-package igraph
+package igraph_test
 
 import (
 	"testing"
+
+	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 )
 
 func TestMemoryEngine(t *testing.T) {
-	graphTest(t, &MemoryEngine{}, 100_000)
+	t.Parallel()
+
+	graphTest(t, &igraph.MemoryEngine{}, 100_000)
 }

@@ -25,7 +25,7 @@ type ThreeStorage interface {
 	//
 	// l acts as a label for the insert.
 	// when the given edge already exists, the conflict function should be called to resolve the conflict
-	Add(a, b, c impl.ID, l impl.ID, conflict func(old, new impl.ID) (impl.ID, error)) (conflicted bool, err error)
+	Add(a, b, c impl.ID, l impl.ID, conflict func(old, conflicting impl.ID) (impl.ID, error)) (conflicted bool, err error)
 
 	// Count counts the overall number of entries in the index
 	Count() (int64, error)

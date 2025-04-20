@@ -1,16 +1,18 @@
-package impl
+package impl_test
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"reflect"
 	"testing"
+
+	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
 func ExampleID() {
 	// create a new zero -- which isn't valid
-	var zero ID
+	var zero impl.ID
 	fmt.Println(zero)
 	fmt.Println(zero.Valid())
 
@@ -19,15 +21,17 @@ func ExampleID() {
 	fmt.Println(zero.Valid())
 
 	// create the value 10
-	var ten ID
+	var ten impl.ID
 	for range 10 {
 		ten.Inc()
 	}
 
 	// compare it with other ids
+
 	fmt.Println(zero.Compare(ten)) // 0 < 10
 	fmt.Println(ten.Compare(zero)) // 10 > 0
-	fmt.Println(ten.Compare(ten))  // 10 == 10
+	//nolint:gocritic
+	fmt.Println(ten.Compare(ten)) // 10 == 10
 
 	// Output: ID(0)
 	// false
@@ -45,8 +49,10 @@ const (
 )
 
 func TestID_Int(t *testing.T) {
+	t.Parallel()
+
 	var (
-		id ID      // ID representation
+		id impl.ID // ID representation
 		bi big.Int // Big Integer representation
 	)
 
@@ -78,7 +84,7 @@ func TestID_Int(t *testing.T) {
 }
 
 func BenchmarkID_Inc(b *testing.B) {
-	var id ID
+	var id impl.ID
 	for range b.N {
 		id.Reset()
 
@@ -89,7 +95,7 @@ func BenchmarkID_Inc(b *testing.B) {
 }
 
 func BenchmarkID_Load(b *testing.B) {
-	var id ID
+	var id impl.ID
 	var bi big.Int
 	for range b.N {
 		id.LoadInt(&bi)
@@ -98,8 +104,10 @@ func BenchmarkID_Load(b *testing.B) {
 
 // Test that only non-zero values are valid.
 func TestID_Valid(t *testing.T) {
+	t.Parallel()
+
 	var (
-		id ID      // ID representation
+		id impl.ID // ID representation
 		bi big.Int // to load big integers
 	)
 
@@ -118,7 +126,7 @@ func TestID_Valid(t *testing.T) {
 func BenchmarkID_Compare(b *testing.B) {
 	b.StopTimer()
 
-	var idI, idJ ID
+	var idI, idJ impl.ID
 
 	idI.LoadInt(big.NewInt(10000))
 	idJ.LoadInt(big.NewInt(12))
@@ -132,13 +140,15 @@ func BenchmarkID_Compare(b *testing.B) {
 
 // Test that the order of ids behaves as expected.
 func TestID_Compare(t *testing.T) {
+	t.Parallel()
+
 	var (
-		idI, idJ ID
+		idI, idJ impl.ID
 		big      big.Int
 	)
 
-	bytesI := make([]byte, IDLen)
-	bytesJ := make([]byte, IDLen)
+	bytesI := make([]byte, impl.IDLen)
+	bytesJ := make([]byte, impl.IDLen)
 
 	// check that the .Compare() method indeed implements the order
 	// that was induced by their generation
@@ -154,11 +164,12 @@ func TestID_Compare(t *testing.T) {
 				got := idI.Compare(idJ)
 
 				var want int
-				if i < j {
+				switch {
+				case i < j:
 					want = -1
-				} else if i > j {
+				case i > j:
 					want = 1
-				} else {
+				default:
 					want = 0
 				}
 
@@ -170,11 +181,12 @@ func TestID_Compare(t *testing.T) {
 			{
 				got := idJ.Compare(idI)
 				var want int
-				if j < i {
+				switch {
+				case j < i:
 					want = -1
-				} else if j > i {
+				case j > i:
 					want = 1
-				} else {
+				default:
 					want = 0
 				}
 				if got != want {
@@ -186,33 +198,36 @@ func TestID_Compare(t *testing.T) {
 }
 
 const (
-	testEncodeIDsMax  = 1000
-	testEncodeIDsSeed = 1000
-	testEncodeIDsN    = 100
+	testEncodeIDsMax = 1000000
+	testEncodeIDsN   = 1000
 )
 
 func TestEncodeIDs(t *testing.T) {
-	reader := rand.New(rand.NewSource(testEncodeIDsSeed))
+	t.Parallel()
 
-	var big big.Int
+	var big, maxInt big.Int
+	maxInt.SetInt64(testEncodeIDsMax)
 
 	for n := 1; n < testEncodeIDsN; n++ {
 		// setup a random range of ids [0 ... n)
-		ids := make([]ID, n)
+		ids := make([]impl.ID, n)
 		values := make([]int64, n)
 		for i := range ids {
-			value := reader.Int63n(testEncodeIDsMax)
+			value, err := rand.Int(rand.Reader, &maxInt)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			values[i] = value
-			ids[i].LoadInt(big.SetInt64(value))
+			values[i] = value.Int64()
+			ids[i].LoadInt(big.Set(value))
 		}
 
 		// encode as a slice of bytes
-		bytes := EncodeIDs(ids...)
+		bytes := impl.EncodeIDs(ids...)
 
 		// check that random access decoding works
 		for i := range n {
-			DecodeID(bytes, i).Int(&big)
+			impl.DecodeID(bytes, i).Int(&big)
 			got := big.Int64()
 			want := values[i]
 			if got != want {
@@ -221,7 +236,7 @@ func TestEncodeIDs(t *testing.T) {
 		}
 
 		// check that overall decoding works
-		got := DecodeIDs(bytes)
+		got := impl.DecodeIDs(bytes)
 		if !reflect.DeepEqual(ids, got) {
 			t.Errorf("DecodeIDs() got = %d, want = %d", got, ids)
 		}

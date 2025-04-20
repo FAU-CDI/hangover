@@ -23,6 +23,10 @@ This program (headache) implements a GUI for hangover, the WissKI Data Viewer.
 To start the viewer, simply select the exported triplestore data and pathbuilder below.
 Then click the start button below (you may have to scroll to the bottom). `
 
+var (
+	errUnableToDownloadPathbuilder = errors.New("unable to download pathbuilder")
+)
+
 // setupSettingsWindow configures the main window for the settings view.
 func (h *Headache) setupSettingsWindow() {
 	h.handler.Stats.Log("setting up settings window")
@@ -47,16 +51,29 @@ func (h *Headache) setupSettingsWindow() {
 	inverseOf.Bind(h.settings.inverseOf)
 
 	quadsWidget, quadsButton := newFileSelector("Select '.nq' File", h.w, h.settings.nquads, isFile)
-	pbWidget, pbButton := newFileSelector("Select '.xml' File", h.w, h.settings.pathbuilder, func(path string) error {
+	pbWidget, pbButton := newFileSelector("Select '.xml' File", h.w, h.settings.pathbuilder, func(path string) (e error) {
 		if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
-			res, err := http.Get(path)
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, path, nil)
 			if err != nil {
-				return fmt.Errorf("unable to download pathbuilder %q: %w", path, err)
+				return fmt.Errorf("unable to create pathbuilder request: %w", err)
 			}
-			defer res.Body.Close()
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return fmt.Errorf("%w %q: %w", errUnableToDownloadPathbuilder, path, err)
+			}
+			defer func() {
+				if e2 := res.Body.Close(); e2 != nil {
+					e2 = fmt.Errorf("failed to close body: %w", e2)
+					if e == nil {
+						e = e2
+					} else {
+						e = errors.Join(e, e2)
+					}
+				}
+			}()
 
 			if res.StatusCode != http.StatusOK {
-				return fmt.Errorf("unable to download pathbuilder %q: expected code %d, but got %d", path, http.StatusOK, res.StatusCode)
+				return fmt.Errorf("%w %q: expected code %d, but got %d", errUnableToDownloadPathbuilder, path, http.StatusOK, res.StatusCode)
 			}
 
 			return nil
@@ -144,10 +161,14 @@ func (h *Headache) setupSettingsWindow() {
 	}()
 }
 
+var (
+	errEmptyAddress = errors.New("empty address")
+)
+
 // validateAddress checks if address is valid.
 func validateAddress(addr string) error {
 	if addr == "" {
-		return errors.New("empty address")
+		return errEmptyAddress
 	}
 
 	_, port, err := net.SplitHostPort(addr)
@@ -162,29 +183,36 @@ func validateAddress(addr string) error {
 	return nil
 }
 
+var (
+	errNoFilePath = errors.New("no file path provided")
+	errNotAFile   = errors.New("not a file")
+)
+
 // isFile validates that path is a file.
 //
 // If path is not a file, returns an error.
 // Otherwise, returns nil.
 func isFile(path string) error {
 	if path == "" {
-		return errors.New("no file path provided")
+		return errNoFilePath
 	}
 
 	ok, err := fsx.IsRegular(path, true)
 	if err != nil {
-		return fmt.Errorf("not a file: %q: %w", path, err)
+		return fmt.Errorf("%w: %q: %w", errNotAFile, path, err)
 	}
 	if !ok {
-		return fmt.Errorf("not a file: %q", path)
+		return fmt.Errorf("%w: %q", errNotAFile, path)
 	}
 	return nil
 }
+
+var errInvalidURL = errors.New("URL must be empty or start with 'http://' or 'https://'")
 
 func isValidTipsy(url string) error {
 	if url == "" || strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
 		return nil
 	}
 
-	return errors.New("URL must be empty or start with 'http://' or 'https://'")
+	return errInvalidURL
 }

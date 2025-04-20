@@ -2,6 +2,8 @@
 package glass
 
 import (
+	"errors"
+	"fmt"
 	"runtime/debug"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
@@ -32,7 +34,7 @@ func (glass *Glass) Close() error {
 
 // Create creates a new glass from the given pathbuilder and nquads.
 // output is written to output.
-func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, st *stats.Stats) (drincw Glass, err error) {
+func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags viewer.RenderFlags, st *stats.Stats) (drincw Glass, e error) {
 	// read the pathbuilder
 	if err := st.DoStage(stats.StageReadPathbuilder, func() (err error) {
 		drincw.Pathbuilder, err = pbxml.Load(pathbuilderPath)
@@ -51,19 +53,27 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	// build an index
 	index, err := sparkl.LoadIndex(nquadsPath, flags.Predicates, engine, sparkl.DefaultIndexOptions(&drincw.Pathbuilder), st)
 	if err != nil {
-		return drincw, err
+		return drincw, fmt.Errorf("failed to load index: %w", err)
 	}
 
 	st.Log("finished indexing", "stats", st.IndexStats())
-	defer index.Close()
+	defer func() {
+		if e2 := index.Close(); e2 != nil {
+			e2 = fmt.Errorf("failed to close index: %w", e2)
+			if e == nil {
+				e = e2
+			} else {
+				e = errors.Join(e, e2)
+			}
+		}
+	}()
 
 	// extract the bundles
 	var bundles map[string][]wisski.Entity
-	st.DoStage(stats.StageExtractBundles, func() (err error) {
+	if err := st.DoStage(stats.StageExtractBundles, func() (err error) {
 		bundles, err = sparkl.LoadPathbuilder(&drincw.Pathbuilder, index, bEngine, st)
 		return err
-	})
-	if err != nil {
+	}); err != nil {
 		return drincw, err
 	}
 
@@ -92,8 +102,12 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 		return drincw, err
 	}
 
-	index.Close()        // We close the index early, because it's no longer needed
-	debug.FreeOSMemory() // force returning memory to the os
+	// We close the index early, because it's no longer needed
+	if err := index.Close(); err != nil {
+		return drincw, fmt.Errorf("failed to close index: %w", err)
+	}
+	// force returning memory to the os
+	debug.FreeOSMemory()
 
 	drincw.Flags = flags
 	return drincw, nil

@@ -25,13 +25,19 @@ import (
 
 // cspell:words pathbuilder
 
+var errEvenLength = errors.New("pairs must be of even length")
+
 var contextTemplateFuncs = template.FuncMap{
-	"renderhtml": func(html string, globals contextGlobal) template.HTML {
-		return template.HTML(htmlx.ReplaceLinks(html, globals.ReplaceURL))
+	"renderhtml": func(html string, globals contextGlobal) (template.HTML, error) {
+		render, err := htmlx.ReplaceLinks(html, globals.ReplaceURL)
+		if err != nil {
+			return "", fmt.Errorf("failed to replace links: %w", err)
+		}
+		return template.HTML(render), nil // #nosec G203
 	},
 	"combine": func(pairs ...any) (map[string]any, error) {
 		if len(pairs)%2 != 0 {
-			return nil, errors.New("pairs must be of even length")
+			return nil, errEvenLength
 		}
 		result := make(map[string]any, len(pairs)/2)
 		for i, v := range pairs {
@@ -304,7 +310,7 @@ func (viewer *Viewer) htmlBundleWithLimit(w http.ResponseWriter, r *http.Request
 		if skip < 0 {
 			skip = 0
 		}
-		return template.URL("/bundle/" + url.PathEscape(bundleName) + "?limit=" + strconv.Itoa(limit) + "&" + "skip=" + strconv.Itoa(skip))
+		return template.URL("/bundle/" + url.PathEscape(bundleName) + "?limit=" + strconv.Itoa(limit) + "&" + "skip=" + strconv.Itoa(skip)) // #nosec G203
 	}
 
 	// add the previous link if there are previous pages
@@ -360,7 +366,7 @@ type htmlTipsyContext struct {
 }
 
 func makeDataAttr(name string, value string) template.HTMLAttr {
-	return template.HTMLAttr(` data-` + name + `="` + html.EscapeString(value) + `"`)
+	return template.HTMLAttr(` data-` + name + `="` + html.EscapeString(value) + `"`) // #nosec G203
 }
 
 func (viewer *Viewer) htmlTipsy(w http.ResponseWriter, r *http.Request) {
@@ -467,8 +473,8 @@ func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
 
 	suffix := url.PathEscape(vars["bundle"]) + "?uri=" + url.QueryEscape(vars["uri"])
 
-	context.DownloadLinks.Triples = template.URL("/api/v1/ntriples/" + suffix)
-	context.DownloadLinks.Turtle = template.URL("/api/v1/turtle/" + suffix)
+	context.DownloadLinks.Triples = template.URL("/api/v1/ntriples/" + suffix) // #nosec G203
+	context.DownloadLinks.Turtle = template.URL("/api/v1/turtle/" + suffix)    // #nosec G203
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)

@@ -1,4 +1,4 @@
-package imap
+package imap_test
 
 import (
 	"fmt"
@@ -6,14 +6,15 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/FAU-CDI/hangover/internal/triplestore/imap"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
 // cspell:words itol
 
 func ExampleIMap() {
-	var mp IMap
-	mp.Reset(&MemoryMap{})
+	var mp imap.IMap
+	_ = mp.Reset(&imap.MemoryMap{})
 
 	lid := func(prefix impl.Label) func(id impl.ID, err error) {
 		return func(id impl.ID, err error) {
@@ -21,8 +22,8 @@ func ExampleIMap() {
 		}
 	}
 
-	lid2 := func(prefix impl.Label) func(id TripleID, err error) {
-		return func(id TripleID, err error) {
+	lid2 := func(prefix impl.Label) func(id imap.TripleID, err error) {
+		return func(id imap.TripleID, err error) {
 			fmt.Println(prefix, id.Canonical, err)
 		}
 	}
@@ -49,7 +50,7 @@ func ExampleIMap() {
 	lstr("reverse")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(2))))
 	lstr("reverse")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(3))))
 
-	mp.MarkIdentical("earth", "world")
+	_, _ = mp.MarkIdentical("earth", "world")
 
 	lstr("reverse<again>")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(1))))
 	lstr("reverse<again>")(mp.Reverse(*new(impl.ID).LoadInt(big.NewInt(3))))
@@ -83,15 +84,21 @@ func itol(i int) impl.Label {
 }
 
 // mapTest performs a test for a given engine.
-func mapTest(t *testing.T, engine Map, N int) {
+func mapTest(t *testing.T, engine imap.Map, n int) {
 	t.Helper()
 
-	var mp IMap
-	mp.Reset(engine)
-	defer mp.Close()
+	var mp imap.IMap
+	if err := mp.Reset(engine); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := mp.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	// make i == i + 1
-	for i := 0; i < N; i += 2 {
+	for i := 0; i < n; i += 2 {
 		canon, err := mp.MarkIdentical(itol(i), itol(i+1))
 		if err != nil {
 			t.Fatalf("MarkIdentical returned error %s", err)
@@ -104,7 +111,7 @@ func mapTest(t *testing.T, engine Map, N int) {
 	}
 
 	// check that forward mappings work
-	for i := range N {
+	for i := range n {
 		id, err := mp.Forward(itol(i))
 		if err != nil {
 			t.Errorf("Forward() returned error %s", err)
@@ -119,7 +126,7 @@ func mapTest(t *testing.T, engine Map, N int) {
 	// check that reverse mappings work
 	var id impl.ID
 	var big big.Int
-	for i := 1; i < N; i++ {
+	for i := 1; i < n; i++ {
 		big.SetInt64(int64(i))
 
 		got, err := mp.Reverse(*id.LoadInt(&big))

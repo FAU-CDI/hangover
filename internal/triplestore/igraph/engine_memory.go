@@ -35,6 +35,8 @@ func (MemoryEngine) POSIndex() (ThreeStorage, error) {
 }
 
 // ThreeHash implements ThreeStorage in memory.
+//
+//nolint:recvcheck
 type ThreeHash map[impl.ID]map[impl.ID]*ThreeItem
 
 func (th *ThreeHash) Compact() error {
@@ -46,7 +48,7 @@ type ThreeItem struct {
 	Keys []impl.ID
 }
 
-func (tlm ThreeHash) Add(a, b, c impl.ID, l impl.ID, conflict func(old, new impl.ID) (impl.ID, error)) (conflicted bool, err error) {
+func (tlm ThreeHash) Add(a, b, c impl.ID, l impl.ID, conflict func(old, conflicting impl.ID) (impl.ID, error)) (conflicted bool, err error) {
 	switch {
 	case tlm[a] == nil:
 		tlm[a] = make(map[impl.ID]*ThreeItem)

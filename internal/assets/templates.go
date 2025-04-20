@@ -2,6 +2,7 @@ package assets
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 )
 
@@ -21,12 +22,14 @@ var (
 // NewSharedTemplate creates a new template with the given name.
 // It will be able to make use of shared templates as well as functions.
 func NewSharedTemplate(name string, funcMap template.FuncMap) *template.Template {
-	new := template.New(name)
-	new.Funcs(funcMap)
+	tpl := template.New(name)
+	tpl.Funcs(funcMap)
 	for _, template := range shared.Templates() {
 		if template != nil && template.Tree != nil {
-			new.AddParseTree(template.Tree.Name, template.Tree.Copy())
+			if _, err := tpl.AddParseTree(template.Tree.Name, template.Tree.Copy()); err != nil {
+				panic(fmt.Errorf("failed to copy shared template tree: %w", err))
+			}
 		}
 	}
-	return new
+	return tpl
 }

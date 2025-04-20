@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"time"
 
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -32,7 +33,9 @@ func (h *Headache) setupRunWindow() {
 	// create a button to open the viewer
 	url := "http://" + listener.Addr().String()
 	button := widget.NewButton("Open In Default Browser", func() {
-		browser.OpenURL(url)
+		if err := browser.OpenURL(url); err != nil {
+			h.handler.Stats.LogError("failed to open browser", err)
+		}
 	})
 
 	layout := container.NewVBox(
@@ -61,19 +64,25 @@ func (h *Headache) setupRunWindow() {
 	h.setContent(container.NewScroll(layout))
 
 	// create a context and run it!
-	context, _, cancel := h.newWindowContext(context.Background())
-	h.runViewer(listener, context, cancel)
+	context, _, _ := h.newWindowContext(context.Background())
+	h.runViewer(listener, context)
 }
 
 // runViewer.
-func (h *Headache) runViewer(listener net.Listener, ctx context.Context, cancel context.CancelFunc) {
+func (h *Headache) runViewer(listener net.Listener, ctx context.Context) {
 	// create a new handler
 	h.done.Add(1)
 	go func() {
 		defer h.done.Done()
 
+		server := http.Server{
+			Handler: h.handler,
+
+			ReadHeaderTimeout: 10 * time.Second,
+		}
+
 		h.handler.Stats.Log("http.Serve", "address", listener.Addr().String())
-		err := http.Serve(listener, h.handler)
+		err := server.Serve(listener)
 		h.handler.Stats.LogError("http.Serve", err)
 	}()
 
@@ -82,8 +91,23 @@ func (h *Headache) runViewer(listener net.Listener, ctx context.Context, cancel 
 	go func() {
 		defer h.done.Done() // we're done cleaning up
 
-		defer listener.Close()  // close the listener
-		defer h.handler.Close() // kill the cache
+		// kill the cache
+		defer func() {
+			err := listener.Close()
+			if err == nil {
+				return
+			}
+			h.handler.Stats.LogError("failed to close listener", err)
+		}()
+
+		// kill the cache
+		defer func() {
+			err := h.handler.Close()
+			if err == nil {
+				return
+			}
+			h.handler.Stats.LogError("failed to close handler", err)
+		}()
 
 		h.handler.RenderFlags = h.settings.Flags()
 		pb, nq := h.settings.Pathbuilder(), h.settings.Nquads()
@@ -97,15 +121,19 @@ func (h *Headache) runViewer(listener net.Listener, ctx context.Context, cancel 
 		}
 
 		// prepare the handler
-		h.handler.Stats.DoStage(stats.StageHandler, func() error {
+		if err := h.handler.Stats.DoStage(stats.StageHandler, func() error {
 			h.handler.Prepare(drincw.Cache, &drincw.Pathbuilder)
 			return nil
-		})
+		}); err != nil {
+			h.handler.Stats.Log("failed to do handler stage")
+		}
 
 		// wait for the context to close
 		h.handler.Stats.Log("dataset loaded")
 		<-ctx.Done()
-		h.handler.Stats.Log("cancelation received")
-		listener.Close()
+		h.handler.Stats.Log("cancellation received")
+		if err := listener.Close(); err != nil {
+			h.handler.Stats.LogError("failed to close listener", err)
+		}
 	}()
 }

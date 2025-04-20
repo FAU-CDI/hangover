@@ -4,6 +4,7 @@ package stats
 // spellchecker:words rewritable
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -218,28 +219,28 @@ func (st *Stats) Diff() perf.Diff {
 	st.m.RLock()
 	defer st.m.RUnlock()
 
-	min := st.current.Start
-	max := st.current.End
+	minPerf := st.current.Start
+	maxPerf := st.current.End
 
 	for _, ss := range st.all {
-		if min.Time.IsZero() || ss.Start.Time.Before(min.Time) {
-			min = ss.Start
+		if minPerf.Time.IsZero() || ss.Start.Time.Before(minPerf.Time) {
+			minPerf = ss.Start
 		}
-		if max.Time.IsZero() || ss.End.Time.After(max.Time) {
-			max = ss.End
+		if maxPerf.Time.IsZero() || ss.End.Time.After(maxPerf.Time) {
+			maxPerf = ss.End
 		}
 	}
 
-	return max.Sub(min)
+	return maxPerf.Sub(minPerf)
 }
 
 // Start starts a new stage, updating the current property.
 // Any changes are written to the underlying writer.
 //
 // If st is done or nil, this function has no effect.
-func (st *Stats) Start(stage Stage) {
+func (st *Stats) Start(stage Stage) error {
 	if st == nil || st.done.Load() {
-		return
+		return nil
 	}
 
 	defer st.onUpdate()
@@ -248,7 +249,9 @@ func (st *Stats) Start(stage Stage) {
 	defer st.m.Unlock()
 
 	// end the previous stage (if any)
-	st.end()
+	if _, err := st.end(); err != nil {
+		return fmt.Errorf("failed to end previous stage: %w", err)
+	}
 
 	// start a new stage
 	st.current.Stage = stage
@@ -258,13 +261,14 @@ func (st *Stats) Start(stage Stage) {
 	if st.logger != nil {
 		st.logger.Info("start", "stage", stage)
 	}
+	return nil
 }
 
 // End ends the current stage if any.
 // Any changes are flushed to the underlying writer.
 //
 // If st is nil, this function has no effect.
-func (st *Stats) End() (prev StageStats) {
+func (st *Stats) End() (prev StageStats, err error) {
 	if st == nil || st.done.Load() {
 		return
 	}
@@ -279,7 +283,7 @@ func (st *Stats) End() (prev StageStats) {
 
 // end implements End.
 // st must not be nil st.m must be held for writing.
-func (st *Stats) end() (prev StageStats) {
+func (st *Stats) end() (prev StageStats, err error) {
 	// store the current stage (if any)
 	if st.current.Stage != StageInitial {
 		st.current.End = perf.Now()
@@ -288,7 +292,7 @@ func (st *Stats) end() (prev StageStats) {
 	}
 
 	// and reset the current stage
-	st.current = *new(StageStats)
+	st.current = StageStats{}
 
 	// don't do anything
 	if prev.Stage == StageInitial {
@@ -297,9 +301,15 @@ func (st *Stats) end() (prev StageStats) {
 
 	// write the final status into the rewritable
 	// and force a rewrite!
+	errs := make([]error, 0, 2)
 	if st.rewritable != nil {
-		st.rewritable.Flush(true)
-		st.rewritable.Close() // reset it!
+		if err := st.rewritable.Flush(true); err != nil {
+			errs = append(errs, fmt.Errorf("failed to flush rewritable: %w", err))
+		}
+		// reset it!
+		if err := st.rewritable.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close rewritable: %w", err))
+		}
 	}
 
 	// log that we finished the stage
@@ -310,6 +320,13 @@ func (st *Stats) end() (prev StageStats) {
 		} else {
 			st.logger.Info("end", "stage", prev.Stage, "took", prev.Diff())
 		}
+	}
+
+	switch len(errs) {
+	case 1:
+		err = errs[0]
+	case 2:
+		err = errors.Join(errs[0], errs[1])
 	}
 	return
 }
@@ -322,7 +339,9 @@ func (st *Stats) DoStage(stage Stage, f func() error) error {
 		return f()
 	}
 
-	st.Start(stage)
+	if err := st.Start(stage); err != nil {
+		return fmt.Errorf("failed to start stage: %w", err)
+	}
 
 	err := f()
 
@@ -331,16 +350,25 @@ func (st *Stats) DoStage(stage Stage, f func() error) error {
 
 	// an err occurred => write the stats
 	if err != nil {
-		st.end()
+		if _, err := st.end(); err != nil {
+			return fmt.Errorf("failed to end failed stage: %w", err)
+		}
 
 		if st.rewritable != nil {
-			st.rewritable.Close()
+			if err2 := st.rewritable.Close(); err2 != nil {
+				err = errors.Join(
+					err,
+					fmt.Errorf("failed to close rewritable: %w", err2),
+				)
+			}
 		}
 		st.LogError("failed stage", err, "stage", stage)
 		return err
 	}
 
-	st.end()
+	if _, err := st.end(); err != nil {
+		return fmt.Errorf("failed to end stage: %w", err)
+	}
 	return nil
 }
 
@@ -357,9 +385,9 @@ type StageStats struct {
 
 // SetCT sets the current and total for the given stage.
 // It the status is nil, or the status is done, has no effect.
-func (st *Stats) SetCT(current, total int) {
+func (st *Stats) SetCT(current, total int) error {
 	if st == nil || st.done.Load() {
-		return
+		return nil
 	}
 
 	// update the process and make a copy
@@ -377,8 +405,11 @@ func (st *Stats) SetCT(current, total int) {
 
 	// and write out the rewritable
 	if st.rewritable != nil {
-		st.rewritable.Write(progress)
+		if err := st.rewritable.Write(progress); err != nil {
+			return fmt.Errorf("failed to update rewritable: %w", err)
+		}
 	}
+	return nil
 }
 
 // Progress returns a string holding progress information on the current stage.

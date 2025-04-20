@@ -3,6 +3,7 @@ package igraph
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -118,8 +119,17 @@ func (index *Index) Reset(engine Engine) (err error) {
 	var closers []io.Closer
 	defer func() {
 		if err != nil {
+			errs := make([]error, 1, len(closers))
+			errs[0] = err
 			for _, closer := range closers {
-				closer.Close()
+				if err := closer.Close(); err != nil {
+					errs = append(errs, fmt.Errorf("failed to close closer: %w", err))
+				}
+			}
+			// errs always contains err
+			// if there is more, make a joined error
+			if len(errs) > 1 {
+				err = errors.Join(errs...)
 			}
 		}
 	}()
@@ -253,29 +263,28 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label, source impl
 	// store the labels for the triple values
 	s, err := index.labels.Add(subject)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add subject label: %w", err)
 	}
 	o, err := index.labels.Add(object)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add object label: %w", err)
 	}
 	// get the source
-	g, err := index.addSource(source)
-	if err != nil {
-		return err
-	}
+	g := index.addSource(source)
 
 	// forward id
 	id := index.triple.Inc()
-	index.triples.Set(id, IndexTriple{
+	if err := index.triples.Set(id, IndexTriple{
 		Role:   Regular,
 		Source: g,
 		Items:  [3]imap.TripleID{s, p, o},
-	})
+	}); err != nil {
+		return fmt.Errorf("failed to add triple to index: %w", err)
+	}
 
 	conflicted, err := index.insert(s.Canonical, p.Canonical, o.Canonical, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to insert canonical into index: %w", err)
 	}
 	if !conflicted {
 		index.stats.DirectTriples++
@@ -283,12 +292,12 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label, source impl
 
 	i, ok, err := index.inverses.Get(p.Canonical)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get inverse: %w", err)
 	}
 	if ok {
 		// reverse id
 		iid := index.triple.Inc()
-		index.triples.Set(iid, IndexTriple{
+		if err := index.triples.Set(iid, IndexTriple{
 			Role:   Inverse,
 			Source: g,
 			Items: [3]imap.TripleID{
@@ -305,11 +314,13 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label, source impl
 					Literal:   o.Literal,
 				},
 			},
-		})
+		}); err != nil {
+			return fmt.Errorf("failed to add to index: %w", err)
+		}
 
 		conflicted, err := index.insert(o.Canonical, i, s.Canonical, iid)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert: %w", err)
 		}
 		if !conflicted {
 			index.stats.InverseTriples++
@@ -319,15 +330,15 @@ func (index *Index) AddTriple(subject, predicate, object impl.Label, source impl
 }
 
 // addSource returns the id for the given source.
-func (index *Index) addSource(source impl.Source) (impl.ID, error) {
+func (index *Index) addSource(source impl.Source) impl.ID {
 	if id, ok := index.sources[source]; ok {
-		return id, nil
+		return id
 	}
 
 	next := index.triple.Inc()
 	index.sources[source] = next
 	index.reverseSource[next] = source
-	return next, nil
+	return next
 }
 
 var errUnknownSource = errors.New("unknown source")
@@ -375,10 +386,7 @@ func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum, so
 	}
 
 	// get the source
-	g, err := index.addSource(source)
-	if err != nil {
-		return err
-	}
+	g := index.addSource(source)
 
 	// store the original triple
 	id := index.triple.Inc()
@@ -406,8 +414,8 @@ func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum, so
 
 var errResolveConflictCorrupt = errors.New("errResolveConflict: Corrupted triple data")
 
-func (index *Index) resolveLabelConflict(old, new impl.ID) (impl.ID, error) {
-	if old == new {
+func (index *Index) resolveLabelConflict(old, conflicting impl.ID) (impl.ID, error) {
+	if old == conflicting {
 		return old, nil
 	}
 
@@ -423,17 +431,17 @@ func (index *Index) resolveLabelConflict(old, new impl.ID) (impl.ID, error) {
 	}
 
 	// load the new triple
-	nt, ok, err := index.triples.Get(new)
+	nt, ok, err := index.triples.Get(conflicting)
 	if !ok {
 		return old, errResolveConflictCorrupt
 	}
 	if err != nil {
-		return new, err
+		return conflicting, err
 	}
 
 	// use the one with the smaller role
 	if nt.Role < ot.Role {
-		return new, nil
+		return conflicting, nil
 	}
 	return old, nil
 }
@@ -452,14 +460,14 @@ func (index *Index) insert(subject, predicate, object impl.ID, label impl.ID) (c
 	return conflicted1 || conflicted2, err
 }
 
-// MarkIdentical identifies the new and old labels.
+// MarkIdentical identifies the same and old labels.
 // See [imap.IMap.MarkIdentical].
-func (index *Index) MarkIdentical(new, old impl.Label) error {
+func (index *Index) MarkIdentical(same, old impl.Label) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
 
-	_, err := index.labels.MarkIdentical(new, old)
+	_, err := index.labels.MarkIdentical(same, old)
 	return err
 }
 

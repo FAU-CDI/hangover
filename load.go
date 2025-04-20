@@ -9,8 +9,12 @@ import (
 
 // cspell:words nqauds
 
-var errWrongArgCount = errors.New("need one or two arguments")
-var errIndexPassed = errors.New("you should provide a path to an xml and nq file, or a directory providing both")
+var (
+	errWrongArgCount  = errors.New("need one or two arguments")
+	errIndexPassed    = errors.New("you should provide a path to an xml and nq file, or a directory providing both")
+	errNotRegularFile = errors.New("not a regular file")
+	errNeedOneFile    = errors.New("need exactly one '*.xml' and one '*.nq' file")
+)
 
 // FindSource finds the sources for the given path.
 // FindSource does not guarantee that contents are loadable.
@@ -41,7 +45,7 @@ func FindSource(argv ...string) (nq, xml string, err error) {
 			return "", "", err
 		}
 		if len(xmls) != 1 {
-			return "", "", fmt.Errorf("need exactly one '*.xml' in %q, but got %d", base, len(xmls))
+			return "", "", fmt.Errorf("%w: found exactly %d '.xml' files in %q", errNeedOneFile, len(xml), base)
 		}
 		xml = xmls[0]
 
@@ -50,7 +54,7 @@ func FindSource(argv ...string) (nq, xml string, err error) {
 			return "", "", err
 		}
 		if len(nqs) != 1 {
-			return "", "", fmt.Errorf("need exactly one '*.xml' in %q, but got %d", base, len(nqs))
+			return "", "", fmt.Errorf("%w: found exactly %d '.nq' files in %q", errNeedOneFile, len(nqs), base)
 		}
 		nq = nqs[0]
 	}
@@ -59,10 +63,10 @@ func FindSource(argv ...string) (nq, xml string, err error) {
 	for _, file := range [2]string{nq, xml} {
 		ok, err := isFile(file)
 		if err != nil {
-			return "", "", err
+			return "", "", fmt.Errorf("failed to check file status: %w", err)
 		}
 		if !ok {
-			return "", "", fmt.Errorf("%q is not a regular file", file)
+			return "", "", fmt.Errorf("%w: %q", errNotRegularFile, file)
 		}
 	}
 

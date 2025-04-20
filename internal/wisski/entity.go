@@ -1,12 +1,14 @@
 package wisski
 
 import (
+	"fmt"
 	"io"
+
+	"slices"
 
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/anglo-korean/rdf"
-	"slices"
 )
 
 // cspell:words WissKI
@@ -21,9 +23,14 @@ type Entity struct {
 }
 
 // WriteTo writes triples representing this entity into w.
-func (entity Entity) WriteAllTriples(w io.Writer, canonical bool, f rdf.Format) error {
+func (entity Entity) WriteAllTriples(w io.Writer, canonical bool, f rdf.Format) (err error) {
 	writer := rdf.NewTripleEncoder(w, f)
-	defer writer.Close()
+	defer func() {
+		werr := writer.Close()
+		if err == nil && werr != nil {
+			err = fmt.Errorf("failed to close triple encoder: %w", err)
+		}
+	}()
 
 	for _, triple := range entity.AllTriples() {
 		triple, err := triple.Triple(canonical)
