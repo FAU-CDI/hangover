@@ -75,16 +75,15 @@ func Values(context context.Context, index *igraph.Index, path *pathbuilder.Path
 			}
 		}
 
-		// create an actual iterator for the result
-		result := query.Paths()
-		defer result.Close()
-
 		// iterate over the result and return it to the caller.
-		for result.Next() {
+		for instance, err := range query.Paths() {
+			if err != nil {
+				errChan <- err
+				return
+			}
 
 			// compute the current instance of the path we got returned.
 			// this is quick for a single instance.
-			instance := result.Datum()
 			value := Value{
 				Path:        path,
 				Pathbuilder: pathbuilder,
@@ -110,12 +109,6 @@ func Values(context context.Context, index *igraph.Index, path *pathbuilder.Path
 				errChan <- err
 				return
 			}
-		}
-
-		// check if the result had an error
-		if err := result.Err(); err != nil {
-			errChan <- err
-			return
 		}
 	}()
 
