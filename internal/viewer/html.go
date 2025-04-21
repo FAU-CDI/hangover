@@ -448,10 +448,7 @@ type htmlEntityContext struct {
 	DownloadLinks struct {
 		Triples template.URL
 		Turtle  template.URL
-		SVG     template.URL
-		DOT     template.URL
 	}
-	Graph   template.URL
 	Aliases []impl.Label
 	Globals contextGlobal
 }
@@ -477,14 +474,9 @@ func (viewer *Viewer) htmlEntity(w http.ResponseWriter, r *http.Request) {
 	context.Aliases = viewer.Cache.Aliases(entity.URI)
 
 	suffix := url.PathEscape(vars["bundle"]) + "?uri=" + url.QueryEscape(vars["uri"])
-	context.Graph = template.URL("/api/v1/svg/" + suffix) // #nosec G203
 
-	downloadSuffix := suffix + "&download=true"
-
-	context.DownloadLinks.Triples = template.URL("/api/v1/ntriples/" + downloadSuffix) // #nosec G203
-	context.DownloadLinks.Turtle = template.URL("/api/v1/turtle/" + downloadSuffix)    // #nosec G203
-	context.DownloadLinks.SVG = template.URL("/api/v1/svg/" + downloadSuffix)          // #nosec G203
-	context.DownloadLinks.DOT = template.URL("/api/v1/dot/" + downloadSuffix)          // #nosec G203
+	context.DownloadLinks.Triples = template.URL("/api/v1/ntriples/" + suffix) // #nosec G203
+	context.DownloadLinks.Turtle = template.URL("/api/v1/turtle/" + suffix)    // #nosec G203
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)

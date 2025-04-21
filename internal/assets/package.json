@@ -1,10 +1,11 @@
 {
-  "name": "hangover-assets",
+  "name": "wisski-distillery-frontend",
   "version": "1.0.0",
   "license": "AGPL-3.0-only",
   "private": true,
   "dependencies": {
-    "node-html-parser": "^7.0.1",
-    "parcel": "^2.14.4"
+    "@viz-js/viz": "^3.12.0",
+    "node-html-parser": "^6.1.5",
+    "parcel": "^2.9.3"
   }
 }
