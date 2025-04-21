@@ -1,6 +1,9 @@
 // Package progress provides Reader and Writer
+//
+//spellchecker:words progress
 package progress
 
+//spellchecker:words errors strconv strings time github dustin humanize
 import (
 	"errors"
 	"fmt"

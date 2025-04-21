@@ -1,5 +1,7 @@
+//spellchecker:words imap
 package imap
 
+//spellchecker:words encoding json errors path filepath github hangover internal triplestore impl syndtr goleveldb leveldb util
 import (
 	"encoding/json"
 	"errors"

@@ -1,5 +1,7 @@
+//spellchecker:words storages
 package storages
 
+//spellchecker:words bytes encoding sync github hangover internal triplestore igraph impl wisski
 import (
 	"bytes"
 	"encoding/gob"

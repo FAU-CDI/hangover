@@ -1,5 +1,7 @@
+//spellchecker:words storages
 package storages
 
+//spellchecker:words iter sync github drincw pathbuilder hangover internal triplestore igraph impl wisski
 import (
 	"fmt"
 	"iter"

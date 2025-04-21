@@ -1,5 +1,7 @@
+//spellchecker:words storages
 package storages
 
+//spellchecker:words errors iter path filepath github drincw pathbuilder hangover internal triplestore igraph impl wisski
 import (
 	"errors"
 	"io"

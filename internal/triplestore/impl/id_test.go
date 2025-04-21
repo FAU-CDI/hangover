@@ -1,5 +1,7 @@
+//spellchecker:words impl
 package impl_test
 
+//spellchecker:words crypto rand math reflect testing github hangover internal triplestore impl
 import (
 	"crypto/rand"
 	"fmt"

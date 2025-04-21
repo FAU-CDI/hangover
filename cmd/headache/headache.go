@@ -1,5 +1,7 @@
+//spellchecker:words main
 package main
 
+//spellchecker:words github hangover internal headache
 import (
 	"os"
 

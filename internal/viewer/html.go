@@ -1,5 +1,7 @@
+//spellchecker:words viewer
 package viewer
 
+//spellchecker:words errors html template http strconv strings embed github drincw pathbuilder pbxml hangover internal assets stats triplestore impl wisski htmlx gorilla golang
 import (
 	"errors"
 	"fmt"
@@ -23,7 +25,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-// cspell:words pathbuilder
+//spellchecker:words pathbuilder
 
 var errEvenLength = errors.New("pairs must be of even length")
 

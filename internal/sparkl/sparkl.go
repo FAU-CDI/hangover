@@ -1,6 +1,9 @@
 // Package sparkl implements a very primitive graph index
+//
+//spellchecker:words sparkl
 package sparkl
 
+//spellchecker:words strings github hangover internal triplestore igraph impl
 import (
 	"strings"
 
@@ -8,7 +11,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// cspell:words sparkl
+//spellchecker:words sparkl
 
 // Predicates represent special predicates.
 type Predicates struct {

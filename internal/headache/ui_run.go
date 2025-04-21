@@ -1,5 +1,7 @@
+//spellchecker:words headache
 package headache
 
+//spellchecker:words context http time fyne container layout widget github hangover internal glass stats browser
 import (
 	"context"
 	"net"

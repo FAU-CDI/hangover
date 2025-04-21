@@ -1,5 +1,7 @@
+//spellchecker:words imap
 package imap
 
+//spellchecker:words errors github hangover internal triplestore impl
 import (
 	"errors"
 

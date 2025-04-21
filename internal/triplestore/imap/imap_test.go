@@ -1,5 +1,7 @@
+//spellchecker:words imap
 package imap_test
 
+//spellchecker:words math strconv testing github hangover internal triplestore imap impl
 import (
 	"fmt"
 	"math/big"
@@ -10,7 +12,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// cspell:words itol
+//spellchecker:words itol
 
 func ExampleIMap() {
 	var mp imap.IMap

@@ -1,5 +1,7 @@
+//spellchecker:words storages
 package storages
 
+//spellchecker:words errors iter path filepath sync atomic github drincw pathbuilder hangover internal triplestore igraph impl wisski syndtr goleveldb leveldb lerrors
 import (
 	"errors"
 	"fmt"

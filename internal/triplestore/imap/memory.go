@@ -1,5 +1,7 @@
+//spellchecker:words imap
 package imap
 
+//spellchecker:words errors math runtime
 import (
 	"errors"
 	"math"

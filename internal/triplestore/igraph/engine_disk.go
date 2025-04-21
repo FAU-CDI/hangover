@@ -1,5 +1,7 @@
+//spellchecker:words igraph
 package igraph
 
+//spellchecker:words errors path filepath github hangover internal triplestore imap impl syndtr goleveldb leveldb leveldberrors util
 import (
 	"errors"
 	"fmt"

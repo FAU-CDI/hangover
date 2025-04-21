@@ -1,5 +1,7 @@
+//spellchecker:words viewer
 package viewer
 
+//spellchecker:words encoding json http github hangover internal triplestore impl anglo korean gorilla
 import (
 	"encoding/json"
 	"fmt"

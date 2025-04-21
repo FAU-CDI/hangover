@@ -1,5 +1,7 @@
+//spellchecker:words progress
 package progress_test
 
+//spellchecker:words strings github hangover progress
 import (
 	"fmt"
 	"io"

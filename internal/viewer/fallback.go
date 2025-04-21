@@ -1,7 +1,9 @@
+//spellchecker:words viewer
 package viewer
 
 // fallback implements an api that implements the current status
 
+//spellchecker:words encoding json html template http embed github hangover internal assets stats
 import (
 	"encoding/json"
 	"html/template"

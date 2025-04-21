@@ -1,5 +1,7 @@
+//spellchecker:words igraph
 package igraph
 
+//spellchecker:words maps slices github hangover internal triplestore imap impl
 import (
 	"maps"
 	"slices"

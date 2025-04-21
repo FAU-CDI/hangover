@@ -1,5 +1,7 @@
+//spellchecker:words sparkl
 package sparkl
 
+//spellchecker:words errors runtime maps slices github hangover internal stats triplestore imap impl wisski
 import (
 	"errors"
 	"fmt"
@@ -14,7 +16,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// cspell:Words WIssKI imap
+//spellchecker:words WIss KI imap
 
 // Cache represents an easily accessible cache of WissKIObjects.
 // It is held entirely in memory.

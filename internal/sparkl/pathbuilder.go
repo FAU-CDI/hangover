@@ -1,5 +1,7 @@
+//spellchecker:words sparkl
 package sparkl
 
+//spellchecker:words errors sync github drincw pathbuilder hangover internal sparkl exporter storages stats triplestore igraph wisski
 import (
 	"errors"
 	"fmt"
@@ -13,7 +15,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// cspell:words pathbuilder
+//spellchecker:words pathbuilder
 
 // Export loads all top-level paths from the given path-builder from the index into the given engine.
 // Afterwards it is exported into the given exporter.

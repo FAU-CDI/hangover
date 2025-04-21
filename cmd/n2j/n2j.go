@@ -1,6 +1,9 @@
 // Command n2r turns an nquads file into a json file
+//
+//spellchecker:words main
 package main
 
+//spellchecker:words embed errors flag github drincw pathbuilder pbxml hangover internal sparkl storages stats triplestore igraph wisski profile
 import (
 	_ "embed"
 	"errors"
@@ -19,7 +22,7 @@ import (
 	"github.com/pkg/profile"
 )
 
-// cspell:words nquads pathbuilder
+//spellchecker:words nquads pathbuilder
 
 var errBothSqliteAndMysql = errors.New("both -sqlite and -mysql were given")
 

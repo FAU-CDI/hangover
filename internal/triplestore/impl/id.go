@@ -1,7 +1,9 @@
+//spellchecker:words impl
 package impl
 
-// cspell:words twiesing
+//spellchecker:words twiesing
 
+//spellchecker:words bytes errors math
 import (
 	"bytes"
 	"errors"

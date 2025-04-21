@@ -1,5 +1,7 @@
+//spellchecker:words hangover
 package hangover
 
+//spellchecker:words embed
 import _ "embed"
 
 //go:embed internal/assets/logo/Icon.svg

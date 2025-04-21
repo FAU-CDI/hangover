@@ -1,6 +1,9 @@
 // Package glass provides Glass
+//
+//spellchecker:words glass
 package glass
 
+//spellchecker:words errors runtime debug github drincw pathbuilder pbxml hangover internal sparkl storages stats triplestore imap impl viewer wisski
 import (
 	"errors"
 	"fmt"
@@ -17,7 +20,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// cspell:words WissKI pathbuilder nquads
+//spellchecker:words Wiss KI pathbuilder nquads
 
 const GlassVersion = 2
 

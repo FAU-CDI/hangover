@@ -1,6 +1,9 @@
 // Package assets implements serving of fully static resources
+//
+//spellchecker:words assets
 package assets
 
+//spellchecker:words embed http
 import (
 	"embed"
 	"io/fs"

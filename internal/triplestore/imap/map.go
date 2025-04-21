@@ -1,8 +1,10 @@
+//spellchecker:words imap
 package imap
 
+//spellchecker:words github hangover internal triplestore impl
 import "github.com/FAU-CDI/hangover/internal/triplestore/impl"
 
-// cspell:words imap
+//spellchecker:words imap
 
 // Map represents the backend of an Imap and creates appropriate key-value stores.
 type Map interface {

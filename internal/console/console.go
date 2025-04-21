@@ -1,5 +1,7 @@
+//spellchecker:words console
 package console
 
+//spellchecker:words strings fyne container widget github pkglib status
 import (
 	"fmt"
 	"strings"

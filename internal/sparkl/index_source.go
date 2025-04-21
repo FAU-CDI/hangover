@@ -1,5 +1,7 @@
+//spellchecker:words sparkl
 package sparkl
 
+//spellchecker:words github hangover internal triplestore impl cayleygraph quad nquads
 import (
 	"fmt"
 	"io"
@@ -9,7 +11,7 @@ import (
 	"github.com/cayleygraph/quad/nquads"
 )
 
-// cspell:words triplestore
+//spellchecker:words triplestore
 
 // Source represents a source of triples.
 type Source interface {

@@ -1,5 +1,7 @@
+//spellchecker:words igraph
 package igraph_test
 
+//spellchecker:words crypto rand math reflect strconv testing github hangover internal triplestore igraph impl
 import (
 	"crypto/rand"
 	"math"
@@ -149,7 +151,7 @@ func graphTest(t *testing.T, engine igraph.Engine, n int) {
 	encountered := make(map[impl.Datum]struct{})
 	for path, err := range paths {
 		if err != nil {
-			t.Error("unable to iterate paths: %s", err)
+			t.Errorf("unable to iterate paths: %s", err)
 			return
 		}
 		// extract the datum

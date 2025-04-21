@@ -1,8 +1,10 @@
+//spellchecker:words hangover
 package hangover
 
+//spellchecker:words embed
 import _ "embed"
 
-// cspell:words gogenlicense
+//spellchecker:words gogenlicense
 
 //go:generate go tool gogenlicense -m -t 0.5
 

@@ -1,6 +1,9 @@
 // Package htmlx provides facilities for various html editing
+//
+//spellchecker:words htmlx
 package htmlx
 
+//spellchecker:words iter strings golang html
 import (
 	"fmt"
 	"iter"
@@ -9,7 +12,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-// cspell:words htmlx twiesing
+//spellchecker:words htmlx twiesing
 
 // ReplaceLinks parses source as a html fragment, and then replaces all paths
 // inside <a> and <img> elements with the replace function.

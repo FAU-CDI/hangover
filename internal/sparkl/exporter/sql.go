@@ -1,5 +1,7 @@
+//spellchecker:words exporter
 package exporter
 
+//spellchecker:words database errors strings sync github drincw pathbuilder hangover internal triplestore impl wisski huandu sqlbuilder
 import (
 	"database/sql"
 	"errors"
@@ -13,7 +15,7 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// cspell:words twiesing
+//spellchecker:words twiesing
 
 // SQL implements an exporter for storing data inside an sql database.
 // TODO(twiesing): For now this only supports string-like fields.

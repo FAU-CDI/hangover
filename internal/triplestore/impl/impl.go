@@ -1,5 +1,7 @@
+//spellchecker:words impl
 package impl
 
+//spellchecker:words encoding json
 import (
 	"encoding/json"
 	"fmt"

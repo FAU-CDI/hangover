@@ -1,5 +1,7 @@
+//spellchecker:words assets
 package assets
 
+//spellchecker:words html template http embed
 import (
 	"fmt"
 	"html/template"

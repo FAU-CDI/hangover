@@ -1,5 +1,7 @@
+//spellchecker:words viewer
 package viewer
 
+//spellchecker:words bytes html template http strings sync time github drincw pathbuilder hangover internal assets sparkl stats gorilla pkglib text
 import (
 	"bytes"
 	"fmt"
@@ -20,7 +22,7 @@ import (
 	"github.com/tkw1536/pkglib/text"
 )
 
-// cspell:words WissKI
+//spellchecker:words Wiss KI
 
 // Viewer implements an [http.Handler] that displays WissKI Entities.
 type Viewer struct {

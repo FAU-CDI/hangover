@@ -1,5 +1,7 @@
+//spellchecker:words igraph
 package igraph
 
+//spellchecker:words errors iter strings github hangover internal triplestore impl
 import (
 	"errors"
 	"fmt"
@@ -9,7 +11,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// cspell:words sparql twiesing
+//spellchecker:words sparql twiesing
 
 const invalidSize = -1
 

@@ -1,5 +1,7 @@
+//spellchecker:words igraph
 package igraph_test
 
+//spellchecker:words testing github hangover internal triplestore igraph imap
 import (
 	"testing"
 

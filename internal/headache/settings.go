@@ -1,5 +1,7 @@
+//spellchecker:words headache
 package headache
 
+//spellchecker:words fyne data binding github hangover internal sparkl viewer wisski
 import (
 	"fyne.io/fyne/v2/data/binding"
 	"github.com/FAU-CDI/hangover/internal/sparkl"

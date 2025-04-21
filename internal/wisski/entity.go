@@ -1,5 +1,7 @@
+//spellchecker:words wisski
 package wisski
 
+//spellchecker:words slices github hangover internal triplestore igraph impl anglo korean
 import (
 	"fmt"
 	"io"
@@ -11,7 +13,7 @@ import (
 	"github.com/anglo-korean/rdf"
 )
 
-// cspell:words WissKI
+//spellchecker:words Wiss KI
 
 // Entity represents an Entity inside a WissKI Bundle.
 type Entity struct {

@@ -1,5 +1,7 @@
+//spellchecker:words headache
 package headache
 
+//spellchecker:words context signal sync atomic syscall fyne container layout github hangover internal console viewer
 import (
 	"context"
 	"io"

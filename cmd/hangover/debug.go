@@ -1,5 +1,7 @@
+//spellchecker:words main
 package main
 
+//spellchecker:words http pprof time github hangover internal viewer gorilla
 import (
 	"net/http"
 	"net/http/pprof"

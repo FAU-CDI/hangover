@@ -1,6 +1,9 @@
 // Package imap
+//
+//spellchecker:words imap
 package imap
 
+//spellchecker:words errors sync atomic github hangover internal triplestore impl
 import (
 	"errors"
 	"fmt"
@@ -11,7 +14,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// cspell:words twiesing imap
+//spellchecker:words twiesing imap
 
 // IMap holds forward and reverse mapping from Labels to IDs.
 // An IMap may be read concurrently; however any operations which change internal state are not safe to access concurrently.

@@ -1,5 +1,7 @@
+//spellchecker:words sparkl
 package sparkl
 
+//spellchecker:words errors iter sync atomic github drincw pathbuilder hangover internal sparkl storages stats triplestore igraph impl wisski
 import (
 	"errors"
 	"fmt"

@@ -1,5 +1,7 @@
+//spellchecker:words imap
 package imap_test
 
+//spellchecker:words testing github hangover internal triplestore imap
 import (
 	"testing"
 

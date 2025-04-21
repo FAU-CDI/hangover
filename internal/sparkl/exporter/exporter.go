@@ -1,5 +1,7 @@
+//spellchecker:words exporter
 package exporter
 
+//spellchecker:words github drincw pathbuilder hangover internal wisski
 import (
 	"io"
 
@@ -7,7 +9,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// cspell:words WissKI
+//spellchecker:words Wiss KI
 
 // Exporter handles WissKI Entities.
 type Exporter interface {

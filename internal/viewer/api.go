@@ -1,5 +1,7 @@
+//spellchecker:words viewer
 package viewer
 
+//spellchecker:words github drincw pathbuilder hangover internal stats triplestore igraph impl wisski pkglib perf
 import (
 	"github.com/FAU-CDI/drincw/pathbuilder"
 	"github.com/FAU-CDI/hangover/internal/stats"
@@ -9,7 +11,7 @@ import (
 	"github.com/tkw1536/pkglib/perf"
 )
 
-// cspell:words pathbuilder
+//spellchecker:words pathbuilder
 
 // findBundle returns a bundle by machine name and makes sure that appropriate caches are filled.
 func (viewer *Viewer) findBundle(machine string) (bundle *pathbuilder.Bundle, ok bool) {

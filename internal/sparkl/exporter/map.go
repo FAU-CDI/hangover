@@ -1,5 +1,7 @@
+//spellchecker:words exporter
 package exporter
 
+//spellchecker:words sync github drincw pathbuilder hangover internal wisski
 import (
 	"sync"
 

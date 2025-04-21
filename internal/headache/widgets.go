@@ -1,5 +1,7 @@
+//spellchecker:words headache
 package headache
 
+//spellchecker:words fyne data binding dialog widget github hangover
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"

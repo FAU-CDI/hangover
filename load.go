@@ -1,5 +1,7 @@
+//spellchecker:words hangover
 package hangover
 
+//spellchecker:words errors path filepath
 import (
 	"errors"
 	"fmt"
@@ -7,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-// cspell:words nqauds
+//spellchecker:words nqauds
 
 var (
 	errWrongArgCount  = errors.New("need one or two arguments")

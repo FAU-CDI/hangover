@@ -1,8 +1,11 @@
 // Command hangover implements a WissKI Viewer
+//
+//spellchecker:words main
 package main
 
-// cspell:words WissKI
+//spellchecker:words Wiss KI
 
+//spellchecker:words embed flag html template http time github hangover internal glass sparkl stats viewer wisski pkglib perf
 import (
 	_ "embed"
 	"flag"

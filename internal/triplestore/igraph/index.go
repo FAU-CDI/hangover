@@ -1,6 +1,9 @@
 // package igraph provides Index
+//
+//spellchecker:words igraph
 package igraph
 
+//spellchecker:words errors sync atomic github hangover internal triplestore imap impl
 import (
 	"errors"
 	"fmt"
@@ -12,7 +15,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 )
 
-// cSpell:words igraph imap
+//spellchecker:words igraph imap
 
 // Index represents a searchable index of a directed labeled graph with optionally attached Data.
 //

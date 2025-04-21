@@ -1,5 +1,7 @@
+//spellchecker:words headache
 package headache
 
+//spellchecker:words math strconv fyne data binding widget github hangover internal stats
 import (
 	"fmt"
 	"math"

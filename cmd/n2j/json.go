@@ -1,5 +1,7 @@
+//spellchecker:words main
 package main
 
+//spellchecker:words encoding json github drincw pathbuilder hangover internal sparkl storages stats triplestore igraph wisski
 import (
 	"encoding/json"
 	"fmt"

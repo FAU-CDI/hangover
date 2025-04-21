@@ -1,5 +1,7 @@
+//spellchecker:words headache
 package headache
 
+//spellchecker:words context errors http strconv strings sync atomic fyne container layout widget github pkglib
 import (
 	"context"
 	"errors"

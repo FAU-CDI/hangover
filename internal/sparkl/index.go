@@ -1,6 +1,9 @@
 // Package sparkl provides facilities to generate an Index for a WissKI
+//
+//spellchecker:words sparkl
 package sparkl
 
+//spellchecker:words errors github drincw pathbuilder hangover internal stats triplestore igraph impl wisski
 import (
 	"errors"
 	"fmt"
@@ -14,7 +17,7 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski"
 )
 
-// cspell:words nquads WissKI sparkl pathbuilder
+//spellchecker:words nquads Wiss KI sparkl pathbuilder
 
 // LoadIndex is like MakeIndex, but reads nquads from the given path.
 // When err != nil, the caller must eventually close the index.

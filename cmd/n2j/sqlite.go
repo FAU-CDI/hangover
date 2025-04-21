@@ -1,5 +1,7 @@
+//spellchecker:words main
 package main
 
+//spellchecker:words database encoding errors path filepath github drincw pathbuilder hangover internal sparkl exporter storages stats triplestore igraph glebarez sqlite driver mysql
 import (
 	"database/sql"
 	"encoding/csv"

@@ -1,8 +1,11 @@
 // Package stats provides Stats
+//
+//spellchecker:words stats
 package stats
 
-// spellchecker:words rewritable
+//spellchecker:words rewritable
 
+//spellchecker:words errors slog sync atomic github hangover internal triplestore igraph progress pkglib lazy perf
 import (
 	"errors"
 	"fmt"

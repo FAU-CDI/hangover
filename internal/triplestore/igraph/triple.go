@@ -1,5 +1,7 @@
+//spellchecker:words igraph
 package igraph
 
+//spellchecker:words errors github hangover internal triplestore imap impl anglo korean
 import (
 	"errors"
 	"fmt"
