@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"sync"
 	"sync/atomic"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/FAU-CDI/hangover/internal/wisski"
-	"github.com/tkw1536/pkglib/traversal"
 )
 
 // StoreBundle loads all entities from the given bundle into a new storage, which is then returned.
@@ -162,27 +162,17 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 		// stage 1: load the entities themselves
 		err := (func() (e error) {
 			paths := extractPath(bundle.Path, context.Index, context.st)
-			defer func() {
-				if e2 := paths.Close(); e2 != nil {
-					e2 = fmt.Errorf("failed to close extracted paths: %w", e2)
-					if e == nil {
-						e = e2
-					} else {
-						e = errors.Join(e, e2)
-					}
+			for path, err := range paths {
+				if err != nil {
+					return fmt.Errorf("failed to get paths: %w", err)
 				}
-			}()
-
-			for paths.Next() {
-				path := paths.Datum()
 				nodes := path.Nodes
 				triples := path.Triples
 				if err := storage.Add(nodes[entityURIIndex], nodes, triples); err != nil {
 					return fmt.Errorf("failed to add to storage: %w", err)
 				}
 			}
-
-			return paths.Err()
+			return nil
 		})()
 		if context.reportError(err) {
 			return
@@ -195,19 +185,16 @@ func (context *Context) Store(bundle *pathbuilder.Bundle, onFinish func()) stora
 				defer context.extractWait.Done()
 
 				paths := extractPath(field.Path, context.Index, context.st)
-				defer func() {
-					context.reportError(paths.Close())
-				}()
-
-				for paths.Next() {
-					path := paths.Datum()
-
+				for path, err := range paths {
+					if err != nil {
+						context.reportError(fmt.Errorf("failed to iterate paths: %w", err))
+						return
+					}
 					err = storage.AddFieldValue(path.Nodes[entityURIIndex], field.MachineName(), path.Value(), path.Nodes, path.Triples)
 					if !errors.Is(err, storages.ErrNoEntity) {
 						context.reportError(err)
 					}
 				}
-				context.reportError(paths.Err())
 			}(field)
 		}
 
@@ -275,11 +262,11 @@ var debugLogID int64 // id of the current log id
 //
 // Any values found along the path are written to the returned channel which is then closed.
 // If an error occurs, it is written to errDst before the channel is closed.
-func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) traversal.Iterator[igraph.Path] {
+func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) iter.Seq2[igraph.Path, error] {
 	// start with the path array
 	uris := append([]string{}, path.PathArray...)
 	if len(uris) == 0 {
-		return traversal.Empty[igraph.Path](nil)
+		return func(yield func(igraph.Path, error) bool) {}
 	}
 
 	// add the datatype property if are not a group
@@ -296,12 +283,12 @@ func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) tr
 
 	set, err := index.PathsStarting(wisski.Type, impl.Label(uris[0]))
 	if err != nil {
-		return traversal.Empty[igraph.Path](err)
+		return func(yield func(igraph.Path, error) bool) { yield(igraph.Path{}, err) }
 	}
 	if debugLogAllPaths {
 		size, err := set.Size()
 		if err != nil {
-			return traversal.Empty[igraph.Path](err)
+			return func(yield func(igraph.Path, error) bool) { yield(igraph.Path{}, err) }
 		}
 		st.LogDebug("path", "id", debugID, "uri", uris[0], "size", size)
 	}
@@ -309,18 +296,18 @@ func extractPath(path pathbuilder.Path, index *igraph.Index, st *stats.Stats) tr
 	for i := 1; i < len(uris); i++ {
 		if i%2 == 0 {
 			if err := set.Ending(wisski.Type, impl.Label(uris[i])); err != nil {
-				return traversal.Empty[igraph.Path](err)
+				return func(yield func(igraph.Path, error) bool) { yield(igraph.Path{}, err) }
 			}
 		} else {
 			if err := set.Connected(impl.Label(uris[i])); err != nil {
-				return traversal.Empty[igraph.Path](err)
+				return func(yield func(igraph.Path, error) bool) { yield(igraph.Path{}, err) }
 			}
 		}
 
 		if debugLogAllPaths {
 			size, err := set.Size()
 			if err != nil {
-				return traversal.Empty[igraph.Path](err)
+				return func(yield func(igraph.Path, error) bool) { yield(igraph.Path{}, err) }
 			}
 			st.LogDebug("uri", "id", debugID, "uris", uris[i], "size", size)
 		}

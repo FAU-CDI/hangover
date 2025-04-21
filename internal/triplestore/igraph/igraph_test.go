@@ -147,12 +147,14 @@ func graphTest(t *testing.T, engine igraph.Engine, n int) {
 	paths := query.Paths()
 
 	encountered := make(map[impl.Datum]struct{})
-	for paths.Next() {
-		path := paths.Datum()
-
+	for path, err := range paths {
+		if err != nil {
+			t.Error("unable to iterate paths: %s", err)
+			return
+		}
 		// extract the datum
 		if !path.HasDatum {
-			t.Errorf("Unable to retrieve Datum: %s", err)
+			t.Errorf("unable to retrieve Datum: %s", err)
 		}
 		encountered[path.Datum] = struct{}{}
 
