@@ -6,18 +6,18 @@ package assets
 
 // Assetshangover contains assets for the 'hangover' entrypoint.
 var Assetshangover = Assets{
-	Scripts: `<script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover.41386889.js"></script><script src="/assets/hangover.a4602244.js" nomodule defer></script>`,
+	Scripts: `<script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover.3e2a739a.js"></script><script src="/assets/hangover.38938bc0.js" nomodule defer></script>`,
 	Styles:  `<link rel="stylesheet" href="/assets/hangover.90bee0fa.css">`,	
 }
 
 // Assetshangover_fallback contains assets for the 'hangover_fallback' entrypoint.
 var Assetshangover_fallback = Assets{
-	Scripts: `<script nomodule defer src="/assets/hangover.a4602244.js"></script><script type="module" src="/assets/hangover.41386889.js"></script><script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover_fallback.948ee401.js"></script><script src="/assets/hangover_fallback.111191b2.js" nomodule defer></script>`,
+	Scripts: `<script nomodule defer src="/assets/hangover.38938bc0.js"></script><script type="module" src="/assets/hangover.3e2a739a.js"></script><script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/hangover_fallback.50fe6883.js"></script><script src="/assets/hangover_fallback.35574774.js" nomodule defer></script>`,
 	Styles:  `<link rel="stylesheet" href="/assets/hangover.90bee0fa.css"><link rel="stylesheet" href="/assets/hangover_fallback.38d394c2.css">`,	
 }
 
 // Assetstipsy contains assets for the 'tipsy' entrypoint.
 var Assetstipsy = Assets{
-	Scripts: `<script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/tipsy.670775d4.js"></script><script src="/assets/tipsy.670775d4.js" nomodule defer></script>`,
+	Scripts: `<script type="module" src="/assets/hangover.c7abdb94.js"></script><script src="/assets/hangover.b0ea6023.js" nomodule defer></script><script type="module" src="/assets/tipsy.4f01ea37.js"></script><script src="/assets/tipsy.4f01ea37.js" nomodule defer></script>`,
 	Styles:  `<link rel="stylesheet" href="/assets/tipsy.ffc311c9.css">`,	
 }

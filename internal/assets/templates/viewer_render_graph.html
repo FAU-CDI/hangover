@@ -18,7 +18,7 @@
             {{ if eq $e.Role 2 }}
             {{ if $comma }},{{ end }}
             [
-                {{ $e.SSubject }}, {{ $e.SPredicate }}, {{ $e.Datum.Value }}
+                {{ $e.SSubject }}, {{ $e.SPredicate }}, {{ $e.Datum.Value }}, {{ $e.Datum.Language }}
             ]
             {{ $comma = true }}
             {{ end }}
