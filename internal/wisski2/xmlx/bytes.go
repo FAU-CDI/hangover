@@ -23,14 +23,34 @@ func DecodeTagBytes[T any](dest *T, d *xml.Decoder, start xml.StartElement, deco
 
 	errParse := make(chan error, 1)
 	go func() {
-		defer close(errParse) // prevent a deadlock in case of panic!
-		defer reader.Close()
+		var e error
+		defer func() {
+			defer close(errParse)
+			if e2 := reader.Close(); e2 != nil {
+				e2 = fmt.Errorf("failed to close reader: %w", e2)
+				if e == nil {
+					e = e2
+				} else {
+					e = errors.Join(e, e2)
+				}
+			}
 
-		errParse <- decoder(dest, reader)
+			errParse <- e
+		}()
+		e = decoder(dest, reader)
 	}()
 
-	errDecode := func() error {
-		defer writer.Close()
+	errDecode := func() (e error) {
+		defer func() {
+			if e2 := writer.Close(); e2 != nil {
+				e2 = fmt.Errorf("failed to close writer: %w", e2)
+				if e == nil {
+					e = e2
+				} else {
+					e = errors.Join(e, e2)
+				}
+			}
+		}()
 
 		for {
 			token, err := d.Token()
@@ -40,7 +60,9 @@ func DecodeTagBytes[T any](dest *T, d *xml.Decoder, start xml.StartElement, deco
 
 			switch tt := token.(type) {
 			case xml.CharData: // read some character data
-				writer.Write([]byte(tt))
+				if _, err := writer.Write([]byte(tt)); err != nil {
+					return fmt.Errorf("failed to write to writer: %w", err)
+				}
 			case xml.EndElement:
 				if tt.Name != start.Name {
 					// shouldn't happen because the parser validates
@@ -81,7 +103,7 @@ func ParseMainTag[T any](d *xml.Decoder, start xml.StartElement, parser func(byt
 		bytes, err := io.ReadAll(src)
 		if err != nil {
 			var zero T
-			return zero, err
+			return zero, fmt.Errorf("failed to read from source: %w", err)
 		}
 		return parser(bytes)
 	})
@@ -96,49 +118,69 @@ func TagDecoderFunction[T any](decoder func(dst *T, src io.Reader) error) Decode
 var encodeBufferSize = 32 * 1024
 
 func EncodeBytesFunc[T any](encoder func(dest io.Writer, source *T) error) EncoderFunction[T] {
-	return func(source *T, e *xml.Encoder, start xml.StartElement) error {
+	return func(source *T, xmlEncoder *xml.Encoder, start xml.StartElement) error {
 		// TODO: Make this an io.Pipe!
 		// and read from it bit by bit.
 		reader, writer := io.Pipe()
 
 		errEncode := make(chan error, 1)
 		go func() {
-			defer writer.Close()
-			defer close(errEncode)
+			var e error
 
-			errEncode <- encoder(writer, source)
+			defer func() {
+				defer close(errEncode)
+
+				if e2 := writer.Close(); e2 != nil {
+					e2 = fmt.Errorf("failed to close writer: %w", e2)
+					if e == nil {
+						e = e2
+					} else {
+						e = errors.Join(e, e2)
+					}
+				}
+				errEncode <- e
+			}()
+
+			e = encoder(writer, source)
 		}()
 
 		// encode the token
-		if err := e.EncodeToken(start); err != nil {
-			return err
+		if err := xmlEncoder.EncodeToken(start); err != nil {
+			return fmt.Errorf("failed to encode start token: %w", err)
 		}
 
-		errWrite := (func() error {
-			defer reader.Close()
+		errWrite := (func() (e error) {
+			defer func() {
+				if e2 := reader.Close(); e2 != nil {
+					e2 = fmt.Errorf("failed to close reader: %w", e2)
+					if xmlEncoder == nil {
+						e = e2
+					} else {
+						e = errors.Join(e, e2)
+					}
+				}
+			}()
 
 			buffer := make([]byte, encodeBufferSize)
 
 			for {
-
 				// read the next chunk from the bufer
 				n, err := reader.Read(buffer)
-				if err != nil && err != io.EOF {
+				if err != nil && !errors.Is(err, io.EOF) {
 					return fmt.Errorf("unexpected read error: %w", err)
 				}
 
 				// write the bytes back into the buffer
 				if n >= 0 {
-					if err := e.EncodeToken(xml.CharData(buffer[:n])); err != nil {
+					if err := xmlEncoder.EncodeToken(xml.CharData(buffer[:n])); err != nil {
 						return fmt.Errorf("unexpected encode token error: %w", err)
 					}
 				}
 
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					return nil
 				}
 			}
-
 		})()
 
 		// check if an error occurred
@@ -151,8 +193,8 @@ func EncodeBytesFunc[T any](encoder func(dest io.Writer, source *T) error) Encod
 		}
 
 		// encode the token
-		if err := e.EncodeToken(start.End()); err != nil {
-			return err
+		if err := xmlEncoder.EncodeToken(start.End()); err != nil {
+			return fmt.Errorf("failed to encode end token: %w", err)
 		}
 
 		return nil

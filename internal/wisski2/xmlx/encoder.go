@@ -7,15 +7,16 @@ import (
 	"strings"
 )
 
+//nolint:recvcheck
 type Encoder struct {
 	encoders   map[string]reflect.Value
 	encoderTyp map[string]reflect.Type
 }
 
-// DecoderFunction is a function that decodes into an object of type T
+// DecoderFunction is a function that decodes into an object of type T.
 type EncoderFunction[T any] = func(source *T, d *xml.Encoder, start xml.StartElement) error
 
-// MustRegister is like Register, but panic()s if something goes wrong
+// MustRegister is like Register, but panic()s if something goes wrong.
 func (e *Encoder) MustRegister(name string, decoder any) {
 	if err := e.Register(name, decoder); err != nil {
 		panic(err)
@@ -32,13 +33,13 @@ func (e *Encoder) Register(name string, encoder any) error {
 	v := reflect.ValueOf(encoder)
 
 	t := v.Type()
-	if !(t.Kind() == reflect.Func &&
-		t.NumIn() == 3 &&
-		t.In(0).Kind() == reflect.Pointer &&
-		t.In(1) == typeEncoder &&
-		t.In(2) == typeStart &&
-		t.NumOut() == 1 &&
-		t.Out(0) == typeErr) {
+	if t.Kind() != reflect.Func ||
+		t.NumIn() != 3 ||
+		t.In(0).Kind() != reflect.Pointer ||
+		t.In(1) != typeEncoder ||
+		t.In(2) != typeStart ||
+		t.NumOut() != 1 ||
+		t.Out(0) != typeErr {
 		return errNoEncoderFunc
 	}
 
@@ -130,5 +131,8 @@ func (ee Encoder) Encode(source any, e *xml.Encoder, start xml.StartElement) err
 	}
 
 	// force a flush!
-	return e.Flush()
+	if err := e.Flush(); err != nil {
+		return fmt.Errorf("failed to flush: %w", err)
+	}
+	return nil
 }

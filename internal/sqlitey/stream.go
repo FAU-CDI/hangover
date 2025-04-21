@@ -1,6 +1,7 @@
 package sqlitey
 
 import (
+	"fmt"
 	"io"
 	"sync"
 
@@ -16,7 +17,7 @@ import (
 func StreamStatement[T any](conn *sqlite.Conn, query string, bind func(stmt *sqlite.Stmt, value T) error, cacheSize int) (execute func(t T) error, closer func() error, err error) {
 	stmt, err := conn.Prepare(query)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
 	// messages used for insertion
@@ -41,7 +42,7 @@ func StreamStatement[T any](conn *sqlite.Conn, query string, bind func(stmt *sql
 		defer func() {
 			err := stmt.Finalize()
 			if err != nil && doneError == nil {
-				doneError = err
+				doneError = fmt.Errorf("failed to finalize statement: %w", err)
 			}
 		}()
 
@@ -55,6 +56,7 @@ func StreamStatement[T any](conn *sqlite.Conn, query string, bind func(stmt *sql
 			// do all the binding
 			if bind != nil {
 				if doneError = bind(stmt, msg.value); doneError != nil {
+					doneError = fmt.Errorf("failed to bind: %w", doneError)
 					msg.result <- doneError
 					continue
 				}
@@ -64,6 +66,9 @@ func StreamStatement[T any](conn *sqlite.Conn, query string, bind func(stmt *sql
 			var returned bool
 			for {
 				returned, doneError = stmt.Step()
+				if doneError != nil {
+					doneError = fmt.Errorf("failed to step statement: %w", err)
+				}
 				if !returned {
 					break
 				}
@@ -79,6 +84,7 @@ func StreamStatement[T any](conn *sqlite.Conn, query string, bind func(stmt *sql
 			close(msg.result)
 
 			// prepare for the next invocation
+			// TODO: handle errors here!
 			stmt.Reset()
 			stmt.ClearBindings()
 		}

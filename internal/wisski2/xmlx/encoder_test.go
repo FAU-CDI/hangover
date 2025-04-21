@@ -3,6 +3,7 @@ package xmlx_test
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -16,6 +17,8 @@ type EncoderTestObj struct {
 }
 
 func TestXMLEncode_single(t *testing.T) {
+	t.Parallel()
+
 	for _, tt := range []struct {
 		Name string
 
@@ -35,6 +38,8 @@ func TestXMLEncode_single(t *testing.T) {
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+
 			var encoder xmlx.Encoder
 			encoder.MustRegister("bytes", xmlx.EncodeBytesFunc(WriteBytes))
 
@@ -58,10 +63,12 @@ func TestXMLEncode_single(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func WriteBytes(dest io.Writer, source *[]byte) error {
 	_, err := bytes.NewReader(*source).WriteTo(dest)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to write to reader: %w", err)
+	}
+	return nil
 }

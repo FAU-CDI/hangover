@@ -1,6 +1,7 @@
 package wca
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 
 const MANIFEST_VERSION = "1.0"
 
-// Manifest represents the manifest of a WCA archive
+// Manifest represents the manifest of a WCA archive.
 type Manifest struct {
 	Description string
 	Created     time.Time
@@ -21,7 +22,7 @@ type Manifest struct {
 	Version     string
 }
 
-// writeTo writes the given manifest into the archive
+// writeTo writes the given manifest into the archive.
 func (manifest *Manifest) writeTo(archive *Archive) error {
 	// marshal the pathbuilder
 	pathbuilder, err := pbxml.Marshal(manifest.Pathbuilder)
@@ -88,7 +89,10 @@ func (manifest *Manifest) readFrom(archive *Archive) error {
 
 				var err error
 				manifest.Pathbuilder, err = pbxml.Unmarshal(bytes)
-				return err
+				if err != nil {
+					return fmt.Errorf("failed to unmarshal pathbuilder: %w", err)
+				}
+				return nil
 			},
 		},
 	)
@@ -96,7 +100,7 @@ func (manifest *Manifest) readFrom(archive *Archive) error {
 		return fmt.Errorf("unable to query `wca_manifest` table: %w", err)
 	}
 	if !sawRow {
-		return fmt.Errorf("error reading `wca_manifest` table: no row read")
+		return errors.New("error reading `wca_manifest` table: no row read")
 	}
 
 	return nil

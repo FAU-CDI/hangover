@@ -2,6 +2,7 @@ package sqlitey_test
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/FAU-CDI/hangover/internal/sqlitey"
@@ -28,7 +29,7 @@ func ExampleStreamStatement() {
 	}
 
 	// prepare streaming of the statement
-	insert, close, err := sqlitey.StreamStatement(conn, `INSERT INTO "EXAMPLE" ("key", "value") VALUES (?, ?);`, func(stmt *sqlite.Stmt, value *KeyValue) error {
+	insert, closer, err := sqlitey.StreamStatement(conn, `INSERT INTO "EXAMPLE" ("key", "value") VALUES (?, ?);`, func(stmt *sqlite.Stmt, value *KeyValue) error {
 		stmt.BindText(1, value.Key)
 		stmt.BindText(2, value.Value)
 		return nil
@@ -36,12 +37,16 @@ func ExampleStreamStatement() {
 	if err != nil {
 		panic(err)
 	}
-	defer close()
+	defer func() {
+		if err := closer(); err != nil {
+			panic(err)
+		}
+	}()
 
 	// generate a bunch of random values
 	values := make([]KeyValue, 10000)
 	for i := range values {
-		values[i].Key = fmt.Sprint(i)
+		values[i].Key = strconv.Itoa(i)
 		values[i].Value = "test"
 	}
 

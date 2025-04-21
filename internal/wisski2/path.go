@@ -13,26 +13,27 @@ import (
 	"github.com/FAU-CDI/hangover/internal/wisski2/xmlx"
 )
 
+//nolint:recvcheck
 type Path struct {
-	ID                   string   `xmlxcoder:"str" xmlxtag:"id"`
-	Weight               int      `xmlxcoder:"int" xmlxtag:"weight"`
-	Enabled              bool     `xmlxcoder:"bool" xmlxtag:"enabled"`
-	GroupID              string   `xmlxcoder:"str0" xmlxtag:"group_id"`
-	Bundle               string   `xmlxcoder:"str" xmlxtag:"bundle"`
-	Field                string   `xmlxcoder:"str" xmlxtag:"field"`
-	FieldType            string   `xmlxcoder:"str" xmlxtag:"fieldtype"`
-	FieldTypeInformative string   `xmlxcoder:"str" xmlxtag:"field_type_informative"`
-	DisplayWidget        string   `xmlxcoder:"str" xmlxtag:"displaywidget"`
-	FormatterWidget      string   `xmlxcoder:"str" xmlxtag:"formatterwidget"`
-	Cardinality          int      `xmlxcoder:"int" xmlxtag:"cardinality"`
-	PathArray            []string `xmlxcoder:"path" xmlxtag:"path_array"`
+	ID                   string   `xmlxcoder:"str"      xmlxtag:"id"`
+	Weight               int      `xmlxcoder:"int"      xmlxtag:"weight"`
+	Enabled              bool     `xmlxcoder:"bool"     xmlxtag:"enabled"`
+	GroupID              string   `xmlxcoder:"str0"     xmlxtag:"group_id"`
+	Bundle               string   `xmlxcoder:"str"      xmlxtag:"bundle"`
+	Field                string   `xmlxcoder:"str"      xmlxtag:"field"`
+	FieldType            string   `xmlxcoder:"str"      xmlxtag:"fieldtype"`
+	FieldTypeInformative string   `xmlxcoder:"str"      xmlxtag:"field_type_informative"`
+	DisplayWidget        string   `xmlxcoder:"str"      xmlxtag:"displaywidget"`
+	FormatterWidget      string   `xmlxcoder:"str"      xmlxtag:"formatterwidget"`
+	Cardinality          int      `xmlxcoder:"int"      xmlxtag:"cardinality"`
+	PathArray            []string `xmlxcoder:"path"     xmlxtag:"path_array"`
 	DatatypeProperty     string   `xmlxcoder:"strEmpty" xmlxtag:"datatype_property"`
-	ShortName            string   `xmlxcoder:"str" xmlxtag:"short_name"`
-	Disambiguation       int      `xmlxcoder:"int" xmlxtag:"disamb"`
-	Description          string   `xmlxcoder:"str" xmlxtag:"description"`
-	UUID                 string   `xmlxcoder:"str" xmlxtag:"uuid"`
-	IsGroup              bool     `xmlxcoder:"bool" xmlxtag:"is_group"`
-	Name                 string   `xmlxcoder:"str" xmlxtag:"name"`
+	ShortName            string   `xmlxcoder:"str"      xmlxtag:"short_name"`
+	Disambiguation       int      `xmlxcoder:"int"      xmlxtag:"disamb"`
+	Description          string   `xmlxcoder:"str"      xmlxtag:"description"`
+	UUID                 string   `xmlxcoder:"str"      xmlxtag:"uuid"`
+	IsGroup              bool     `xmlxcoder:"bool"     xmlxtag:"is_group"`
+	Name                 string   `xmlxcoder:"str"      xmlxtag:"name"`
 }
 
 // Gets the number of concepts in this path.
@@ -68,7 +69,7 @@ func (path Path) InformativeFieldType() (tp string, ok bool) {
 	return path.FieldType, true
 }
 
-// Returns the index of the disambiguated concept in the pathArray, or null
+// Returns the index of the disambiguated concept in the pathArray, or null.
 func (path Path) DisambiguationIndex() (index int, ok bool) {
 	index = 2*path.Disambiguation - 2
 	if index < 0 || index >= len(path.PathArray) {
@@ -77,7 +78,7 @@ func (path Path) DisambiguationIndex() (index int, ok bool) {
 	return index, true
 }
 
-// The concept  disambiguated by this pathbuilder, if any
+// The concept  disambiguated by this pathbuilder, if any.
 func (path Path) DisambiguatedConcept() (ceoncept string, ok bool) {
 	index := 2*path.Disambiguation - 2
 	if index < 0 || index >= len(path.PathArray) {
@@ -86,9 +87,10 @@ func (path Path) DisambiguatedConcept() (ceoncept string, ok bool) {
 	return path.PathArray[index], true
 }
 
+// TODO: register the encoder!
 var (
 	pathDecoder xmlx.Decoder
-	pathEncoder xmlx.Encoder
+	pathEncoder xmlx.Encoder //nolint:unused
 )
 
 func init() {
@@ -109,13 +111,16 @@ func (path *Path) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		panic("cannot unmarshal into nil path")
 	}
 
-	return pathDecoder.Decode(path, d, start)
+	if err := pathDecoder.Decode(path, d, start); err != nil {
+		return fmt.Errorf("failed to decode path: %w", err)
+	}
+	return nil
 }
 
 func parseString(dst *string, src io.Reader) error {
 	str, err := io.ReadAll(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read from source: %w", err)
 	}
 	*dst = string(str)
 	return nil
@@ -144,7 +149,7 @@ func parseStringEmpty(dst *string, src io.Reader) error {
 func parseInt(dst *int, src io.Reader) error {
 	value, err := io.ReadAll(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read from source: %w", err)
 	}
 	str := strings.TrimSpace(string(value))
 	if str == "" {
@@ -154,7 +159,7 @@ func parseInt(dst *int, src io.Reader) error {
 
 	i, err := strconv.Atoi(str)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse integer: %w", err)
 	}
 	*dst = i
 	return nil
@@ -178,7 +183,7 @@ func parsePathArray(dest *[]string, d *xml.Decoder, start xml.StartElement) erro
 	for {
 		token, err := d.Token()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get token: %w", err)
 		}
 
 		switch tt := token.(type) {
@@ -210,9 +215,8 @@ func parsePathArray(dest *[]string, d *xml.Decoder, start xml.StartElement) erro
 			// write the element into dest
 			*dest = append(*dest, "")
 			if err := xmlx.DecodeTagBytes(&(*dest)[len(*dest)-1], d, tt, parseString); err != nil {
-				return err
+				return fmt.Errorf("failed to decode x or y tag: %w", err)
 			}
-
 		}
 	}
 }

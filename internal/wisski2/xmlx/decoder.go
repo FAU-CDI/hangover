@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Decoder decodes multiple different fields and writes them into a struct tag
+// Decoder decodes multiple different fields and writes them into a struct tag.
 type Decoder struct {
 	decoders   map[string]reflect.Value
 	decoderTyp map[string]reflect.Type
@@ -23,17 +23,17 @@ var (
 	errNoEncoderFunc = errors.New("Register: Not a Encoder Function")
 )
 
-// DecoderFunction is a function that decodes into an object of type T
+// DecoderFunction is a function that decodes into an object of type T.
 type DecoderFunction[T any] = func(dest *T, d *xml.Decoder, start xml.StartElement) error
 
-// type of arguments for decoder function
+// type of arguments for decoder function.
 var (
 	typeErr     = reflect.TypeFor[error]()
 	typeDecoder = reflect.TypeFor[*xml.Decoder]()
 	typeStart   = reflect.TypeFor[xml.StartElement]()
 )
 
-// MustRegister is like Register, but panic()s if something goes wrong
+// MustRegister is like Register, but panic()s if something goes wrong.
 func (ed *Decoder) MustRegister(name string, decoder any) {
 	if err := ed.Register(name, decoder); err != nil {
 		panic(err)
@@ -46,13 +46,13 @@ func (ed *Decoder) Register(name string, decoder any) error {
 	v := reflect.ValueOf(decoder)
 
 	t := v.Type()
-	if !(t.Kind() == reflect.Func &&
-		t.NumIn() == 3 &&
-		t.In(0).Kind() == reflect.Pointer &&
-		t.In(1) == typeDecoder &&
-		t.In(2) == typeStart &&
-		t.NumOut() == 1 &&
-		t.Out(0) == typeErr) {
+	if t.Kind() != reflect.Func ||
+		t.NumIn() != 3 ||
+		t.In(0).Kind() != reflect.Pointer ||
+		t.In(1) != typeDecoder ||
+		t.In(2) != typeStart ||
+		t.NumOut() != 1 ||
+		t.Out(0) != typeErr {
 		return errNoDecoderFunc
 	}
 
@@ -179,7 +179,6 @@ loop:
 				if decoderOK {
 					if !ed.IgnoreRepeats {
 						return fmt.Errorf("repeated tag %q", tt.Name.Local)
-
 					}
 					// we have an unknown field
 				} else {
@@ -208,7 +207,6 @@ loop:
 				return fmt.Errorf("decoder for %q: %w", tt.Name.Local, err.(error))
 			}
 			delete(fields, local)
-
 		}
 	}
 

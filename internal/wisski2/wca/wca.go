@@ -12,22 +12,25 @@ import (
 	_ "embed"
 )
 
-// Archive implements an opened WissKI Column Archive
+// Archive implements an opened WissKI Column Archive.
 type Archive struct {
 	conn *sqlite.Conn // database connection
 
 	manifest Manifest // manifest
 }
 
-// Close closes this archive
+// Close closes this archive.
 func (archive *Archive) Close() error {
-	return archive.conn.Close()
+	if err := archive.conn.Close(); err != nil {
+		return fmt.Errorf("failed to close connection: %w", err)
+	}
+	return nil
 }
 
 //go:embed wca.sql
 var wcaSQL string
 
-// initialize initializes the archive, copying relevant values from the given manifest
+// initialize initializes the archive, copying relevant values from the given manifest.
 func (archive *Archive) initialize(manifest *Manifest) error {
 	// check that we have a fresh schema!
 	{

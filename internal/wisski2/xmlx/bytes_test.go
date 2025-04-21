@@ -26,6 +26,9 @@ More content here
 	}
 
 	value, err := xmlx.ReadTagBytes(d, start.(xml.StartElement), io.ReadAll)
+	if err != nil {
+		panic(err)
+	}
 
 	// Output: Some content here
 	//

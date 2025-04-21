@@ -2,6 +2,7 @@ package xmlx_test
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -15,6 +16,8 @@ type DecoderTestObj struct {
 }
 
 func TestXMLDecoder_single(t *testing.T) {
+	t.Parallel()
+
 	for _, tt := range []struct {
 		Name           string
 		XML            string
@@ -103,6 +106,8 @@ func TestXMLDecoder_single(t *testing.T) {
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+
 			var decoder xmlx.Decoder
 			decoder.IgnoreRepeats = tt.IgnoreRepeats
 			decoder.IgnoreUnknowns = tt.IgnoreUnknowns
@@ -140,12 +145,17 @@ func TestXMLDecoder_single(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func ReadBytes(dest *[]byte, d *xml.Decoder, start xml.StartElement) error {
-	return xmlx.DecodeTagBytes(dest, d, start, func(dest *[]byte, src io.Reader) (err error) {
+	if err := xmlx.DecodeTagBytes(dest, d, start, func(dest *[]byte, src io.Reader) (err error) {
 		*dest, err = io.ReadAll(src)
-		return err
-	})
+		if err != nil {
+			return fmt.Errorf("failed to read from source: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to decode tag bytes: %w", err)
+	}
+	return nil
 }

@@ -3,6 +3,7 @@ package sqlitey
 import (
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 
 	"zombiezen.com/go/sqlite"
@@ -18,7 +19,7 @@ func Result[T any](conn *sqlite.Conn, query string, args []any, f func(stmt *sql
 	// prepare the query
 	stmt, tb, err := conn.PrepareTransient(query)
 	if err != nil {
-		return value, err
+		return value, fmt.Errorf("failed to prepare query: %w", err)
 	}
 	defer stmt.Finalize()
 
@@ -45,18 +46,28 @@ func BindArgs(stmt *sqlite.Stmt, args []any) error {
 	}
 
 	for i, value := range args {
-		setArg(stmt, i, reflect.ValueOf(value))
+		if err := setArg(stmt, i, reflect.ValueOf(value)); err != nil {
+			return fmt.Errorf("failed to set argument %d: %w", i, err)
+		}
 	}
 
 	return nil
 }
 
-func setArg(stmt *sqlite.Stmt, i int, v reflect.Value) {
+var (
+	errTooBig = errors.New("setArg: uint value too big")
+)
+
+func setArg(stmt *sqlite.Stmt, i int, v reflect.Value) error {
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		stmt.BindInt64(i, v.Int())
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		stmt.BindInt64(i, int64(v.Uint()))
+		val := v.Uint()
+		if val > math.MaxInt64 {
+			return errTooBig
+		}
+		stmt.BindInt64(i, int64(val))
 	case reflect.Float32, reflect.Float64:
 		stmt.BindFloat(i, v.Float())
 	case reflect.String:
@@ -65,11 +76,12 @@ func setArg(stmt *sqlite.Stmt, i int, v reflect.Value) {
 		stmt.BindBool(i, v.Bool())
 	case reflect.Invalid:
 		stmt.BindNull(i)
-	default:
+	case reflect.Complex64, reflect.Complex128, reflect.Array, reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice, reflect.Struct, reflect.UnsafePointer:
 		if v.Kind() == reflect.Slice && v.Type().Elem().Kind() == reflect.Uint8 {
 			stmt.BindBytes(i, v.Bytes())
 		} else {
 			stmt.BindText(i, fmt.Sprint(v.Interface()))
 		}
 	}
+	return nil
 }
