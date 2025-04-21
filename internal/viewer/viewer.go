@@ -99,7 +99,7 @@ func (rf RenderFlags) Tipsy() string {
 // CSPHeader returns the CSPHeader to be included in viewer responses.
 func (rf RenderFlags) CSPHeader(onURIError func(string, error)) string {
 	// don't allow anything by default
-	header := "default-src 'none'; connect-src 'self'; script-src 'self'; font-src 'self'; "
+	header := "default-src 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; font-src 'self'; "
 
 	if rf.HTMLRender {
 		// when rendering html, we explicitly want to allow inline styles.

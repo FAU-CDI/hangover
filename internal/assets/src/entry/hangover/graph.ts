@@ -1,5 +1,4 @@
-import { Network } from "vis-network";
-import { DataSet } from "vis-data";
+import { Graph, instance } from "@viz-js/viz";
 
 type GraphData = {
     triples: Array<[string, string, string]>,
@@ -17,11 +16,6 @@ class NamespaceMap {
         const prefix = this.prefix(uri);
         if (prefix === "") return uri;
         return this.elements.get(prefix) + ":" + uri.substring(prefix.length);
-    }
-    applyLabel(uri: string) {
-        const prefix = this.prefix(uri);
-        if (prefix === "") return uri;
-        return this.elements.get(prefix) + ":\n" + uri.substring(prefix.length);
     }
     prefix(uri: string): string {
         let prefix = "";     // prefix used
@@ -147,25 +141,19 @@ function renderData(data: unknown, line = 30): string {
     return lines.join('\n');
 }
 
-function renderGraph(element: HTMLElement, graph: GraphData): Network {
-    // create a graph element and append it
-    const graphElement = document.createElement("div");
-    element.append(graphElement);
-
-
-
-    const nodes = new DataSet<{ id?: string, label: string, shape?: string, color?: string; font?: unknown }>([]);
-    const edges = new DataSet<{ from: string, to: string, id?: never, label: string, color?: string; font?: unknown, arrows?: "to" }>();
+function renderGraph(element: HTMLElement, data: GraphData) {
+    // build the graph 
+    const graph: Graph = {directed: true, nodes: [], edges: []}
 
     // add the nodes that we know of
     const nodeSet = new Set<string>();
     const uriSet = new Set<string>();
-    graph.triples.forEach(triple => {
+    data.triples.forEach(triple => {
         nodeSet.add(triple[0]);
         nodeSet.add(triple[2]);
         uriSet.add(triple[1]);
     });
-    graph.data.forEach(triple => {
+    data.data.forEach(triple => {
         nodeSet.add(triple[0]);
         uriSet.add(triple[1]);
     });
@@ -175,50 +163,114 @@ function renderGraph(element: HTMLElement, graph: GraphData): Network {
     // generate a namespace map
     const mp = NamespaceMap.generate(uriSet);
     mp.add("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf"); // we always use this prefix
-    element.append(mp.toTable());
 
     // add the nodes to the underlying dataset
     nodeSet.forEach(node => {
-        nodes.add({ id: node, label: mp.applyLabel(node), shape: "ellipse" });
+        graph.nodes?.push({
+            name: node,
+            attributes: {
+                label: mp.apply(node),
+                shape: 'ellipse',
+            },
+        })
     })
 
     // add the known edges
-    graph.triples.forEach(triple => {
-        edges.add({
-            from: triple[0], to: triple[2],
-            arrows: "to",
-            label: mp.applyLabel(triple[1]), font: { background: 'white' },
-        });
+    data.triples.forEach(triple => {
+        graph.edges?.push({
+            head: triple[2],
+            tail: triple[0],
+            attributes: {
+                label: mp.apply(triple[1]),
+            },
+        })
     })
 
+    let counter = 0;
 
     // add data edges
-    graph.data.forEach(triple => {
-        const id = nodes.add({ label: renderData(triple[2]), shape: "box", color: "orange" })[0] as string;
+    data.data.forEach(triple => {
+        counter++
+        const id = '_:' + counter.toString()
 
-        edges.add({
-            from: triple[0], to: id,
-            arrows: "to",
-            label: mp.applyLabel(triple[1]), font: { background: 'white' }, color: 'orange',
-        });
+        graph.nodes?.push({
+            name: id,
+            attributes: {
+                label: renderData(triple[2]),
+                shape: 'box',
+                color: 'orange',
+            }
+        })
+
+        graph.edges?.push({
+            head: id,
+            tail: triple[0],
+            attributes: {
+                label: mp.apply(triple[1]),
+            }
+        })
     })
 
-    graphElement.style.width = '100%';
-    graphElement.style.height = '500px';
+    const statusSpan = document.createElement("span")
+    statusSpan.append("Loading ...")
+    element.appendChild(statusSpan)
 
-    const options = {
-        layout: {
-            hierarchical: {
-                enabled: true,
+    // and render it
+    instance().then(viz => {
+        const canon = viz.renderString(graph, { format: 'canon' })
+        const svg =  viz.renderString(canon, { format: 'svg' })
+        return  { canon, svg }
+    }).then(
+        ({canon, svg }) => {
+            // create an svg element!
+            let svgElem: SVGElement
+            {
+                const temp = document.createElement('span')
+                temp.innerHTML = svg
+                const svgQuery = temp.querySelector('svg')
+                if (svgQuery == null) {
+                    throw new Error('no svg rendered')
+                }
+                svgElem = svgQuery
             }
+            
+            // create URLs for the gv and svg formats
+            const svgURL = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
+            const gvURL = URL.createObjectURL(new Blob([canon], {type: 'text/vnd.graphviz'}))
+
+            // create download link for svg
+            const downloadSVG = document.createElement('a')
+            downloadSVG.href = svgURL
+            downloadSVG.download = 'graph.svg'
+            downloadSVG.append('SVG')
+
+            // create download link for gv
+            const downloadGV = document.createElement('a')
+            downloadGV.href = gvURL
+            downloadGV.download = 'graph.gv'
+            downloadGV.append('GV')
+
+            // make a <p>
+            const p = document.createElement('p')
+            p.append(
+                'Download As: ',
+                downloadSVG,
+                ' ',
+                downloadGV,
+            )
+            
+            element.removeChild(statusSpan)
+            element.append(
+                svgElem,
+                p,
+                mp.toTable()
+            )
+        }, error => {
+            statusSpan.innerHTML = '';
+            statusSpan.append("Failed to render graph")
+            console.error(error)
         },
-        physics: {
-            hierarchicalRepulsion: {
-                avoidOverlap: 100,
-            },
-        },
-    }
-    return new Network(graphElement, { nodes: nodes as unknown as any, edges: edges as unknown as any }, options);
+    )
 }
 
 document.querySelectorAll("script").forEach((script) => {
