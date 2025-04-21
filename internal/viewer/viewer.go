@@ -99,7 +99,7 @@ func (rf RenderFlags) Tipsy() string {
 // CSPHeader returns the CSPHeader to be included in viewer responses.
 func (rf RenderFlags) CSPHeader(onURIError func(string, error)) string {
 	// don't allow anything by default
-	header := "default-src 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; font-src 'self'; "
+	header := "default-src 'none'; object-src 'self'; connect-src 'self'; script-src 'self'; font-src 'self'; "
 
 	if rf.HTMLRender {
 		// when rendering html, we explicitly want to allow inline styles.
@@ -165,6 +165,9 @@ func (viewer *Viewer) setupMux() {
 
 		viewer.mux.HandleFunc("/api/v1/ntriples/{bundle}", viewer.handlerError(viewer.jsonNTriples)).Queries("uri", "{uri:.+}")
 		viewer.mux.HandleFunc("/api/v1/turtle/{bundle}", viewer.handlerError(viewer.jsonTurtle)).Queries("uri", "{uri:.+}")
+
+		viewer.mux.HandleFunc("/api/v1/svg/{bundle}", viewer.handlerError(viewer.jsonSVG)).Queries("uri", "{uri:.+}")
+		viewer.mux.HandleFunc("/api/v1/dot/{bundle}", viewer.handlerError(viewer.jsonDOT)).Queries("uri", "{uri:.+}")
 
 		viewer.mux.PathPrefix("/assets/").Handler(assets.AssetHandler)
 
