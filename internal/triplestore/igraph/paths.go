@@ -164,7 +164,7 @@ func (set *Paths) Size() (int, error) {
 		return set.size, nil
 	}
 
-	var all []element
+	all := make([]element, 0)
 	for element, err := range set.elements {
 		if err != nil {
 			return 0, fmt.Errorf("failed to drain elements: %w", err)
