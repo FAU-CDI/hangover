@@ -234,7 +234,10 @@ func (sql *SQL) Close() error {
 	if sql.SkipClose {
 		return nil
 	}
-	return sql.DB.Close() // close the database
+	if err := sql.DB.Close(); err != nil {
+		return fmt.Errorf("failed to close database: %w", err)
+	}
+	return nil
 }
 
 var (

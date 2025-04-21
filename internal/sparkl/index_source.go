@@ -49,11 +49,11 @@ func (qs *QuadSource) Open() error {
 	// then we need to reset the state
 	if qs.reader != nil {
 		if err := qs.reader.Close(); err != nil {
-			return err
+			return fmt.Errorf("failed to close reader: %w", err)
 		}
 		_, err := qs.Reader.Seek(0, io.SeekStart)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to seek back to start: %w", err)
 		}
 	}
 
@@ -110,8 +110,12 @@ func (qs *QuadSource) Next() Token {
 }
 
 func (qs *QuadSource) Close() error {
-	if qs.reader != nil {
-		return qs.reader.Close()
+	if qs.reader == nil {
+		return nil
+	}
+
+	if err := qs.reader.Close(); err != nil {
+		return fmt.Errorf("failed to close reader: %w", err)
 	}
 	return nil
 }

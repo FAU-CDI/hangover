@@ -44,4 +44,4 @@ linters:
     - usetesting
     - wastedassign
     - whitespace
-#    - wrapcheck
+    - wrapcheck

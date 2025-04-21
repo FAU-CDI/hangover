@@ -109,12 +109,12 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 
 	spo.Subj, err = rdf.NewIRI(subject)
 	if err != nil {
-		return rdf.Triple{}, err
+		return rdf.Triple{}, fmt.Errorf("failed to create IRI for subject: %w", err)
 	}
 
 	spo.Pred, err = rdf.NewIRI(predicate)
 	if err != nil {
-		return rdf.Triple{}, err
+		return rdf.Triple{}, fmt.Errorf("failed to create IRI for predicate: %w", err)
 	}
 
 	if triple.Role != Data {
@@ -127,7 +127,7 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 
 		spo.Obj, err = rdf.NewIRI(object)
 		if err != nil {
-			return rdf.Triple{}, err
+			return rdf.Triple{}, fmt.Errorf("failed to create IRI for object: %w", err)
 		}
 	} else {
 		var err error
@@ -138,7 +138,7 @@ func (triple Triple) Triple(canonical bool) (spo rdf.Triple, err error) {
 			spo.Obj, err = rdf.NewLiteral(triple.Datum.Value)
 		}
 		if err != nil {
-			return rdf.Triple{}, err
+			return rdf.Triple{}, fmt.Errorf("failed to create literal: %w", err)
 		}
 	}
 

@@ -1,6 +1,9 @@
 package impl
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Label represents the label of individual triple members.
 // A label is a uri.
@@ -25,12 +28,19 @@ type Datum struct {
 
 // DatumAsByte encodes a datum as a set of bytes.
 func DatumAsByte(datum Datum) ([]byte, error) {
-	return json.Marshal(&datum)
+	bytes, err := json.Marshal(datum)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal datum: %w", err)
+	}
+	return bytes, nil
 }
 
 // ByteAsDatum decodes a datum from a set of bytes.
 func ByteAsDatum(dest *Datum, src []byte) error {
-	return json.Unmarshal(src, dest)
+	if err := json.Unmarshal(src, dest); err != nil {
+		return fmt.Errorf("failed to unmarshal datum: %w", err)
+	}
+	return nil
 }
 
 // Source represents source information for a triple.

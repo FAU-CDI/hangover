@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/FAU-CDI/drincw/pathbuilder"
@@ -17,7 +18,7 @@ func doJSON(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.B
 	var bundles map[string][]wisski.Entity
 	if err := st.DoStage(stats.StageExtractBundles, func() error {
 		bundles, err = sparkl.LoadPathbuilder(pb, index, bEngine, st)
-		return err
+		return fmt.Errorf("failed to load pathbuilder: %w", err)
 	}); err != nil {
 		st.LogFatal("extract bundles", err)
 	}

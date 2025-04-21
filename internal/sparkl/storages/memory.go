@@ -1,6 +1,7 @@
 package storages
 
 import (
+	"fmt"
 	"iter"
 	"sync"
 
@@ -88,7 +89,7 @@ func (bs *Memory) AddChild(parent impl.Label, bundle string, child impl.Label) e
 
 	entity, err := bs.childStorages[bundle].Load(child)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add child bundle: %w", err)
 	}
 	bs.Entities[id].Children[bundle] = append(bs.Entities[id].Children[bundle], entity)
 	return nil

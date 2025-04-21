@@ -2,6 +2,7 @@ package viewer
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -51,7 +52,10 @@ func (viewer *Viewer) Close() error {
 	if viewer == nil {
 		return nil
 	}
-	return viewer.Cache.Close()
+	if err := viewer.Cache.Close(); err != nil {
+		return fmt.Errorf("failed to close cache: %w", err)
+	}
+	return nil
 }
 
 type RenderFlags struct {

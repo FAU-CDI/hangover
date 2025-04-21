@@ -63,20 +63,27 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 				// count the number of elements
 				count, err := storage.Count()
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to count number of entities: %w", err)
 				}
 
 				// start the exporter
 				if err := exporter.Begin(bundle, count); err != nil {
+					err = fmt.Errorf("failed to begin exporter: %w", err)
 					errOnce.Do(func() { gErr = err })
 					return err
 				}
 
 				// make sure it is also closed
 				defer func() {
-					err := exporter.End(bundle)
+					e2 := exporter.End(bundle)
+					if e2 == nil {
+						return
+					}
+					e2 = fmt.Errorf("failed to finish exporting bundle: %w", e2)
 					if e == nil {
-						e = err
+						e = e2
+					} else {
+						e = errors.Join(e, e2)
 					}
 				}()
 
@@ -85,14 +92,14 @@ func Export(pb *pathbuilder.Pathbuilder, index *igraph.Index, engine storages.Bu
 				// load all the entities
 				for element, err := range storage.Get(-1) {
 					if err != nil {
-						return err
+						return fmt.Errorf("failed to get from storage: %w", err)
 					}
 					entity, err := storage.Load(element.Label)
 					if err != nil {
-						return err
+						return fmt.Errorf("failed to load element: %w", err)
 					}
 					if err := exporter.Add(bundle, &entity); err != nil {
-						return err
+						return fmt.Errorf("failed to add entity to exporter: %w", err)
 					}
 				}
 

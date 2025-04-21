@@ -2,6 +2,7 @@ package igraph
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -81,13 +82,13 @@ func NewDiskHash(path string) (ThreeStorage, error) {
 	_, err := os.Stat(path)
 	if err == nil {
 		if err := os.RemoveAll(path); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to delete previous database contents: %w", err)
 		}
 	}
 
 	level, err := leveldb.OpenFile(path, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 	dh := &ThreeDiskHash{
 		DB: level,
@@ -114,7 +115,12 @@ func (tlm *ThreeDiskHash) Add(a, b, c impl.ID, l impl.ID, conflict func(old, con
 		conflicted = true
 	case errors.Is(err, leveldberrors.ErrNotFound):
 	}
-	return conflicted, tlm.DB.Put(impl.EncodeIDs(a, b, c), impl.EncodeIDs(l), nil)
+
+	err = tlm.DB.Put(impl.EncodeIDs(a, b, c), impl.EncodeIDs(l), nil)
+	if err != nil {
+		return conflicted, fmt.Errorf("failed to store encoded ids: %w", err)
+	}
+	return conflicted, nil
 }
 
 func (tlm *ThreeDiskHash) Count() (total int64, err error) {
@@ -126,14 +132,17 @@ func (tlm *ThreeDiskHash) Count() (total int64, err error) {
 	}
 
 	if err := iterator.Error(); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to count database: %w", err)
 	}
 
 	return total, nil
 }
 
 func (tlm ThreeDiskHash) Compact() error {
-	return tlm.DB.CompactRange(util.Range{})
+	if err := tlm.DB.CompactRange(util.Range{}); err != nil {
+		return fmt.Errorf("failed to compact database: %w", err)
+	}
+	return nil
 }
 
 func (tlm ThreeDiskHash) Finalize() error {
@@ -148,12 +157,12 @@ func (tlm *ThreeDiskHash) Fetch(a, b impl.ID, f func(c impl.ID, l impl.ID) error
 		c := impl.DecodeID(iterator.Key(), 2)
 		l := impl.DecodeID(iterator.Value(), 0)
 		if err := f(c, l); err != nil {
-			return err
+			return fmt.Errorf("f returned error: %w", err)
 		}
 	}
 
 	if err := iterator.Error(); err != nil {
-		return err
+		return fmt.Errorf("failed to fetch triple from disk: %w", err)
 	}
 
 	return nil
@@ -168,7 +177,7 @@ func (tlm *ThreeDiskHash) Has(a, b, c impl.ID) (id impl.ID, ok bool, err error) 
 
 	err = impl.UnmarshalID(&id, value)
 	if err != nil {
-		return id, false, err
+		return id, false, fmt.Errorf("failed to unmarshal id: %w", err)
 	}
 	return id, true, nil
 }

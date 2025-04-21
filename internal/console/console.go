@@ -1,6 +1,7 @@
 package console
 
 import (
+	"fmt"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -48,7 +49,11 @@ func (console *Console) CanvasObject() fyne.CanvasObject {
 
 // Write writes to the underlying console.
 func (console *Console) Write(data []byte) (int, error) {
-	return console.buffer.Write(data)
+	count, err := console.buffer.Write(data)
+	if err != nil {
+		return count, fmt.Errorf("failed to write to buffer: %w", err)
+	}
+	return count, nil
 }
 
 func (console *Console) line(line string) {

@@ -86,7 +86,7 @@ func NewCache(data map[string][]wisski.Entity, sameAs imap.HashMap[impl.Label, i
 		for i, entity := range entities {
 			id, err := c.uris.Add(entity.URI)
 			if err != nil {
-				return c, err
+				return c, fmt.Errorf("failed to add entity: %w", err)
 			}
 			c.biIndex[bundle][id.Canonical] = i
 			c.ebIndex[id.Canonical] = bundle
@@ -100,7 +100,7 @@ func NewCache(data map[string][]wisski.Entity, sameAs imap.HashMap[impl.Label, i
 
 	sameAsCount, err := sameAs.Count()
 	if err != nil {
-		return c, err
+		return c, fmt.Errorf("failed to count sameAs: %w", err)
 	}
 
 	// setup same-as and same-as-in
@@ -112,11 +112,11 @@ func NewCache(data map[string][]wisski.Entity, sameAs imap.HashMap[impl.Label, i
 
 		aliass, err := c.uris.Add(alias)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to add alias uri: %w", err)
 		}
 		canons, err := c.uris.Add(canon)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to add canonical uri: %w", err)
 		}
 
 		c.sameAs[aliass.Canonical] = canons.Canonical
@@ -125,7 +125,7 @@ func NewCache(data map[string][]wisski.Entity, sameAs imap.HashMap[impl.Label, i
 		return nil
 	})
 	if err != nil {
-		return c, err
+		return c, fmt.Errorf("failed to iterate sameAs: %w", err)
 	}
 
 	return c, nil

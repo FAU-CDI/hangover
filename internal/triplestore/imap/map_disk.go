@@ -3,6 +3,7 @@ package imap
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -70,14 +71,15 @@ func NewDiskStorage[Key comparable, Value any](path string) (*DiskStorage[Key, V
 	// If the path already exists, wipe it
 	_, err := os.Stat(path)
 	if err == nil {
-		if err := os.RemoveAll(path); err != nil {
-			return nil, err
+		if e2 := os.RemoveAll(path); e2 != nil {
+			err = errors.Join(err, fmt.Errorf("failed to cleanup path: %w", e2))
 		}
+		return nil, err
 	}
 
 	db, err := leveldb.OpenFile(path, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database file: %w", err)
 	}
 
 	storage := &DiskStorage[Key, Value]{
@@ -117,14 +119,17 @@ func (ds *DiskStorage[Key, Value]) Grow(size uint64) error {
 func (ds *DiskStorage[Key, Value]) Set(key Key, value Value) error {
 	keyB, err := ds.MarshalKey(key)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal key: %w", err)
 	}
 	valueB, err := ds.MarshalValue(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal value: %w", err)
 	}
 
-	return ds.DB.Put(keyB, valueB, nil)
+	if err := ds.DB.Put(keyB, valueB, nil); err != nil {
+		return fmt.Errorf("failed to set value for key: %w", err)
+	}
+	return nil
 }
 
 // Get returns the given value if it exists.
@@ -139,11 +144,11 @@ func (ds *DiskStorage[Key, Value]) Get(key Key) (v Value, b bool, err error) {
 		return v, false, nil
 	}
 	if err != nil {
-		return v, b, err
+		return v, b, fmt.Errorf("failed to get key from database: %w", err)
 	}
 
 	if err := ds.UnmarshalValue(&v, valueB); err != nil {
-		return v, b, err
+		return v, b, fmt.Errorf("failed to unmarshal value: %w", err)
 	}
 
 	return v, true, nil
@@ -163,7 +168,7 @@ func (ds *DiskStorage[Key, Value]) Has(key Key) (bool, error) {
 
 	ok, err := ds.DB.Has(keyB, nil)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to check database for key: %w", err)
 	}
 	return ok, nil
 }
@@ -176,7 +181,7 @@ func (ds *DiskStorage[Key, Value]) Delete(key Key) error {
 	}
 
 	if err := ds.DB.Delete(keyB, nil); err != nil {
-		return err
+		return fmt.Errorf("failed to delete key from disk: %w", err)
 	}
 
 	return nil
@@ -198,14 +203,20 @@ func (ds *DiskStorage[Key, Value]) Iterate(f func(Key, Value) error) error {
 			return err
 		}
 		if err := f(key, value); err != nil {
-			return err
+			return fmt.Errorf("function returned error: %w", err)
 		}
 	}
-	return it.Error()
+	if err := it.Error(); err != nil {
+		return fmt.Errorf("failed to iterate database: %w", err)
+	}
+	return nil
 }
 
 func (ds *DiskStorage[Key, Value]) Compact() error {
-	return ds.DB.CompactRange(util.Range{})
+	if err := ds.DB.CompactRange(util.Range{}); err != nil {
+		return fmt.Errorf("failed to compact database: %w", err)
+	}
+	return nil
 }
 
 func (ds *DiskStorage[Key, Value]) Finalize() error {
@@ -219,7 +230,10 @@ func (ds *DiskStorage[Key, Value]) Close() error {
 		err = ds.DB.Close()
 	}
 	ds.DB = nil
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to close database: %w", err)
+	}
+	return nil
 }
 
 // Count returns the number of objects in this DiskStorage.

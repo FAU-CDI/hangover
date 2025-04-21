@@ -44,13 +44,14 @@ func doSQL(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.Bu
 
 			MakeFieldTables: sqlFieldTables,
 
-			Separator: sqlSeperator,
+			Separator: sqlSeparator,
 		}, st)
 	})
 	if err != nil {
 		st.LogFatal("export sql", err)
+		return db, fmt.Errorf("failed to export: %w", err)
 	}
-	return db, err
+	return db, nil
 }
 
 func doCSV(pb *pathbuilder.Pathbuilder, index *igraph.Index, bEngine storages.BundleEngine, path string, st *stats.Stats) (e error) {
@@ -133,7 +134,7 @@ func doCSVTable(db *sql.DB, table string, path string) (e error) {
 	// query everything in the table
 	rows, err := db.Query("SELECT * FROM " + table) // #nosec G202 -- can't parametrize table name
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to query table: %w", err)
 	}
 	defer func() {
 		if e2 := rows.Close(); e2 != nil {
@@ -149,10 +150,10 @@ func doCSVTable(db *sql.DB, table string, path string) (e error) {
 	// write the header
 	columns, err := rows.Columns()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read column names: %w", err)
 	}
 	if err := writer.Write(columns); err != nil {
-		return err
+		return fmt.Errorf("failed to write column names: %w", err)
 	}
 
 	// Write the data
@@ -165,7 +166,7 @@ func doCSVTable(db *sql.DB, table string, path string) (e error) {
 
 		// read everything
 		if err := rows.Scan(values...); err != nil {
-			return err
+			return fmt.Errorf("failed to scan values: %w", err)
 		}
 
 		// convert into strings
@@ -177,13 +178,13 @@ func doCSVTable(db *sql.DB, table string, path string) (e error) {
 
 		// and write out
 		if err := writer.Write(strings); err != nil {
-			return err
+			return fmt.Errorf("failed to write values to file: %w", err)
 		}
 	}
 
 	// check for errors
 	if err := rows.Err(); err != nil {
-		return err
+		return fmt.Errorf("failed to iterate through rows: %w", err)
 	}
 	return nil
 }

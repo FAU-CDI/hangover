@@ -3,6 +3,7 @@ package storages
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"sync"
 
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
@@ -52,7 +53,7 @@ func (s *sEntity) Encode() ([]byte, error) {
 	// encode the entity
 	err := gob.NewEncoder(buffer).Encode(s)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to encode with gob: %w", err)
 	}
 
 	// return a copy of the buffer!
@@ -74,7 +75,10 @@ func (s *sEntity) Decode(data []byte) error {
 	buffer.Write(data)
 
 	// and decode from it
-	return gob.NewDecoder(buffer).Decode(s)
+	if err := gob.NewDecoder(buffer).Decode(s); err != nil {
+		return fmt.Errorf("failed to decode Entity from gob: %w", err)
+	}
+	return nil
 }
 
 func init() {

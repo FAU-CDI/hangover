@@ -34,7 +34,7 @@ func (cr *Reader) Read(bytes []byte) (int, error) {
 	if err := cr.Write("Read " + humanize.Bytes(uint64(byteCount))); err != nil {
 		return count, fmt.Errorf("failed to write to rewritable: %w", err)
 	}
-	return count, err
+	return count, nil
 }
 
 // Writer consistently writes the number of bytes written to Progress.

@@ -29,7 +29,10 @@ type Glass struct {
 }
 
 func (glass *Glass) Close() error {
-	return glass.Cache.Close()
+	if err := glass.Cache.Close(); err != nil {
+		return fmt.Errorf("failed to close cache: %w", err)
+	}
+	return nil
 }
 
 // Create creates a new glass from the given pathbuilder and nquads.
@@ -38,9 +41,12 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	// read the pathbuilder
 	if err := st.DoStage(stats.StageReadPathbuilder, func() (err error) {
 		drincw.Pathbuilder, err = pbxml.Load(pathbuilderPath)
-		return err
+		if err != nil {
+			return fmt.Errorf("failed to load pathbuilder xml: %w", err)
+		}
+		return nil
 	}); err != nil {
-		return drincw, err
+		return drincw, fmt.Errorf("failed to load pathbuilder: %w", err)
 	}
 
 	// make an engine
@@ -72,9 +78,12 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	var bundles map[string][]wisski.Entity
 	if err := st.DoStage(stats.StageExtractBundles, func() (err error) {
 		bundles, err = sparkl.LoadPathbuilder(&drincw.Pathbuilder, index, bEngine, st)
-		return err
+		if err != nil {
+			return fmt.Errorf("failed to load pathbuilder: %w", err)
+		}
+		return nil
 	}); err != nil {
-		return drincw, err
+		return drincw, fmt.Errorf("failed to extract bundles: %w", err)
 	}
 
 	// extract the cache
@@ -84,22 +93,18 @@ func Create(pathbuilderPath string, nquadsPath string, cacheDir string, flags vi
 	if err := st.DoStage(stats.StageExtractSameAs, func() error {
 		return index.IdentityMap(&identities)
 	}); err != nil {
-		return Glass{}, err
+		return Glass{}, fmt.Errorf("failed to extract same as: %w", err)
 	}
 
 	if err := st.DoStage(stats.StageExtractCache, func() error {
 		cache, err := sparkl.NewCache(bundles, &identities, st)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create new cache: %w", err)
 		}
 		drincw.Cache = &cache
 		return nil
 	}); err != nil {
-		return Glass{}, err
-	}
-
-	if err != nil {
-		return drincw, err
+		return Glass{}, fmt.Errorf("failed to extract cache: %w", err)
 	}
 
 	// We close the index early, because it's no longer needed

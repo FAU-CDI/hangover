@@ -26,13 +26,13 @@ func (de DiskEngine) NewStorage(bundle *pathbuilder.Bundle) (BundleStorage, erro
 
 	if _, err := os.Stat(path); err == nil {
 		if err := os.RemoveAll(path); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to remove previous contents: %w", err)
 		}
 	}
 
 	db, err := leveldb.OpenFile(path, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	return &Disk{
@@ -56,18 +56,21 @@ func (ds *Disk) put(f func(*sEntity) error) error {
 	defer sEntityPool.Put(entity)
 
 	if err := f(entity); err != nil {
-		return err
+		return fmt.Errorf("f returned error: %w", err)
 	}
 
 	data, err := entity.Encode()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to encode entity: %w", err)
 	}
 
 	ds.l.Lock()
 	defer ds.l.Unlock()
 
-	return ds.DB.Put([]byte(entity.URI), data, nil)
+	if err := ds.DB.Put([]byte(entity.URI), data, nil); err != nil {
+		return fmt.Errorf("failed to store entity: %w", err)
+	}
+	return nil
 }
 
 func (ds *Disk) get(uri impl.Label, f func(*sEntity) error) error {
@@ -84,16 +87,19 @@ func (ds *Disk) get(uri impl.Label, f func(*sEntity) error) error {
 		return ErrNoEntity
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get entity from database: %w", err)
 	}
 
 	// decode the entity!
 	if err := entity.Decode(data); err != nil {
-		return err
+		return fmt.Errorf("failed to decode entity: %w", err)
 	}
 
 	// handle the entity!
-	return f(entity)
+	if err := f(entity); err != nil {
+		return fmt.Errorf("failed to handle entity: %w", err)
+	}
+	return nil
 }
 
 func (ds *Disk) decode(data []byte, f func(*sEntity) error) error {
@@ -102,7 +108,7 @@ func (ds *Disk) decode(data []byte, f func(*sEntity) error) error {
 	defer sEntityPool.Put(entity)
 
 	if err := entity.Decode(data); err != nil {
-		return err
+		return fmt.Errorf("failed to decode entity: %w", err)
 	}
 
 	return f(entity)
@@ -122,27 +128,30 @@ func (ds *Disk) update(uri impl.Label, update func(*sEntity) error) error {
 		return ErrNoEntity
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get entity: %w", err)
 	}
 
 	// decode the entity!
 	if err := entity.Decode(data); err != nil {
-		return err
+		return fmt.Errorf("failed to decode entity: %w", err)
 	}
 
 	// perform the entity
 	if err := update(entity); err != nil {
-		return err
+		return fmt.Errorf("failed to update entity: %w", err)
 	}
 
 	// encoded the entity again
 	data, err = entity.Encode()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to encode entity: %w", err)
 	}
 
 	// and put it back!
-	return ds.DB.Put([]byte(entity.URI), data, nil)
+	if err := ds.DB.Put([]byte(entity.URI), data, nil); err != nil {
+		return fmt.Errorf("failed to put into database: %w", err)
+	}
+	return nil
 }
 
 // Add adds an entity to this BundleSlice.
@@ -188,7 +197,10 @@ func (ds *Disk) AddChild(parent impl.Label, bundle string, child impl.Label) err
 }
 
 func (ds *Disk) Finalize() error {
-	return ds.DB.SetReadOnly()
+	if err := ds.DB.SetReadOnly(); err != nil {
+		return fmt.Errorf("failed to set database to read only: %w", err)
+	}
+	return nil
 }
 
 func (ds *Disk) Get(parentPathIndex int) iter.Seq2[LabelWithParent, error] {
@@ -247,7 +259,7 @@ func (ds *Disk) Load(uri impl.Label) (entity wisski.Entity, err error) {
 			for i, uri := range value {
 				entity.Children[bundle][i], err = ds.childStorages[bundle].Load(uri)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to load WissKI entity: %w", err)
 				}
 			}
 		}

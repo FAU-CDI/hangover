@@ -44,7 +44,11 @@ func (ti TripleID) Marshal() ([]byte, error) {
 
 // Unmarshal reads this TripleID from a []byte.
 func (ti *TripleID) Unmarshal(src []byte) error {
-	return impl.UnmarshalIDs(src, &(ti.Canonical), &(ti.Literal))
+	err := impl.UnmarshalIDs(src, &(ti.Canonical), &(ti.Literal))
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal ids: %w", err)
+	}
+	return nil
 }
 
 var ErrFinalized = errors.New("IMap is finalized")
@@ -60,7 +64,7 @@ func (mp *IMap) Reset(engine Map) error {
 
 	mp.forward, err = engine.Forward()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to initialize forward mapping: %w", err)
 	}
 	closers = append(closers, mp.forward)
 
@@ -146,12 +150,19 @@ func (mp *IMap) Add(label impl.Label) (ids TripleID, err error) {
 	}
 
 	ids, _, err = mp.AddNew(label)
-	return
+	if err != nil {
+		return ids, fmt.Errorf("failed to add label: %w", err)
+	}
+	return ids, nil
 }
 
 // Get behaves like Add, but in case the label has no associated mappings returns ok = false and does not modify the state.
 func (mp *IMap) Get(label impl.Label) (ids TripleID, ok bool, err error) {
-	return mp.forward.Get(label)
+	ids, ok, err = mp.forward.Get(label)
+	if err != nil {
+		return ids, ok, fmt.Errorf("failed to get label: %w", err)
+	}
+	return ids, ok, nil
 }
 
 // AddNew behaves like Add, except additionally returns a boolean indicating if the returned id existed previously.
@@ -206,12 +217,12 @@ func (mp *IMap) MarkIdentical(same, old impl.Label) (canonical impl.ID, err erro
 	canonicals, err := mp.Add(same)
 	canonical = canonicals.Canonical // we use the "new" version of canonicals
 	if err != nil {
-		return canonical, err
+		return canonical, fmt.Errorf("failed to add id for 'same' element: %w", err)
 	}
 	aliass, aliasIsOld, err := mp.AddNew(old)
 	alias := aliass.Canonical // we use the canonical
 	if err != nil {
-		return canonical, err
+		return canonical, fmt.Errorf("failed to add id for 'old' element: %w", err)
 	}
 
 	// the canonical variant of the alias
@@ -225,7 +236,7 @@ func (mp *IMap) MarkIdentical(same, old impl.Label) (canonical impl.ID, err erro
 	if !aliasIsOld {
 		aliass.Canonical = canonical
 		if err := mp.forward.Set(old, aliass); err != nil {
-			return canonical, err
+			return canonical, fmt.Errorf("failed to set alias to old id: %w", err)
 		}
 		return
 	}
@@ -240,13 +251,16 @@ func (mp *IMap) MarkIdentical(same, old impl.Label) (canonical impl.ID, err erro
 		// set the canonical id
 		ids.Canonical = canonical
 		if err := mp.forward.Set(label, ids); err != nil {
-			return err
+			return fmt.Errorf("failed to set forward id: %w", err)
 		}
 
 		// we do not delete anything
 		return nil
 	})
-	return
+	if err != nil {
+		return canonical, fmt.Errorf("failed to iterate through ids: %w", err)
+	}
+	return canonical, nil
 }
 
 // Forward returns the id corresponding to the given label.
@@ -256,13 +270,20 @@ func (mp *IMap) MarkIdentical(same, old impl.Label) (canonical impl.ID, err erro
 func (mp *IMap) Forward(label impl.Label) (impl.ID, error) {
 	// TODO: This stores, but discards the original value.
 	value, err := mp.forward.GetZero(label)
-	return value.Canonical, err
+	if err != nil {
+		return value.Canonical, fmt.Errorf("failed to get forward id: %w", err)
+	}
+	return value.Canonical, nil
 }
 
 // Reverse returns the label corresponding to the given id.
 // When id is not contained in this map, the zero value of the label type is contained.
 func (mp *IMap) Reverse(id impl.ID) (impl.Label, error) {
-	return mp.reverse.GetZero(id)
+	label, err := mp.reverse.GetZero(id)
+	if err != nil {
+		return label, fmt.Errorf("failed to get reverse id: %w", err)
+	}
+	return label, nil
 }
 
 // IdentityMap writes canonical label mappings to the given storage.
@@ -272,16 +293,21 @@ func (mp *IMap) Reverse(id impl.ID) (impl.Label, error) {
 //	mp.Reverse(mp.Forward(L1)) == L2 && L1 != L2
 func (mp *IMap) IdentityMap(storage HashMap[impl.Label, impl.Label]) error {
 	// TODO: Do we really want this right now
-	return mp.forward.Iterate(func(label impl.Label, id TripleID) error {
+	if err := mp.forward.Iterate(func(label impl.Label, id TripleID) error {
 		value, err := mp.reverse.GetZero(id.Canonical)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get canonical id: %w", err)
 		}
 		if value != label {
-			return storage.Set(label, value)
+			if err := storage.Set(label, value); err != nil {
+				return fmt.Errorf("failed to store canonical id: %w", err)
+			}
 		}
 		return nil
-	})
+	}); err != nil {
+		return fmt.Errorf("failed to iterate forward mappings: %w", err)
+	}
+	return nil
 }
 
 // Close closes any storages related to this IMap.

@@ -117,7 +117,7 @@ var mysql string
 
 var debug bool
 
-var sqlSeperator string = ","
+var sqlSeparator string = ","
 var sqlFieldTables bool
 
 func init() {
@@ -134,7 +134,7 @@ func init() {
 
 	flag.BoolVar(&debug, "debug", debug, "Setup debug logging")
 
-	flag.StringVar(&sqlSeperator, "sql-seperator", sqlSeperator, "Use seperator on multi-valued fields")
+	flag.StringVar(&sqlSeparator, "sql-seperator", sqlSeparator, "Use seperator on multi-valued fields")
 	flag.BoolVar(&sqlFieldTables, "sql-field-tables", sqlFieldTables, "Store values for fields in seperate tables")
 
 	flag.StringVar(&debugProfile, "debug-profile", debugProfile, "write out a debugging profile to the given path")

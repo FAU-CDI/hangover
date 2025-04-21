@@ -42,7 +42,7 @@ func FindSource(argv ...string) (nq, xml string, err error) {
 
 		xmls, err := filepath.Glob(filepath.Join(base, "*.xml"))
 		if err != nil {
-			return "", "", err
+			return "", "", fmt.Errorf("failed to list xml files: %w", err)
 		}
 		if len(xmls) != 1 {
 			return "", "", fmt.Errorf("%w: found exactly %d '.xml' files in %q", errNeedOneFile, len(xml), base)
@@ -51,7 +51,7 @@ func FindSource(argv ...string) (nq, xml string, err error) {
 
 		nqs, err := filepath.Glob(filepath.Join(base, "*.nq"))
 		if err != nil {
-			return "", "", err
+			return "", "", fmt.Errorf("failed to list nq files: %w", err)
 		}
 		if len(nqs) != 1 {
 			return "", "", fmt.Errorf("%w: found exactly %d '.nq' files in %q", errNeedOneFile, len(nqs), base)
@@ -76,7 +76,7 @@ func FindSource(argv ...string) (nq, xml string, err error) {
 func isDirectory(path string) (ok bool, err error) {
 	stats, err := os.Stat(path)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to stat %q: %w", path, err)
 	}
 	return stats.Mode().IsDir(), nil
 }
@@ -85,7 +85,7 @@ func isDirectory(path string) (ok bool, err error) {
 func isFile(path string) (ok bool, err error) {
 	stats, err := os.Stat(path)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to stat %q: %w", path, err)
 	}
 	return stats.Mode().IsRegular(), nil
 }

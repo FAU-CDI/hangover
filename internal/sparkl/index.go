@@ -268,7 +268,7 @@ func indexInverseOf(source Source, index *igraph.Index, inversePredicates []impl
 		// check if we should compact
 		if opts.shouldCompact(counter) {
 			if err := index.Compact(); err != nil {
-				return err
+				return fmt.Errorf("failed to compact index: %w", err)
 			}
 		}
 

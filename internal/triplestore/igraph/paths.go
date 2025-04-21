@@ -30,12 +30,12 @@ type Paths struct {
 func (index *Index) PathsStarting(predicate, object impl.Label) (*Paths, error) {
 	p, err := index.labels.Forward(predicate)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to resolve predicate: %w", err)
 	}
 
 	o, err := index.labels.Forward(object)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to resolve object: %w", err)
 	}
 
 	return index.newQuery(func(sender traversal.Generator[element]) {
@@ -71,7 +71,7 @@ func (index *Index) newQuery(source func(sender traversal.Generator[element])) (
 func (set *Paths) Connected(predicate impl.Label) error {
 	p, err := set.index.labels.Forward(predicate)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to resolve predicate: %w", err)
 	}
 	set.predicates = append(set.predicates, p)
 	return set.expand(p)
@@ -108,11 +108,11 @@ func (set *Paths) expand(p impl.ID) error {
 func (set *Paths) Ending(predicate, object impl.Label) error {
 	p, err := set.index.labels.Forward(predicate)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to resolve predicate label: %w", err)
 	}
 	o, err := set.index.labels.Forward(object)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to resolve object label: %w", err)
 	}
 	return set.restrict(p, o)
 }
@@ -146,7 +146,7 @@ func (set *Paths) Size() (int, error) {
 	// we don't know the size, so we need to fully expand it
 	all, err := traversal.Drain(set.elements)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to drain traversal: %w", err)
 	}
 	set.size = len(all)
 	set.elements = traversal.Slice(all)
@@ -220,7 +220,7 @@ func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []i
 		// split off the first value to use as a datum (if any)
 		path.Datum, path.HasDatum, err = index.data.Get(rNodeIDs[0])
 		if err != nil {
-			return Path{}, err
+			return Path{}, fmt.Errorf("failed to get node ids: %w", err)
 		}
 
 		// if we have a datum, get the node id!
@@ -235,7 +235,7 @@ func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []i
 		for j, label := range rNodeIDs {
 			path.Nodes[last-j], err = index.labels.Reverse(label)
 			if err != nil {
-				return Path{}, err
+				return Path{}, fmt.Errorf("failed to reverse node label: %w", err)
 			}
 		}
 	}
@@ -245,7 +245,7 @@ func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []i
 	for j, label := range edgeIDs {
 		path.Edges[j], err = index.labels.Reverse(label)
 		if err != nil {
-			return Path{}, err
+			return Path{}, fmt.Errorf("failed to reverse edge label: %w", err)
 		}
 	}
 
@@ -255,7 +255,7 @@ func newPath(index *Index, rNodeIDs []impl.ID, edgeIDs []impl.ID, rTripleIDs []i
 	for j, label := range rTripleIDs {
 		path.Triples[last-j], err = index.Triple(label)
 		if err != nil {
-			return Path{}, err
+			return Path{}, fmt.Errorf("failed to reverse triple label: %w", err)
 		}
 	}
 

@@ -35,11 +35,11 @@ func (entity Entity) WriteAllTriples(w io.Writer, canonical bool, f rdf.Format) 
 	for _, triple := range entity.AllTriples() {
 		triple, err := triple.Triple(canonical)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to encode canonical triple: %w", err)
 		}
 
 		if err := writer.Encode(triple); err != nil {
-			return err
+			return fmt.Errorf("failed to encode triple: %w", err)
 		}
 	}
 

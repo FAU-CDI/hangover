@@ -57,53 +57,57 @@ func (index *Index) TripleCount() (count uint64, err error) {
 	if index == nil {
 		return 0, nil
 	}
-	return index.triples.Count()
+	count, err = index.triples.Count()
+	if err != nil {
+		return 0, fmt.Errorf("failed to count triples: %w", err)
+	}
+	return count, nil
 }
 
 // Triple returns the triple with the given id.
 func (index *Index) Triple(id impl.ID) (triple Triple, err error) {
 	t, _, err := index.triples.Get(id)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to resolve id: %w", err)
 	}
 
 	triple.Role = t.Role
 
 	triple.Subject, err = index.labels.Reverse(t.Items[0].Literal)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to resolve reserve label: %w", err)
 	}
 	triple.SSubject, err = index.labels.Reverse(t.Items[0].Canonical)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to reverse semantic subject: %w", err)
 	}
 
 	triple.Predicate, err = index.labels.Reverse(t.Items[1].Literal)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to reverse predicate: %w", err)
 	}
 	triple.SPredicate, err = index.labels.Reverse(t.Items[1].Canonical)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to reverse semantic predicate: %w", err)
 	}
 
 	triple.Object, err = index.labels.Reverse(t.Items[2].Literal)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to reverse object: %w", err)
 	}
 	triple.SObject, err = index.labels.Reverse(t.Items[2].Canonical)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to reverse semantic object: %w", err)
 	}
 
 	triple.Datum, _, err = index.data.Get(t.Items[2].Literal)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to resolve datum: %w", err)
 	}
 
 	triple.Source, err = index.getSource(t.Source)
 	if err != nil {
-		return triple, err
+		return triple, fmt.Errorf("failed to get source: %w", err)
 	}
 
 	triple.ID = id
@@ -113,7 +117,7 @@ func (index *Index) Triple(id impl.ID) (triple Triple, err error) {
 // Reset resets this index and prepares all internal structures for use.
 func (index *Index) Reset(engine Engine) (err error) {
 	if err = index.Close(); err != nil {
-		return err
+		return fmt.Errorf("failed to close index: %w", err)
 	}
 
 	var closers []io.Closer
@@ -135,37 +139,37 @@ func (index *Index) Reset(engine Engine) (err error) {
 	}()
 
 	if err := index.labels.Reset(engine); err != nil {
-		return err
+		return fmt.Errorf("failed to reset labels index: %w", err)
 	}
 	closers = append(closers, &index.labels)
 
 	index.data, err = engine.Data()
 	if err != nil {
-		return
+		return fmt.Errorf("failed to initialize data: %w", err)
 	}
 	closers = append(closers, index.data)
 
 	index.inverses, err = engine.Inverses()
 	if err != nil {
-		return
+		return fmt.Errorf("failed to initialize inverse index: %w", err)
 	}
 	closers = append(closers, index.inverses)
 
 	index.psoIndex, err = engine.PSOIndex()
 	if err != nil {
-		return
+		return fmt.Errorf("failed to initialize PSOIndex: %w", err)
 	}
 	closers = append(closers, index.psoIndex)
 
 	index.posIndex, err = engine.POSIndex()
 	if err != nil {
-		return
+		return fmt.Errorf("failed to initialize POS index: %w", err)
 	}
 	closers = append(closers, index.posIndex)
 
 	index.triples, err = engine.Triples()
 	if err != nil {
-		return
+		return fmt.Errorf("failed to initialize triples: %w", err)
 	}
 
 	index.triple.Reset()
@@ -198,7 +202,7 @@ func (index *Index) setMask(predicates map[impl.Label]struct{}, dest *map[impl.I
 	for label := range predicates {
 		ids, err := index.labels.Add(label)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to add predicate label: %w", err)
 		}
 		mask[ids.Canonical] = struct{}{}
 	}
@@ -211,16 +215,19 @@ func (index *Index) addMask(predicate impl.Label, mask map[impl.ID]struct{}) (im
 	// no mask => add normally
 	if mask == nil {
 		id, err := index.labels.Add(predicate)
-		return id, true, err
+		if err != nil {
+			return id, true, fmt.Errorf("failed to add predicate label: %w", err)
+		}
+		return id, true, nil
 	}
 
 	// check if we have an id
 	ids, ok, err := index.labels.Get(predicate)
 	if err != nil {
-		return ids, false, err
+		return ids, false, fmt.Errorf("failed to resolve predicate label: %w", err)
 	}
 	if !ok {
-		return ids, false, err
+		return ids, false, nil
 	}
 
 	// make sure it's contained in the map
@@ -235,7 +242,10 @@ func (index *Index) Grow(data uint64) error {
 	if index.finalized.Load() {
 		return ErrFinalized
 	}
-	return index.data.Grow(data)
+	if err := index.data.Grow(data); err != nil {
+		return fmt.Errorf("failed to grow data: %w", err)
+	}
+	return nil
 }
 
 // AddTriple inserts a subject-predicate-object triple into the index.
@@ -364,7 +374,7 @@ func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum, so
 	// add a predicate (and check if it is masked)
 	p, masked, err := index.addMask(predicate, index.dMask)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add object data: %w", err)
 	}
 
 	// was masked out!
@@ -376,13 +386,13 @@ func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum, so
 	// store the new datum for the object
 	o := index.labels.Next()
 	if err := index.data.Set(o, object); err != nil {
-		return err
+		return fmt.Errorf("failed to add object data: %w", err)
 	}
 
 	// add the subject
 	s, err := index.labels.Add(subject)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add subject label: %w", err)
 	}
 
 	// get the source
@@ -402,7 +412,7 @@ func (index *Index) AddData(subject, predicate impl.Label, object impl.Datum, so
 			},
 		},
 	}); err != nil {
-		return err
+		return fmt.Errorf("failed to add triple to index: %w", err)
 	}
 
 	conflicted, err := index.insert(s.Canonical, p.Canonical, o, id)
@@ -427,7 +437,7 @@ func (index *Index) resolveLabelConflict(old, conflicting impl.ID) (impl.ID, err
 		return old, errResolveConflictCorrupt
 	}
 	if err != nil {
-		return old, err
+		return old, fmt.Errorf("failed to resolve old triple: %w", err)
 	}
 
 	// load the new triple
@@ -436,7 +446,7 @@ func (index *Index) resolveLabelConflict(old, conflicting impl.ID) (impl.ID, err
 		return old, errResolveConflictCorrupt
 	}
 	if err != nil {
-		return conflicting, err
+		return conflicting, fmt.Errorf("failed to resolve conflicting: %w", err)
 	}
 
 	// use the one with the smaller role
@@ -452,12 +462,12 @@ func (index *Index) insert(subject, predicate, object impl.ID, label impl.ID) (c
 
 	conflicted1, err = index.psoIndex.Add(predicate, subject, object, label, index.resolveLabelConflict)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to add to pso index: %w", err)
 	}
 	if conflicted2, err = index.posIndex.Add(predicate, object, subject, label, index.resolveLabelConflict); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to add to pos index: %w", err)
 	}
-	return conflicted1 || conflicted2, err
+	return conflicted1 || conflicted2, nil
 }
 
 // MarkIdentical identifies the same and old labels.
@@ -468,7 +478,10 @@ func (index *Index) MarkIdentical(same, old impl.Label) error {
 	}
 
 	_, err := index.labels.MarkIdentical(same, old)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to set identical: %w", err)
+	}
+	return nil
 }
 
 // MarkInverse marks the left and right Labels as inverse properties of each other.
@@ -485,12 +498,12 @@ func (index *Index) MarkInverse(left, right impl.Label) error {
 
 	l, err := index.labels.Add(left)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add left label: %w", err)
 	}
 
 	r, err := index.labels.Add(right)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add right label: %w", err)
 	}
 
 	if l == r {
@@ -499,10 +512,10 @@ func (index *Index) MarkInverse(left, right impl.Label) error {
 
 	// store the inverses of the left and right
 	if err := index.inverses.Set(l.Canonical, r.Canonical); err != nil {
-		return err
+		return fmt.Errorf("failed to set left-right canonical inverse: %w", err)
 	}
 	if err := index.inverses.Set(r.Canonical, l.Canonical); err != nil {
-		return err
+		return fmt.Errorf("failed to set right-left canonical inverse: %w", err)
 	}
 	return nil
 }
@@ -510,7 +523,10 @@ func (index *Index) MarkInverse(left, right impl.Label) error {
 // IdentityMap writes all Labels for which has a semantically equivalent label.
 // See [imap.Storage.IdentityMap].
 func (index *Index) IdentityMap(storage imap.HashMap[impl.Label, impl.Label]) error {
-	return index.labels.IdentityMap(storage)
+	if err := index.labels.IdentityMap(storage); err != nil {
+		return fmt.Errorf("failed to get identity map: %w", err)
+	}
+	return nil
 }
 
 // Compact informs the implementation to perform any internal optimizations.
