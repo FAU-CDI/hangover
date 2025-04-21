@@ -6,7 +6,7 @@ import _ "embed"
 
 //spellchecker:words gogenlicense
 
-//go:generate go tool gogenlicense -m -t 0.5
+//go:generate go tool gogenlicense -m -skip-no-license
 
 //go:embed LICENSE
 var License string

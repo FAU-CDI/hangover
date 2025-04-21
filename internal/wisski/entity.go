@@ -3,6 +3,7 @@ package wisski
 
 //spellchecker:words slices github hangover internal triplestore igraph impl anglo korean
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/FAU-CDI/hangover/internal/triplestore/igraph"
 	"github.com/FAU-CDI/hangover/internal/triplestore/impl"
 	"github.com/anglo-korean/rdf"
+	"github.com/goccy/go-graphviz"
+	"github.com/goccy/go-graphviz/cgraph"
 )
 
 //spellchecker:words Wiss KI
@@ -22,6 +25,78 @@ type Entity struct {
 	URI      impl.Label
 	Path     []impl.Label
 	Triples  []igraph.Triple
+}
+
+func (entity Entity) WriteGraphViz(ctx context.Context, format graphviz.Format, w io.Writer) (err error) {
+	g, err := graphviz.New(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to instantiate graphviz: %w", err)
+	}
+
+	graph, err := g.Graph(graphviz.WithDirectedType(cgraph.StrictDirected))
+	if err != nil {
+		return fmt.Errorf("failed to create graph: %w", err)
+	}
+
+	graph.SetRankDir(cgraph.LRRank)
+
+	nodes := make(map[string]*cgraph.Node)
+	makeNode := func(name string) (*cgraph.Node, error) {
+		node, ok := nodes[name]
+		if ok {
+			return node, nil
+		}
+		nodes[name], err = graph.CreateNodeByName(name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create node: %w", err)
+		}
+		return nodes[name], nil
+	}
+
+	counter := 0
+
+	// add all the triples
+	for _, triple := range entity.AllTriples() {
+		subject, err := makeNode(string(triple.SSubject))
+		if err != nil {
+			return fmt.Errorf("failed to create subject node: %w", err)
+		}
+
+		var object *cgraph.Node
+
+		if triple.Role != igraph.Data {
+			object, err = makeNode(string(triple.SObject))
+			if err != nil {
+				return fmt.Errorf("failed to create object node: %w", err)
+			}
+		} else {
+			counter++
+			object, err = graph.CreateNodeByName(fmt.Sprintf("_:%d", counter))
+			if err != nil {
+				return fmt.Errorf("failed to create datum node: %w", err)
+			}
+			if triple.Datum.Language != "" {
+				object.SetLabel(fmt.Sprintf("%q@%s", triple.Datum.Value, triple.Datum.Language))
+			} else {
+				object.SetLabel(fmt.Sprintf("%q", triple.Datum.Value))
+			}
+
+			object.SetShape(cgraph.BoxShape)
+		}
+
+		{
+			_, err := graph.CreateEdgeByName(string(triple.SPredicate), subject, object)
+			if err != nil {
+				return fmt.Errorf("failed to create edge: %w", err)
+			}
+		}
+	}
+
+	// and render it!
+	if err := g.Render(ctx, graph, format, w); err != nil {
+		return fmt.Errorf("failed to render graph: %w", err)
+	}
+	return nil
 }
 
 // WriteTo writes triples representing this entity into w.
